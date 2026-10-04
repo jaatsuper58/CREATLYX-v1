@@ -9,6 +9,10 @@ plugins {
 android {
     namespace = "com.chattlyx.app"
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         // AUTH-10: deletion flow also exists on the web (URL configured server-side).
         manifestPlaceholders["chattlyxDeepLinkHost"] = "chattlyx.com"

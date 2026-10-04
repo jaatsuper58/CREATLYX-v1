@@ -1,115 +1,47 @@
-package com.chattlyx.app.navigation
+package com.chattlyx.app.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.stringResource
-import com.chattlyx.core.designsystem.icon.ChattlyxIcons
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
+import com.chattlyx.app.navigation.ChattlyxShell
+import com.chattlyx.core.designsystem.theme.ChattlyxTheme
+import com.chattlyx.feature.onboarding.OnboardingNavHost
 
 /**
- * App shell: bottom navigation on compact widths, navigation rail on wide
- * screens (WindowSizeClass medium/expanded, tablets and foldables per
- * Section 5.1). Phase 0 threshold: 840 dp.
+ * Root composable (AUTH-01 gate): splash stays visible while the session is
+ * checked, then either the onboarding graph or the authenticated shell.
  */
 @Composable
-fun ChattlyxShell(onSessionEnded: () -> Unit = {}) {
-    val navController = rememberNavController()
-    val useRail = LocalConfiguration.current.screenWidthDp >= WIDE_SCREEN_WIDTH_DP
+fun ChattlyxAppRoot(
+    appViewModel: AppViewModel = hiltViewModel(),
+) {
+    val gate by appViewModel.gate.collectAsState()
+    val appearance by appViewModel.appearance.collectAsState(
+        initial = com.chattlyx.core.datastore.AppearanceSettings(),
+    )
 
-    if (useRail) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            ShellNavigationRail(navController)
-            Scaffold { innerPadding ->
-                ChattlyxNavHost(
-                    navController = navController,
-                    modifier = Modifier.padding(innerPadding),
-                    onSessionEnded = onSessionEnded,
+    ChattlyxTheme(
+        themeMode = appearance.themeMode,
+        dynamicColor = appearance.dynamicColor,
+        reduceMotion = appearance.reduceMotion,
+    ) {
+        when (gate) {
+            RootGate.LOADING -> {
+                // SplashScreen keeps showing until the gate resolves.
+            }
+
+            RootGate.ONBOARDING -> {
+                OnboardingNavHost(
+                    navController = rememberNavController(),
+                    onFinishOnboarding = appViewModel::completeOnboarding,
                 )
             }
-        }
-    } else {
-        Scaffold(
-            bottomBar = { ShellNavigationBar(navController) },
-        ) { innerPadding ->
-            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                ChattlyxNavHost(
-                    navController = navController,
-                    onSessionEnded = onSessionEnded,
-                )
+
+            RootGate.MAIN -> {
+                ChattlyxShell(onSessionEnded = appViewModel::sessionEnded)
             }
         }
     }
 }
-
-@Composable
-private fun ShellNavigationBar(navController: androidx.navigation.NavHostController) {
-    NavigationBar {
-        val backStackEntry by navController.currentBackStackEntryAsState()
-        TopLevelDestination.entries.forEach { destination ->
-            val selected = backStackEntry?.destination?.hasRoute(routeClass(destination)) == true
-            NavigationBarItem(
-                selected = selected,
-                onClick = { navController.navigateToTopLevel(destination) },
-                icon = { Icon(destination.icon.imageVector(), contentDescription = null) },
-                label = { Text(stringResource(destination.labelRes)) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun ShellNavigationRail(navController: androidx.navigation.NavHostController) {
-    NavigationRail(modifier = Modifier.fillMaxHeight()) {
-        val backStackEntry by navController.currentBackStackEntryAsState()
-        TopLevelDestination.entries.forEach { destination ->
-            val selected = backStackEntry?.destination?.hasRoute(routeClass(destination)) == true
-            NavigationRailItem(
-                selected = selected,
-                onClick = { navController.navigateToTopLevel(destination) },
-                icon = { Icon(destination.icon.imageVector(), contentDescription = null) },
-                label = { Text(stringResource(destination.labelRes)) },
-            )
-        }
-    }
-}
-
-private fun androidx.navigation.NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
-    navigate(destination.route) {
-        popUpTo(graph.findStartDestination().id) {
-            saveState = true
-        }
-        launchSingleTop = true
-        restoreState = true
-    }
-}
-
-/** Maps a destination to its route KClass for hasRoute checks. */
-private fun routeClass(destination: TopLevelDestination): kotlin.reflect.KClass<*> =
-    destination.route::class
-
-private fun ChattlyxShellIcon.imageVector(): ImageVector = when (this) {
-    ChattlyxShellIcon.CHAT -> ChattlyxIcons.Chat
-    ChattlyxShellIcon.CALL -> ChattlyxIcons.Call
-    ChattlyxShellIcon.CONTACTS -> ChattlyxIcons.Contacts
-    ChattlyxShellIcon.SETTINGS -> ChattlyxIcons.Settings
-}
-
-private const val WIDE_SCREEN_WIDTH_DP = 840

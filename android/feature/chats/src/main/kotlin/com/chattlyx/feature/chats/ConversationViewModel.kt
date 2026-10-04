@@ -3,7 +3,6 @@ package com.chattlyx.feature.chats
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.chattlyx.domain.messaging.Conversation
@@ -39,7 +38,12 @@ class ConversationViewModel @Inject constructor(
     private val markConversationReadUseCase: MarkConversationReadUseCase,
 ) : ViewModel() {
 
-    private val conversationId: String = savedStateHandle.toRoute<ConversationRoute>().conversationId
+    // Type-safe navigation stores route arguments under their declared name;
+    // reading the key directly keeps the ViewModel unit-testable without the
+    // Bundle-backed route decoder.
+    private val conversationId: String = requireNotNull(savedStateHandle["conversationId"]) {
+        "conversationId route argument is required"
+    }
 
     val messages: Flow<PagingData<Message>> =
         observeMessages(conversationId).cachedIn(viewModelScope)

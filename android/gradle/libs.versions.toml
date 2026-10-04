@@ -55,7 +55,7 @@ timber = "5.0.1"
 junitJupiter = "5.11.4"          # verify latest stable
 turbine = "1.2.0"                # verify latest stable
 mockk = "1.13.16"                # verify latest stable
-robolectric = "4.17"             # verified: supports SDK 36
+robolectric = "4.16.1"           # 4.17 fails "raw FileDescriptor internals" on JDK 21+; 4.16.1 supports SDK 36
 roborazzi = "1.76.0"             # verified latest
 
 # --- Post-quantum / E2EE (NOT YET DEPENDENDED ON — see ADR-0002) ---

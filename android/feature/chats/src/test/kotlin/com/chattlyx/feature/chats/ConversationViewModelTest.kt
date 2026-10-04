@@ -29,11 +29,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class ConversationViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
