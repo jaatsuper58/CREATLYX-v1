@@ -113,19 +113,19 @@ private suspend fun DefaultWebSocketServerSession.authenticateFirstFrame(
 
     val bytes = (first as? Frame.Binary)?.readBytes()
     if (bytes == null) {
-        close(CloseReason(CloseReason.Codes.POLICY_VIOLATION, "Expected binary AuthFrame"))
+        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Expected binary AuthFrame"))
         return null
     }
 
     val frame = try {
         ProtoFrame.parseFrom(bytes)
     } catch (e: InvalidProtocolBufferException) {
-        close(CloseReason(CloseReason.Codes.POLICY_VIOLATION, "Unparseable AuthFrame"))
+        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unparseable AuthFrame"))
         return null
     }
 
     if (!frame.hasAuth()) {
-        close(CloseReason(CloseReason.Codes.POLICY_VIOLATION, "First frame must be AuthFrame"))
+        close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "First frame must be AuthFrame"))
         return null
     }
 

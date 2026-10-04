@@ -21,9 +21,8 @@ protobuf {
     }
 }
 
-android.sourceSets.getByName("main").proto {
-    srcDir("../../../proto")
-}
+// protobuf 0.10: the Android proto entry is a SourceDirectorySet property.
+android.sourceSets.getByName("main").proto.srcDir("../../../proto")
 
 dependencies {
     api(libs.protobuf.javalite)
