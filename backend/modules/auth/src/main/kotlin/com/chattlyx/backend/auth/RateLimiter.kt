@@ -33,7 +33,10 @@ class RateLimiter(private val clock: () -> Long = System::currentTimeMillis) {
         val iterator = windows.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            entry.value.removeFirstWhile { it <= now - maxAgeMillis }
+            val deque = entry.value
+            while (deque.isNotEmpty() && deque.first() <= now - maxAgeMillis) {
+                deque.removeFirst()
+            }
             if (entry.value.isEmpty()) iterator.remove()
         }
     }
