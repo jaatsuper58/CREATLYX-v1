@@ -9,6 +9,7 @@ application {
 }
 
 dependencies {
+    implementation(project(":modules:storage"))
     implementation(project(":modules:common"))
     implementation(project(":modules:db"))
     implementation(project(":modules:auth"))

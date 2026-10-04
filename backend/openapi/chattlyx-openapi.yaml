@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ChattlyX API
-  version: 0.2.0-phase2
+  version: 0.3.0-phase3
   summary: |
     Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
     stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
@@ -376,6 +376,90 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/HistoryResponse" }
 
+  /attachments:
+    post:
+      tags: [attachments]
+      operationId: declareAttachment
+      summary: Declare an attachment before uploading ciphertext (MED-01/02/03)
+      description: |
+        Clients encrypt the attachment locally and upload the ciphertext to
+        `uploadUrl`. The SHA-256 (over the ciphertext) and the decryption key
+        travel only inside the E2EE AttachmentContent descriptor, so the server
+        stores opaque bytes. Attachment ids are capability tokens shared only
+        with the recipient via an encrypted message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeclareAttachment" }
+      responses:
+        "201":
+          description: Attachment declared; upload the ciphertext to uploadUrl
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeclaredAttachment" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /attachments/{attachmentId}/data:
+    put:
+      tags: [attachments]
+      operationId: uploadAttachmentData
+      summary: Upload the attachment ciphertext (sender only, pending only)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "204": { description: Ciphertext stored; attachment is now ready }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    get:
+      tags: [attachments]
+      operationId: downloadAttachmentData
+      summary: Download the attachment ciphertext (sender or recipient)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Ciphertext bytes; verify SHA-256 then decrypt locally (MED-04)
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /attachments/{attachmentId}:
+    get:
+      tags: [attachments]
+      operationId: getAttachmentMeta
+      summary: Attachment metadata (sender or recipient)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Metadata; downloadUrl present only when status=ready
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttachmentMeta" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -610,3 +694,38 @@ components:
         features:
           type: object
           additionalProperties: { type: boolean }
+    DeclareAttachment:
+      type: object
+      required: [kind, mimeType, sizeBytes, sha256Hex]
+      properties:
+        kind: { type: string, enum: [image, video, file, voice] }
+        mimeType: { type: string, maxLength: 128 }
+        sizeBytes: { type: integer, format: int64, minimum: 1 }
+        sha256Hex: { type: string, pattern: "^[0-9a-fA-F]{64}$" }
+        recipientAccountId: { type: string, format: uuid }
+        conversationId: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        durationMs: { type: integer }
+        fileName: { type: string, maxLength: 255 }
+    DeclaredAttachment:
+      type: object
+      required: [attachmentId, uploadUrl]
+      properties:
+        attachmentId: { type: string, format: uuid }
+        uploadUrl: { type: string }
+    AttachmentMeta:
+      type: object
+      required: [attachmentId, kind, mimeType, sizeBytes, sha256Hex, status]
+      properties:
+        attachmentId: { type: string, format: uuid }
+        kind: { type: string, enum: [image, video, file, voice] }
+        mimeType: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        sha256Hex: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        durationMs: { type: integer }
+        fileName: { type: string }
+        status: { type: string, enum: [pending, ready] }
+        downloadUrl: { type: string, nullable: true }

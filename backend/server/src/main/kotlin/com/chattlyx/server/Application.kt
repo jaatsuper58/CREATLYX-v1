@@ -6,6 +6,7 @@ import com.chattlyx.backend.db.DbConfig
 import com.chattlyx.backend.db.DbFactory
 import com.chattlyx.backend.db.SchemaMigrator
 import com.chattlyx.backend.redis.RedisConfig
+import com.chattlyx.server.attachments.AttachmentContext
 import com.chattlyx.server.messaging.MessagingContext
 import com.chattlyx.server.plugins.chattlyxBearer
 import com.chattlyx.server.plugins.configureErrorHandling
@@ -13,6 +14,7 @@ import com.chattlyx.server.plugins.configureLogging
 import com.chattlyx.server.plugins.configureSerialization
 import com.chattlyx.server.routes.configureRouting
 import com.chattlyx.server.routes.installAccountRoutes
+import com.chattlyx.server.routes.installAttachmentRoutes
 import com.chattlyx.server.routes.installAuthRoutes
 import com.chattlyx.server.routes.installKeyRoutes
 import com.chattlyx.server.routes.installMessagingRoutes
@@ -41,11 +43,17 @@ fun Application.module() {
         deviceRepository = authServices.deviceRepository,
     )
 
-    moduleWithContext(authServices, messaging)
+    val attachments = AttachmentContext.create(dataSource)
+
+    moduleWithContext(authServices, messaging, attachments)
 }
 
-/** Test-friendly wiring: injects pre-built services (messaging optional). */
-fun Application.moduleWithContext(auth: AuthServices, messaging: MessagingContext? = null) {
+/** Test-friendly wiring: injects pre-built services (messaging/attachments optional). */
+fun Application.moduleWithContext(
+    auth: AuthServices,
+    messaging: MessagingContext? = null,
+    attachments: AttachmentContext? = null,
+) {
     configureSerialization()
     configureLogging()
     configureErrorHandling()
@@ -63,5 +71,9 @@ fun Application.moduleWithContext(auth: AuthServices, messaging: MessagingContex
         install(WebSockets)
         installMessagingRoutes(auth, messaging)
         installWsGateway(auth.tokenService, messaging)
+    }
+
+    if (attachments != null) {
+        installAttachmentRoutes(attachments)
     }
 }
