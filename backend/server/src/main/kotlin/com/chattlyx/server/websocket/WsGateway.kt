@@ -147,7 +147,7 @@ private suspend fun DefaultWebSocketServerSession.authenticateFirstFrame(
     }
 
     // Device binding: the socket may only act as the device in its token.
-    if (frame.auth.deviceId != 0 && frame.auth.deviceId != claims.dev) {
+    if (frame.auth.deviceId != 0 && frame.auth.deviceId.toLong() != claims.dev) {
         close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "auth/device-mismatch"))
         return null
     }
@@ -159,10 +159,10 @@ private suspend fun DefaultWebSocketServerSession.handleSend(
     messaging: MessagingContext,
     accountId: UUID,
     deviceId: Long,
-    send: SendFrame,
+    sendFrame: SendFrame,
 ) {
     val recipientId = try {
-        UUID.fromString(send.recipientAccountId)
+        UUID.fromString(sendFrame.recipientAccountId)
     } catch (e: IllegalArgumentException) {
         throw ChattlyxServerException.Validation("recipient_account_id must be a UUID")
     }
@@ -171,7 +171,7 @@ private suspend fun DefaultWebSocketServerSession.handleSend(
         senderAccountId = accountId,
         senderDeviceId = deviceId,
         recipientId = recipientId,
-        envelope = send.envelope,
+        envelope = sendFrame.envelope,
     )
 
     // Sender ack: server id + seq + timestamp for the client's send state.
@@ -181,7 +181,7 @@ private suspend fun DefaultWebSocketServerSession.handleSend(
             ProtoFrame.newBuilder()
                 .setAck(
                     AckFrame.newBuilder()
-                        .setClientMessageId(send.envelope.clientMessageId)
+                        .setClientMessageId(sendFrame.envelope.clientMessageId)
                         .setServerMessageId(result.serverMessageId)
                         .setServerTimestampMs(result.serverTimestampMs),
                 )

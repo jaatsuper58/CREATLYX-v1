@@ -13,7 +13,13 @@ object RedisFactory {
             testOnBorrow = false
             testWhileIdle = true
         }
-        return JedisPool(poolConfig, config.host, config.port, config.timeout, config.password)
+        return JedisPool(
+            poolConfig,
+            config.host,
+            config.port,
+            config.timeout.toMillis().toInt(),
+            config.password,
+        )
     }
 }
 

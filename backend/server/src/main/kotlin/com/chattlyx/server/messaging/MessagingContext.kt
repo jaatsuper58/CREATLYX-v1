@@ -39,7 +39,7 @@ class ConnectionRegistry : PeerNotifier {
      * Delivery hook installed by the WS gateway after construction (avoids a
      * registry <-> MessagingService constructor cycle). Invoked per session.
      */
-    lateinit var deliverTo: (accountId: UUID, session: DefaultWebSocketServerSession) -> Unit
+    lateinit var deliverTo: suspend (accountId: UUID, session: DefaultWebSocketServerSession) -> Unit
 
     override fun notifyEnvelope(accountId: UUID) {
         val sessions = connections[accountId] ?: return
