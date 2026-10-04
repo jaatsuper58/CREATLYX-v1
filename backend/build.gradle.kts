@@ -14,6 +14,7 @@ subprojects {
             events("failed")
             setExceptionFormat(org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL)
             showStackTraces = true
+            showStandardStreams = true
         }
     }
 }
