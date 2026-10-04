@@ -38,6 +38,9 @@ class ChatsViewModelTest {
 
             viewModel.typingByConversation.test {
                 assertEquals(emptyMap(), awaitItem())
+                // Let stateIn's upstream collection start; a replay-0 SharedFlow
+                // drops events emitted before any collector is attached.
+                runCurrent()
 
                 typing.emit(TypingEvent("dm:a:b", "peer-b", started = true))
                 runCurrent()

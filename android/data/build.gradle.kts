@@ -9,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.paging.common)
     implementation(projects.core.common)
     implementation(projects.core.network)
     implementation(projects.core.database)

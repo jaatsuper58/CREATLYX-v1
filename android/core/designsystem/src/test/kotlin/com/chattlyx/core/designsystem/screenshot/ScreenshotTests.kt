@@ -37,7 +37,7 @@ class LightScreenshotsTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onRoot.captureRoboImage("$GOLDEN_DIR/components_light.png")
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/components_light.png")
     }
 
     @Test
@@ -48,7 +48,7 @@ class LightScreenshotsTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onRoot.captureRoboImage("$GOLDEN_DIR/empty_state_light.png")
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/empty_state_light.png")
     }
 }
 
@@ -68,7 +68,7 @@ class DarkScreenshotsTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onRoot.captureRoboImage("$GOLDEN_DIR/components_dark.png")
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/components_dark.png")
     }
 
     @Test
@@ -79,7 +79,7 @@ class DarkScreenshotsTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onRoot.captureRoboImage("$GOLDEN_DIR/components_amoled.png")
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/components_amoled.png")
     }
 }
 
@@ -103,6 +103,6 @@ class RtlLargeFontScreenshotsTest {
             }
         }
         composeRule.waitForIdle()
-        composeRule.onRoot.captureRoboImage("$GOLDEN_DIR/components_rtl_font200.png")
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/components_rtl_font200.png")
     }
 }

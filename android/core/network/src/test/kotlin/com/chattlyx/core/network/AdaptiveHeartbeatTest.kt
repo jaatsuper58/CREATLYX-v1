@@ -18,7 +18,7 @@ class AdaptiveHeartbeatTest {
     @Test
     fun `cellular adds a penalty to protect data budgets`() {
         assertEquals(
-            60_000L,
+            90_000L,
             heartbeat.intervalMillis(NetworkType.CELLULAR, foreground = true, batterySaver = false),
         )
     }
