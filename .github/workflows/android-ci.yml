@@ -35,15 +35,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: "9.7.0" }
 
-      - name: Static analysis (ktlint + detekt) — soft gate in Phase 0
-        continue-on-error: true
-        run: gradle ktlintCheck detekt --continue
+      - name: Static analysis (ktlint + detekt)
+        # Deferred: detekt 1.23.8 and ktlint-gradle 14.2.0 are not AGP 9-safe
+        # yet (see android/build.gradle.kts tech-debt note). Runs in Phase 7.
+        run: echo "static analysis deferred until detekt/ktlint support AGP 9"
 
       - name: Build, unit & screenshot tests
         # Roborazzi records goldens until the first set is committed (see CONTRIBUTING.md).
         run: |
           set -o pipefail
-          gradle build -x ktlintCheck -x detekt -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
+          gradle build -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
 
       - name: Publish build log excerpt
         if: always()
