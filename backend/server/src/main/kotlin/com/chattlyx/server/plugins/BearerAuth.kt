@@ -5,7 +5,8 @@ import com.chattlyx.backend.common.ChattlyxServerException
 import com.chattlyx.backend.common.ProblemDetails
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.auth.AuthenticationChallengeContext
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.AuthenticationProcedureChallenge
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.AuthenticationContext
 import io.ktor.server.auth.AuthenticationFailedCause
@@ -38,8 +39,8 @@ class BearerAuthProvider(config: Config) : AuthenticationProvider(config) {
             ?.takeIf { it.isNotEmpty() }
 
         if (token == null) {
-            context.challenge("chattlyx-bearer", AuthenticationFailedCause.NoCredentials) { challenge ->
-                respondUnauthorized(challenge, "auth/unauthorized")
+            context.challenge("chattlyx-bearer", AuthenticationFailedCause.NoCredentials) { challenge, call ->
+                respondUnauthorized(challenge, call, "auth/unauthorized")
             }
             return
         }
@@ -51,17 +52,21 @@ class BearerAuthProvider(config: Config) : AuthenticationProvider(config) {
         }
 
         if (claims == null) {
-            context.challenge("chattlyx-bearer", AuthenticationFailedCause.InvalidCredentials) { challenge ->
-                respondUnauthorized(challenge, "auth/token-invalid")
+            context.challenge("chattlyx-bearer", AuthenticationFailedCause.InvalidCredentials) { challenge, call ->
+                respondUnauthorized(challenge, call, "auth/token-invalid")
             }
         } else {
             context.principal(AccountPrincipal(UUID.fromString(claims.sub), claims.dev))
         }
     }
 
-    private suspend fun respondUnauthorized(challenge: AuthenticationChallengeContext, code: String) {
-        if (!challenge.call.response.isSent) {
-            challenge.call.respond(
+    private suspend fun respondUnauthorized(
+        challenge: AuthenticationProcedureChallenge,
+        call: ApplicationCall,
+        code: String,
+    ) {
+        if (!call.response.isSent) {
+            call.respond(
                 HttpStatusCode.Unauthorized,
                 ProblemDetails(title = "Authentication required", status = 401, code = code),
             )

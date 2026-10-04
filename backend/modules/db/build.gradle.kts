@@ -5,7 +5,7 @@ plugins {
 dependencies {
     api(project(":modules:common"))
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.hikaricp)
+    api(libs.hikaricp)
     implementation(libs.postgresql)
     implementation(libs.slf4j.api)
 

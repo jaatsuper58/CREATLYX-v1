@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api(project(":modules:common"))
-    implementation(libs.jedis)
+    api(libs.jedis)
     implementation(libs.slf4j.api)
 
     testImplementation(libs.junit.jupiter)
