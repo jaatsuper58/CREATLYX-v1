@@ -11,13 +11,12 @@ android {
 }
 
 // protobuf 0.10 adds the "proto" SourceDirectorySet to each Android source
-// set dynamically. AGP 9 decorated source sets break the legacy static
-// interfaces, so reach it purely through the extensions container.
-val androidExtension = project.extensions.getByName("android") as ExtensionAware
-val androidSourceSets = androidExtension.extensions.getByName("sourceSets")
-    as org.gradle.api.NamedDomainObjectContainer<*>
-val mainSourceSet = androidSourceSets.getByName("main") as ExtensionAware
-val protoSources = mainSourceSet.extensions.getByName("proto") as SourceDirectorySet
+// set dynamically (no Kotlin DSL accessor). Under android.newDsl=false the
+// extension is the legacy BaseExtension; its sourceSets are a plain getter.
+@Suppress("DEPRECATION")
+val legacyAndroid = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+val protoSources = (legacyAndroid.sourceSets.getByName("main") as ExtensionAware)
+    .extensions.getByName("proto") as SourceDirectorySet
 // Wire contract sources live in the shared /proto tree (single copy, both sides).
 protoSources.srcDir("../../../proto")
 
