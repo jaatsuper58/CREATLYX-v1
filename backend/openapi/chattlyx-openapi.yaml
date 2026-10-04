@@ -469,6 +469,12 @@ components:
       description: Short-lived access token (15 min), device-bound.
 
   responses:
+    Problem:
+      description: RFC 9457 problem details
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     RateLimited:
       description: Rate limit exceeded; honour Retry-After
       headers:
