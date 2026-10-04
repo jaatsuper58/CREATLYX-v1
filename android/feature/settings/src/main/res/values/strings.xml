@@ -15,4 +15,34 @@
     <string name="settings_help_summary">FAQ, contact us, terms and privacy</string>
     <string name="settings_about">About</string>
     <string name="settings_about_summary">Version, licences</string>
+
+    <!-- S36 account -->
+    <string name="settings_account_title">Account</string>
+    <string name="settings_account_name_label">Name</string>
+    <string name="settings_account_username_label">Username</string>
+    <string name="settings_account_about_label">About</string>
+    <string name="settings_account_save">Save changes</string>
+    <string name="settings_account_saved">Profile updated</string>
+    <string name="settings_account_sign_out">Sign out</string>
+    <string name="settings_account_sign_out_confirm">Sign out on this device? You will need your phone number to sign back in.</string>
+    <string name="settings_account_error_generic">Could not update the profile. Please try again.</string>
+    <string name="settings_account_username_taken">That username is already taken.</string>
+
+    <!-- S47 devices -->
+    <string name="settings_devices_title">Linked devices</string>
+    <string name="settings_devices_empty">No other devices are linked.</string>
+    <string name="settings_devices_current">This device</string>
+    <string name="settings_devices_revoke">Remove</string>
+    <string name="settings_devices_revoke_confirm">Remove this device? It will be signed out immediately.</string>
+    <string name="settings_devices_added">Added %1$s</string>
+    <string name="settings_devices_last_seen">Last active %1$s</string>
+
+    <!-- S50 delete account -->
+    <string name="settings_delete_title">Delete account</string>
+    <string name="settings_delete_body">Deleting your account is permanent. Your profile, keys and messages on the server are removed within 30 days. This cannot be undone.</string>
+    <string name="settings_delete_confirm_label">I understand that this cannot be undone</string>
+    <string name="settings_delete_button">Delete my account</string>
+    <string name="settings_delete_error">Deletion failed. Check your connection and try again.</string>
+
+    <string name="settings_common_cancel">Cancel</string>
 </resources>

@@ -41,6 +41,8 @@ sqlcipherAndroid = "4.6.1"       # net.zetetic:sqlcipher-android; verify latest
 # --- Network ---
 okhttp = "4.12.0"                # verify latest stable
 retrofit = "2.11.0"              # verify latest stable
+retrofit-kotlinx-serialization = "2.11.0"  # verify latest stable
+play-services-auth-api-phone = "18.1.0"  # verify latest stable
 
 # --- Logging ---
 timber = "5.0.1"
@@ -111,6 +113,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-kotlinx-serialization = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit-kotlinx-serialization" }
+play-services-auth-api-phone = { group = "com.google.android.gms", name = "play-services-auth-api-phone", version.ref = "play-services-auth-api-phone" }
 
 # Logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
@@ -126,6 +130,8 @@ roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi
 roborazzi-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-rule", version.ref = "roborazzi" }
 
 junit4 = { group = "junit", name = "junit", version = "4.13.2" }
+javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }  # verify latest stable
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version = "1.2.1" }  # verify latest stable
 
 # Benchmark

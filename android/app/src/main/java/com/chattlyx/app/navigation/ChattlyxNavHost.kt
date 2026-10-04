@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.chattlyx.feature.calls.CallsRoute
 import com.chattlyx.feature.calls.CallsScreen
 import com.chattlyx.feature.chats.ChatsRoute
@@ -22,6 +23,7 @@ import com.chattlyx.feature.settings.SettingsScreen
 fun ChattlyxNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    onSessionEnded: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -31,6 +33,9 @@ fun ChattlyxNavHost(
         composable<ChatsRoute> { ChatsScreen() }
         composable<CallsRoute> { CallsScreen() }
         composable<ContactsRoute> { ContactsScreen() }
-        composable<SettingsRoute> { SettingsScreen() }
+        composable<SettingsRoute> {
+            val settingsNavController = rememberNavController()
+            SettingsScreen(navController = settingsNavController, onSessionEnded = onSessionEnded)
+        }
     }
 }

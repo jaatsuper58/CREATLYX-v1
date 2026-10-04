@@ -31,6 +31,10 @@ dependencies {
     implementation(projects.core.network)
     implementation(projects.core.analytics)
 
+    implementation(projects.domain)
+    implementation(projects.data)
+
+    implementation(projects.feature.onboarding)
     implementation(projects.feature.chats)
     implementation(projects.feature.calls)
     implementation(projects.feature.contacts)

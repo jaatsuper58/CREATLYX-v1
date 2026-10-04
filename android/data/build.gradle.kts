@@ -17,4 +17,6 @@ dependencies {
     implementation(projects.domain)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.timber)
 }

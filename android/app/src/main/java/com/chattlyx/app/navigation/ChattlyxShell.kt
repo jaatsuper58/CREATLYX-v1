@@ -30,7 +30,7 @@ import androidx.navigation.compose.rememberNavController
  * Section 5.1). Phase 0 threshold: 840 dp.
  */
 @Composable
-fun ChattlyxShell() {
+fun ChattlyxShell(onSessionEnded: () -> Unit = {}) {
     val navController = rememberNavController()
     val useRail = LocalConfiguration.current.screenWidthDp >= WIDE_SCREEN_WIDTH_DP
 
@@ -41,6 +41,7 @@ fun ChattlyxShell() {
                 ChattlyxNavHost(
                     navController = navController,
                     modifier = Modifier.padding(innerPadding),
+                    onSessionEnded = onSessionEnded,
                 )
             }
         }
@@ -49,7 +50,10 @@ fun ChattlyxShell() {
             bottomBar = { ShellNavigationBar(navController) },
         ) { innerPadding ->
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                ChattlyxNavHost(navController = navController)
+                ChattlyxNavHost(
+                    navController = navController,
+                    onSessionEnded = onSessionEnded,
+                )
             }
         }
     }

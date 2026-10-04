@@ -16,3 +16,5 @@ rootProject.name = "chattlyx-backend"
 
 include(":server")
 include(":modules:common")
+include(":modules:db")
+include(":modules:auth")

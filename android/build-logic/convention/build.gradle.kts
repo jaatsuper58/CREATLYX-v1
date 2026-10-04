@@ -19,31 +19,35 @@ gradlePlugin {
     plugins {
         register("chattlyxAndroidApplication") {
             id = "chattlyx.android.application"
-            implementationClass = "com.chattlyx.build.ChattlyxAndroidApplicationConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxAndroidApplicationConventionPlugin"
         }
         register("chattlyxAndroidLibrary") {
             id = "chattlyx.android.library"
-            implementationClass = "com.chattlyx.build.ChattlyxAndroidLibraryConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxAndroidLibraryConventionPlugin"
         }
         register("chattlyxAndroidCompose") {
             id = "chattlyx.android.compose"
-            implementationClass = "com.chattlyx.build.ChattlyxComposeConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxComposeConventionPlugin"
         }
         register("chattlyxAndroidHilt") {
             id = "chattlyx.android.hilt"
-            implementationClass = "com.chattlyx.build.ChattlyxHiltConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxHiltConventionPlugin"
         }
         register("chattlyxAndroidTest") {
             id = "chattlyx.android.test"
-            implementationClass = "com.chattlyx.build.ChattlyxAndroidTestConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxAndroidTestConventionPlugin"
         }
         register("chattlyxAndroidFeature") {
             id = "chattlyx.android.feature"
-            implementationClass = "com.chattlyx.build.ChattlyxFeatureConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxFeatureConventionPlugin"
+        }
+        register("chattlyxKotlinSerialization") {
+            id = "chattlyx.kotlin.serialization"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxKotlinSerializationConventionPlugin"
         }
         register("chattlyxJvmLibrary") {
             id = "chattlyx.jvm.library"
-            implementationClass = "com.chattlyx.build.ChattlyxJvmLibraryConventionPlugin"
+            implementationClass = "com.chattlyx.buildlogic.ChattlyxJvmLibraryConventionPlugin"
         }
     }
 }

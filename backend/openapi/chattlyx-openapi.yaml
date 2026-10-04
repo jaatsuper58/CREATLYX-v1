@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ChattlyX API
-  version: 0.1.0-phase0
+  version: 0.1.0-phase1
   summary: |
     Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
     stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
@@ -25,6 +25,10 @@ tags:
     description: Client configuration and feature flags
   - name: profile
     description: Profile read/write (AUTH-04)
+  - name: devices
+    description: Linked device management (AUTH-07)
+  - name: keys
+    description: Public key distribution (AUTH-06)
 
 paths:
   /config:
@@ -147,6 +151,141 @@ paths:
         "400":
           $ref: "#/components/responses/Validation"
 
+  /profile/avatar:
+    post:
+      tags: [profile]
+      operationId: uploadAvatar
+      summary: Upload encrypted avatar ciphertext (AUTH-04)
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary, maxLength: 400000 }
+      responses:
+        "201":
+          description: Avatar stored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blobId]
+                properties:
+                  blobId: { type: string, format: uuid }
+        "400":
+          $ref: "#/components/responses/Validation"
+
+  /profile/avatar/{blobId}:
+    get:
+      tags: [profile]
+      operationId: downloadAvatar
+      summary: Download avatar ciphertext (keys never touch the server)
+      security: []
+      parameters:
+        - name: blobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Avatar ciphertext
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "404":
+          description: Blob not found
+
+  /devices:
+    get:
+      tags: [devices]
+      operationId: listDevices
+      summary: List active devices on the account (AUTH-07)
+      responses:
+        "200":
+          description: Devices, newest first; `current` marks the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/Device" }
+
+  /devices/{deviceId}:
+    delete:
+      tags: [devices]
+      operationId: revokeDevice
+      summary: Revoke a linked device; its tokens die immediately (AUTH-07)
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "204": { description: Device revoked }
+        "404": { description: Device not found }
+
+  /account:
+    delete:
+      tags: [auth]
+      operationId: deleteAccount
+      summary: Soft-delete the account; purge within 30 days (AUTH-10)
+      responses:
+        "204": { description: Account scheduled for deletion }
+
+  /devices/keys:
+    put:
+      tags: [keys]
+      operationId: uploadKeys
+      summary: Upload this device's public key bundle (AUTH-06)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadKeys" }
+      responses:
+        "200":
+          description: Stored counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCount" }
+
+  /keys/count:
+    get:
+      tags: [keys]
+      operationId: getKeyCount
+      summary: Count remaining one-time/Kyber prekeys (AUTH-06)
+      responses:
+        "200":
+          description: Counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCount" }
+
+  /keys/{accountId}/{deviceId}:
+    get:
+      tags: [keys]
+      operationId: getKeyBundle
+      summary: Fetch a peer bundle; consumes one OTP/Kyber prekey (AUTH-06)
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Public bundle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyBundle" }
+        "404":
+          description: No bundle registered for that device
+
 components:
   securitySchemes:
     bearerAuth:
@@ -242,6 +381,61 @@ components:
           description: Optional unique @username
         about: { type: string, maxLength: 140 }
         avatarBlobId: { type: string, description: Blob id of the encrypted avatar }
+
+    Device:
+      type: object
+      required: [deviceId, name, createdAt, lastSeenAt, current]
+      properties:
+        deviceId: { type: integer, format: int64 }
+        name: { type: string, maxLength: 64 }
+        createdAt: { type: integer, format: int64 }
+        lastSeenAt: { type: integer, format: int64 }
+        current: { type: boolean }
+
+    UploadKeys:
+      type: object
+      required: [identityKey, signedPrekey]
+      properties:
+        identityKey: { type: string, description: Base64 public identity key }
+        signedPrekey: { $ref: "#/components/schemas/SignedPrekey" }
+        oneTimePrekeys:
+          type: array
+          items: { $ref: "#/components/schemas/Prekey" }
+        kyberPrekeys:
+          type: array
+          items: { $ref: "#/components/schemas/Prekey" }
+
+    SignedPrekey:
+      type: object
+      required: [prekeyId, record]
+      properties:
+        prekeyId: { type: integer }
+        record: { type: string, description: Opaque base64 record }
+
+    Prekey:
+      type: object
+      required: [prekeyId, record]
+      properties:
+        prekeyId: { type: integer }
+        record: { type: string, description: Opaque base64 record }
+
+    KeyCount:
+      type: object
+      required: [oneTimePrekeys, kyberPrekeys]
+      properties:
+        oneTimePrekeys: { type: integer }
+        kyberPrekeys: { type: integer }
+
+    KeyBundle:
+      type: object
+      required: [accountId, deviceId]
+      properties:
+        accountId: { type: string, format: uuid }
+        deviceId: { type: integer, format: int64 }
+        identityKey: { type: string }
+        signedPrekey: { $ref: "#/components/schemas/SignedPrekey" }
+        oneTimePrekey: { $ref: "#/components/schemas/Prekey" }
+        kyberPrekey: { $ref: "#/components/schemas/Prekey" }
 
     ServerConfig:
       type: object

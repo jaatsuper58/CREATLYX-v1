@@ -23,11 +23,16 @@ import androidx.compose.ui.unit.dp
 import com.chattlyx.core.designsystem.theme.ChattlyxTheme
 
 /**
- * Settings home (S35, Section 4.10). Rows navigate to their screens as they
- * land across Phases 1/6; the list and copy are final.
+ * Settings home (S35, Section 4.10). Rows navigate to their screens; Phase 1
+ * wires Account/Devices/Delete, later phases add the remaining rows.
  */
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsHomeScreen(
+    onOpenAccount: () -> Unit,
+    onOpenDevices: () -> Unit,
+    onOpenDeleteAccount: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -42,7 +47,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         SettingsRow(
             title = stringResource(R.string.settings_account),
             summary = stringResource(R.string.settings_account_summary),
-            onClick = {},
+            onClick = onOpenAccount,
+        )
+        SettingsRow(
+            title = stringResource(R.string.settings_devices_title),
+            summary = stringResource(R.string.settings_devices_current),
+            onClick = onOpenDevices,
         )
         SettingsRow(
             title = stringResource(R.string.settings_privacy),
@@ -73,6 +83,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             title = stringResource(R.string.settings_about),
             summary = stringResource(R.string.settings_about_summary),
             onClick = {},
+        )
+        SettingsRow(
+            title = stringResource(R.string.settings_delete_title),
+            summary = stringResource(R.string.settings_delete_body),
+            onClick = onOpenDeleteAccount,
         )
     }
 }
@@ -112,6 +127,6 @@ private fun SettingsRow(
 @Composable
 private fun SettingsScreenPreview() {
     ChattlyxTheme {
-        SettingsScreen()
+        SettingsHomeScreen(onOpenAccount = {}, onOpenDevices = {}, onOpenDeleteAccount = {})
     }
 }

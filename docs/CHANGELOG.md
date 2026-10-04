@@ -4,6 +4,55 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.2.0] — Phase 1: Auth, keys & profile (2026-10-04)
+
+### Added
+- Backend `modules:db`: forward-only schema migrator (tracked in
+  `schema_migrations`; no Flyway dependency), HikariCP pool, and repositories
+  for accounts, devices, identity/signed/one-time/Kyber prekeys, OTP sessions,
+  rotating refresh tokens, avatar blobs and a PII-light audit log. Migrations
+  V1–V3 implement the Phase 1 schema contract.
+- Backend `modules:auth`: peppered E.164 hashing + AES-GCM number vault,
+  OTP lifecycle (5 min TTL, 5 attempts, 15 min lockout, doubling resend
+  back-off), HS256 JWT access tokens (15 min), rotating refresh tokens with
+  reuse detection that revokes the device, sliding-window rate limiter.
+- REST endpoints (OpenAPI `0.1.0-phase1`): `POST /v1/auth/otp/request|verify`,
+  `POST /v1/auth/token/refresh`, `GET|PUT /v1/profile`, avatar upload/download,
+  `GET /v1/devices`, `DELETE /v1/devices/{id}`, `DELETE /v1/account`,
+  `PUT /v1/devices/keys`, `GET /v1/keys/count`, `GET /v1/keys/{account}/{device}`.
+  Key fetch atomically consumes one-time and Kyber prekeys.
+- Backend tests: JWT/rate-limiter/E164-vault unit tests plus a Testcontainers
+  integration suite covering registration, key upload/consumption, refresh
+  rotation + reuse, attempt lockout and account deletion.
+- Android `core:network` REST layer: Retrofit + kotlinx.serialization converter,
+  bearer interceptor, 401 refresh authenticator (single-flight, bare-HTTP
+  refresh to avoid client cycles), RFC 9457 -> `ChattlyError` mapping.
+- Android `domain`: auth models, repository ports and use cases
+  (request/verify OTP, profile CRUD, devices, deletion, key bundles).
+- Android `data`: Keystore-wrapped credential DataStore, placeholder X25519
+  key generation with documented libsignal swap point (ADR-0002), avatar
+  AES-256-GCM encryption with on-device key storage, REST repository
+  implementations.
+- `feature:onboarding`: Welcome, phone entry (20 launch markets, SIM region
+  hint, no permissions), OTP screen with SMS Retriever auto-read (GMS-guarded),
+  profile setup with Photo Picker avatar. App gates on registration state.
+- `feature:settings`: Account (S36), Linked devices (S47) and Delete
+  account (S50) screens wired to the backend; session end returns to onboarding.
+- Unit tests for all new ViewModels, use cases and network components.
+
+### Fixed
+- Restored the `build-logic` convention plugin sources (registered in Phase 0
+  but the implementation classes were missing from the tree).
+
+### Known limitations (tracked)
+- Key material uses JCA placeholder records until the libsignal licence
+  decision (ADR-0002); Kyber prekey sets are empty until then.
+- OTP sender is the dev fake gateway; Twilio Verify wiring point is documented
+  in `AuthServices`.
+- Rate limiter is in-memory (single node); Redis-backed variant planned for
+  Phase 2 scale-out.
+- Avatars live in Postgres `bytea` until the S3 blob service lands (Phase 3).
+
 ## [0.1.0] — Phase 0: Foundations (2026-10-04)
 
 ### Added

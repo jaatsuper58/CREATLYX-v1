@@ -1,29 +1,115 @@
-package com.chattlyx.app.ui
+package com.chattlyx.app.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.chattlyx.app.navigation.ChattlyxShell
-import com.chattlyx.core.datastore.AppearanceSettings
-import com.chattlyx.core.designsystem.theme.ChattlyxTheme
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import com.chattlyx.core.designsystem.icon.ChattlyxIcons
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 /**
- * Composition root: applies the user's appearance settings (theme mode, AMOLED,
- * dynamic colour, reduce motion) around the navigation shell.
+ * App shell: bottom navigation on compact widths, navigation rail on wide
+ * screens (WindowSizeClass medium/expanded, tablets and foldables per
+ * Section 5.1). Phase 0 threshold: 840 dp.
  */
 @Composable
-fun ChattlyxAppRoot(
-    viewModel: AppViewModel = hiltViewModel(),
-) {
-    val appearance by viewModel.appearance
-        .collectAsStateWithLifecycle(initialValue = AppearanceSettings())
+fun ChattlyxShell(onSessionEnded: () -> Unit = {}) {
+    val navController = rememberNavController()
+    val useRail = LocalConfiguration.current.screenWidthDp >= WIDE_SCREEN_WIDTH_DP
 
-    ChattlyxTheme(
-        themeMode = appearance.themeMode,
-        dynamicColor = appearance.dynamicColor,
-        reduceMotion = appearance.reduceMotion,
-    ) {
-        ChattlyxShell()
+    if (useRail) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            ShellNavigationRail(navController)
+            Scaffold { innerPadding ->
+                ChattlyxNavHost(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding),
+                    onSessionEnded = onSessionEnded,
+                )
+            }
+        }
+    } else {
+        Scaffold(
+            bottomBar = { ShellNavigationBar(navController) },
+        ) { innerPadding ->
+            Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                ChattlyxNavHost(
+                    navController = navController,
+                    onSessionEnded = onSessionEnded,
+                )
+            }
+        }
     }
 }
+
+@Composable
+private fun ShellNavigationBar(navController: androidx.navigation.NavHostController) {
+    NavigationBar {
+        val backStackEntry by navController.currentBackStackEntryAsState()
+        TopLevelDestination.entries.forEach { destination ->
+            val selected = backStackEntry?.destination?.hasRoute(routeClass(destination)) == true
+            NavigationBarItem(
+                selected = selected,
+                onClick = { navController.navigateToTopLevel(destination) },
+                icon = { Icon(destination.icon.imageVector(), contentDescription = null) },
+                label = { Text(stringResource(destination.labelRes)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShellNavigationRail(navController: androidx.navigation.NavHostController) {
+    NavigationRail(modifier = Modifier.fillMaxHeight()) {
+        val backStackEntry by navController.currentBackStackEntryAsState()
+        TopLevelDestination.entries.forEach { destination ->
+            val selected = backStackEntry?.destination?.hasRoute(routeClass(destination)) == true
+            NavigationRailItem(
+                selected = selected,
+                onClick = { navController.navigateToTopLevel(destination) },
+                icon = { Icon(destination.icon.imageVector(), contentDescription = null) },
+                label = { Text(stringResource(destination.labelRes)) },
+            )
+        }
+    }
+}
+
+private fun androidx.navigation.NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
+    navigate(destination.route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/** Maps a destination to its route KClass for hasRoute checks. */
+private fun routeClass(destination: TopLevelDestination): kotlin.reflect.KClass<*> =
+    destination.route::class
+
+private fun ChattlyxShellIcon.imageVector(): ImageVector = when (this) {
+    ChattlyxShellIcon.CHAT -> ChattlyxIcons.Chat
+    ChattlyxShellIcon.CALL -> ChattlyxIcons.Call
+    ChattlyxShellIcon.CONTACTS -> ChattlyxIcons.Contacts
+    ChattlyxShellIcon.SETTINGS -> ChattlyxIcons.Settings
+}
+
+private const val WIDE_SCREEN_WIDTH_DP = 840

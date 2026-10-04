@@ -2,6 +2,7 @@ plugins {
     id("chattlyx.android.library")
     id("chattlyx.android.hilt")
     id("chattlyx.android.test")
+    id("chattlyx.kotlin.serialization")
 }
 
 android {
@@ -14,5 +15,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
     implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.timber)
+
+    testImplementation(libs.okhttp)
 }
