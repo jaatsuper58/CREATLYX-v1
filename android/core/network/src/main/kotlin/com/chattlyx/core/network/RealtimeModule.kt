@@ -11,4 +11,7 @@ interface RealtimeBindings {
 
     @Binds
     fun bindRealtimeClient(impl: OkHttpRealtimeClient): RealtimeClient
+
+    @Binds
+    fun bindConnectivityMonitor(impl: ConnectivityMonitorImpl): ConnectivityMonitor
 }

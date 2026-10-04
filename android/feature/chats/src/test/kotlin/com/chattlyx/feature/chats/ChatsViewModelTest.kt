@@ -52,9 +52,13 @@ class ChatsViewModelTest {
                 runCurrent()
                 assertEquals(mapOf("dm:a:b" to false), awaitItem())
 
+                // Tear the sharing scope down while the turbine collector is
+                // still attached so WhileSubscribed's delayed stop never runs
+                // against a reset Main dispatcher.
+                viewModel.viewModelScope.cancel()
+                runCurrent()
                 cancelAndIgnoreRemainingEvents()
             }
-            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }

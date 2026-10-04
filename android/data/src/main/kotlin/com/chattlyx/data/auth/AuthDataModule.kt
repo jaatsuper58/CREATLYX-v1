@@ -5,8 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import com.chattlyx.core.crypto.KeystoreKeyWrapper
-import com.chattlyx.core.crypto.KeystoreKeyWrapperImpl
 import com.chattlyx.core.network.rest.AuthTokenProvider
 import com.chattlyx.domain.auth.AuthRepository
 import com.chattlyx.domain.auth.AvatarImageSource
@@ -53,11 +51,6 @@ interface AuthBindings {
 @Module
 @InstallIn(SingletonComponent::class)
 object AuthDataModule {
-
-    @Provides
-    @Singleton
-    fun provideKeystoreKeyWrapper(@ApplicationContext context: Context): KeystoreKeyWrapper =
-        KeystoreKeyWrapperImpl(context)
 
     /** Separate DataStore for credentials so settings wipes never touch tokens. */
     @Provides
