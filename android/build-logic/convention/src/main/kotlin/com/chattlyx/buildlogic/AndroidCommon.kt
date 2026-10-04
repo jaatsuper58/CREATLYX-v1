@@ -1,6 +1,7 @@
 package com.chattlyx.buildlogic
 
-import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
@@ -12,11 +13,12 @@ internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 /**
- * AGP 9 DSL: [CommonExtension] is no longer generic and the legacy
- * `kotlinOptions` bridge is gone — Kotlin settings go through
- * [KotlinAndroidProjectExtension.compilerOptions] (KGP 2.x).
+ * AGP 9 DSL: block methods (defaultConfig, compileOptions, testOptions,
+ * packaging) moved from CommonExtension onto the concrete extension types,
+ * and the legacy `kotlinOptions` bridge is gone — Kotlin settings go through
+ * [KotlinAndroidProjectExtension.compilerOptions].
  */
-internal fun CommonExtension.configureDefaults(project: Project) {
+internal fun LibraryExtension.configureDefaults(project: Project) {
     compileSdk = ChattlyxBuild.COMPILE_SDK
     defaultConfig {
         minSdk = ChattlyxBuild.MIN_SDK
@@ -25,9 +27,6 @@ internal fun CommonExtension.configureDefaults(project: Project) {
     compileOptions {
         sourceCompatibility = ChattlyxBuild.JAVA_VERSION
         targetCompatibility = ChattlyxBuild.JAVA_VERSION
-    }
-    project.extensions.getByType<KotlinAndroidProjectExtension>().compilerOptions {
-        jvmTarget.set(JvmTarget.fromTarget(ChattlyxBuild.JVM_TARGET))
     }
     testOptions {
         unitTests {
@@ -41,6 +40,39 @@ internal fun CommonExtension.configureDefaults(project: Project) {
             "META-INF/LICENSE.md",
             "META-INF/LICENSE-notice.md",
         )
+    }
+    project.configureKotlinJvmTarget()
+}
+
+internal fun ApplicationExtension.configureDefaults(project: Project) {
+    compileSdk = ChattlyxBuild.COMPILE_SDK
+    defaultConfig {
+        minSdk = ChattlyxBuild.MIN_SDK
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility = ChattlyxBuild.JAVA_VERSION
+        targetCompatibility = ChattlyxBuild.JAVA_VERSION
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+    packaging {
+        resources.excludes += setOf(
+            "META-INF/AL2.0",
+            "META-INF/LGPL2.1",
+            "META-INF/LICENSE.md",
+            "META-INF/LICENSE-notice.md",
+        )
+    }
+    project.configureKotlinJvmTarget()
+}
+
+private fun Project.configureKotlinJvmTarget() {
+    extensions.getByType<KotlinAndroidProjectExtension>().compilerOptions {
+        jvmTarget.set(JvmTarget.fromTarget(ChattlyxBuild.JVM_TARGET))
     }
 }
 

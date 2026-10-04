@@ -10,53 +10,63 @@ import redis.clients.jedis.JedisPool
  */
 class DeliveryQueues(private val pool: JedisPool) {
 
+    /** Borrows a connection; always returned to the pool. */
+    private inline fun <T> withJedis(block: (Jedis) -> T): T {
+        val jedis = pool.resource
+        try {
+            return block(jedis)
+        } finally {
+            jedis.close()
+        }
+    }
+
     /** Next monotonic seq for a conversation (INCR is atomic). */
-    fun nextSeq(conversationId: String): Long = pool.resource.use { jedis: Jedis ->
+    fun nextSeq(conversationId: String): Long = withJedis { jedis ->
         jedis.incr(seqKey(conversationId))
     }
 
     /** Enqueue an envelope id for an account's devices. */
     fun enqueue(accountId: String, envelopeId: String) {
-        pool.resource.use { jedis: Jedis ->
+        withJedis { jedis ->
             jedis.lpush(queueKey(accountId), envelopeId)
-            jedis.ltrim(queueKey(accountId), 0, MAX_QUEUE_DEPTH - 1)
+            jedis.ltrim(queueKey(accountId), 0L, MAX_QUEUE_DEPTH - 1L)
         }
     }
 
     /** Drains up to [limit] envelope ids (oldest first). */
     fun drain(accountId: String, limit: Int): List<String> {
         val out = mutableListOf<String>()
-        pool.resource.use { jedis: Jedis ->
+        withJedis { jedis ->
             repeat(limit) {
-                val next = jedis.rpop(queueKey(accountId)) ?: return@use
+                val next = jedis.rpop(queueKey(accountId)) ?: return out
                 out += next
             }
         }
         return out
     }
 
-    fun pendingCount(accountId: String): Long = pool.resource.use { jedis: Jedis ->
+    fun pendingCount(accountId: String): Long = withJedis { jedis ->
         jedis.llen(queueKey(accountId))
     }
 
     // --- Presence (MSG-05): online flag with auto-expiry. ---
 
     fun setOnline(accountId: String, ttlSeconds: Long) {
-        pool.resource.use { jedis: Jedis ->
+        withJedis { jedis ->
             jedis.setex(presenceKey(accountId), ttlSeconds, "1")
         }
     }
 
-    fun isOnline(accountId: String): Boolean = pool.resource.use { jedis: Jedis ->
+    fun isOnline(accountId: String): Boolean = withJedis { jedis ->
         jedis.exists(presenceKey(accountId))
     }
 
-    fun lastSeenMillis(accountId: String): Long? = pool.resource.use { jedis: Jedis ->
+    fun lastSeenMillis(accountId: String): Long? = withJedis { jedis ->
         jedis.get(lastSeenKey(accountId))?.toLongOrNull()
     }
 
     fun recordOffline(accountId: String, now: Long) {
-        pool.resource.use { jedis: Jedis ->
+        withJedis { jedis ->
             jedis.del(presenceKey(accountId))
             jedis.set(lastSeenKey(accountId), now.toString())
         }
@@ -69,6 +79,6 @@ class DeliveryQueues(private val pool: JedisPool) {
 
     companion object {
         /** Bounded queue protects against offline backlog explosion. */
-        const val MAX_QUEUE_DEPTH = 5_000
+        const val MAX_QUEUE_DEPTH = 5_000L
     }
 }

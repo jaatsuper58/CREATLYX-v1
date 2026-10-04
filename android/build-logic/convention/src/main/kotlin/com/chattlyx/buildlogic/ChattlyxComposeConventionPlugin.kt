@@ -1,9 +1,9 @@
 package com.chattlyx.buildlogic
 
-import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
 /**
@@ -16,10 +16,15 @@ class ChattlyxComposeConventionPlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
-            extensions.configure<CommonExtension> {
-                buildFeatures {
-                    compose = true
-                }
+            // AGP 9: buildFeatures moved onto the concrete extension types.
+            val appExtension = extensions.findByType(ApplicationExtension::class.java)
+            val libraryExtension = extensions.findByType(LibraryExtension::class.java)
+            when {
+                appExtension != null -> appExtension.buildFeatures { compose = true }
+                libraryExtension != null -> libraryExtension.buildFeatures { compose = true }
+                else -> throw IllegalStateException(
+                    "chattlyx.android.compose requires an Android application or library plugin",
+                )
             }
 
             dependencies {
