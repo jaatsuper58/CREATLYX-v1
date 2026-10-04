@@ -46,4 +46,9 @@ include(":feature:search")
 include(":feature:settings")
 include(":feature:backup")
 include(":feature:status")
-include(":benchmark")
+// Macrobenchmark needs a physical device/emulator to be meaningful, so CI
+// skips it (it runs in the Phase 7 device lab). Build it locally with
+// -PchattlyxBenchmark=true.
+if (providers.gradleProperty("chattlyxBenchmark").getOrElse("false") == "true") {
+    include(":benchmark")
+}
