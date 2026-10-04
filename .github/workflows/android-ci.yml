@@ -61,6 +61,9 @@ jobs:
             grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -40 || true
             echo "~~~ test failure details ~~~"
             grep -A 14 "FAILED$" build-output.log | head -300 || true
+            echo "~~~ r8 errors ~~~"
+            grep -iE "^ERROR|Missing class|R8 failed|Compilation failed|cannot|Invalid" build-output.log | head -40 || true
+            grep -B 2 -A 12 "R8Task" build-output.log | head -50 || true
             echo "~~~ javac/hilt errors ~~~"
             grep -E "error: |\[Hilt\]|cannot find symbol" build-output.log | head -40 || true
             echo "~~~ ksp messages ~~~"
