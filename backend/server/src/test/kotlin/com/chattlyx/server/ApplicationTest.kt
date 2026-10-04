@@ -17,6 +17,7 @@ class ApplicationTest {
 
     @Test
     fun `liveness probe returns ok`() = testApplication {
+        application { testModule() }
         val response = client.get("/health/live")
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals("OK", response.bodyAsText())
@@ -24,12 +25,14 @@ class ApplicationTest {
 
     @Test
     fun `readiness probe returns ok`() = testApplication {
+        application { testModule() }
         val response = client.get("/health/ready")
         assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
     fun `config exposes limits and minimum version`() = testApplication {
+        application { testModule() }
         val response = client.get("/v1/config")
         assertEquals(HttpStatusCode.OK, response.status)
 
@@ -42,6 +45,7 @@ class ApplicationTest {
 
     @Test
     fun `unknown routes render rfc9457 problem json`() = testApplication {
+        application { testModule() }
         val response = client.get("/v1/does-not-exist")
         assertEquals(HttpStatusCode.NotFound, response.status)
         assertTrue(response.bodyAsText().contains("\"code\":\"resource/not-found\""))
@@ -49,6 +53,7 @@ class ApplicationTest {
 
     @Test
     fun `validation errors render 400 problem json`() = testApplication {
+        application { testModule() }
         val response = client.get("/v1/_internal/validate-sample")
         assertEquals(HttpStatusCode.BadRequest, response.status)
         assertTrue(response.bodyAsText().contains("validation/failed"))
