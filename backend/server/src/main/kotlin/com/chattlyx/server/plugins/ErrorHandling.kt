@@ -20,8 +20,9 @@ fun Application.configureErrorHandling() {
     install(StatusPages) {
         exception<ChattlyxServerException> { call, cause ->
             val problem = cause.toProblemDetails(instance = call.request.path())
-            if (problem.retryAfterMs != null) {
-                call.response.header("Retry-After", (problem.retryAfterMs / 1000).toString())
+            val retryAfterMs = problem.retryAfterMs
+            if (retryAfterMs != null) {
+                call.response.header("Retry-After", (retryAfterMs / 1000).toString())
             }
             call.response.header("Content-Type", PROBLEM_CONTENT_TYPE)
             call.respond(HttpStatusCode.fromValue(problem.status), problem)

@@ -11,11 +11,13 @@ android {
 }
 
 // protobuf 0.10 adds the "proto" SourceDirectorySet to each Android source
-// set dynamically, so Kotlin DSL has no static accessor — look it up.
-val protoSources = android.sourceSets.getByName("main")
-    .let { it as ExtensionAware }
-    .extensions
-    .getByName("proto") as SourceDirectorySet
+// set dynamically. AGP 9 decorated source sets break the legacy static
+// interfaces, so reach it purely through the extensions container.
+val androidExtension = project.extensions.getByName("android") as ExtensionAware
+val androidSourceSets = androidExtension.extensions.getByName("sourceSets")
+    as org.gradle.api.NamedDomainObjectContainer<*>
+val mainSourceSet = androidSourceSets.getByName("main") as ExtensionAware
+val protoSources = mainSourceSet.extensions.getByName("proto") as SourceDirectorySet
 // Wire contract sources live in the shared /proto tree (single copy, both sides).
 protoSources.srcDir("../../../proto")
 
