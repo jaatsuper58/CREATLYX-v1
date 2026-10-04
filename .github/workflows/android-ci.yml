@@ -55,8 +55,8 @@ jobs:
             echo "### Android CI failure @ $(git rev-parse --short HEAD)"
             echo '```'
             grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]|Kotlin compiler:|Location:" build-output.log | head -160 || true
-            echo "~~~ what went wrong ~~~"
-            sed -n '/What went wrong:/,/^$/p' build-output.log | head -15 || true
+            echo "~~~ what went wrong (all) ~~~"
+            grep -A 6 "What went wrong:" build-output.log | head -150 || true
             echo "~~~ failures ~~~"
             grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -20 || true
             echo "~~~ exception context ~~~"
