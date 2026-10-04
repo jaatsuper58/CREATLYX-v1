@@ -29,7 +29,7 @@ interface ConversationDao {
     @Query("SELECT * FROM conversations WHERE id = :id")
     suspend fun byIdOnce(id: String): ConversationEntity?
 
-    @Query("SELECT id, last_seq AS lastSeq FROM conversations")
+    @Query("SELECT id, last_seq FROM conversations")
     suspend fun allCursors(): List<ConversationCursor>
 
     @Query("SELECT * FROM conversations WHERE peer_account_id = :peerAccountId LIMIT 1")

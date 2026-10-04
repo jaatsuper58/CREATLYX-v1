@@ -60,7 +60,7 @@ jobs:
             echo "~~~ failures ~~~"
             grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -40 || true
             echo "~~~ test failure details ~~~"
-            grep -A 14 "FAILED$" build-output.log | head -140 || true
+            grep -A 14 "FAILED$" build-output.log | head -300 || true
             echo "~~~ ksp messages ~~~"
             grep -iE "\[ksp\]|ksp: " build-output.log | head -30 || true
             echo "~~~ exception context ~~~"

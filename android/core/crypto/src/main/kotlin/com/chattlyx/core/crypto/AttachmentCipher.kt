@@ -148,14 +148,18 @@ object AttachmentCipher {
 
             digest?.update(buffer, 0, filled)
 
-            val plaintext = processChunk(
-                mode = Cipher.DECRYPT_MODE,
-                keySpec = keySpec,
-                nonce = nonce,
-                chunkIndex = chunkIndex,
-                data = buffer,
-                length = filled,
-            )
+            val plaintext = try {
+                processChunk(
+                    mode = Cipher.DECRYPT_MODE,
+                    keySpec = keySpec,
+                    nonce = nonce,
+                    chunkIndex = chunkIndex,
+                    data = buffer,
+                    length = filled,
+                )
+            } catch (e: javax.crypto.AEADBadTagException) {
+                throw SecurityException("attachment chunk failed authentication", e)
+            }
             output.write(plaintext)
             chunkIndex++
 
