@@ -162,7 +162,7 @@ object AttachmentCipher {
             if (filled < encryptedChunkSize) break // final partial chunk
         }
 
-        if (verifyDigest && expectedDigest != null) {
+        if (digest != null && expectedDigest != null) {
             val actual = digest.digest()
             if (!MessageDigest.isEqual(actual, expectedDigest)) {
                 throw SecurityException("attachment digest mismatch")

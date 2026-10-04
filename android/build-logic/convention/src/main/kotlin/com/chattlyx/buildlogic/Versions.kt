@@ -2,7 +2,7 @@ package com.chattlyx.buildlogic
 
 /** Single source for Android SDK levels across every module. */
 internal object ChattlyxBuild {
-    const val COMPILE_SDK = 36
+    const val COMPILE_SDK = 37
     const val TARGET_SDK = 36
     const val MIN_SDK = 24
     const val VERSION_CODE = 1

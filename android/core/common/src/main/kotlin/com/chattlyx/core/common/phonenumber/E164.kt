@@ -10,6 +10,9 @@ object E164 {
     const val MIN_LENGTH = 5
     const val MAX_LENGTH = 15
 
+    /** Shortest plausible subscriber number once the dial code is prepended. */
+    const val MIN_NATIONAL_DIGITS = 4
+
     private val SEPARATORS = Regex("""[\s\-()./]""")
 
     /**
@@ -26,6 +29,13 @@ object E164 {
             cleaned.startsWith("00") -> "+" + cleaned.removePrefix("00")
             cleaned.startsWith("0") -> regionDialCode + cleaned.removePrefix("0")
             else -> regionDialCode + cleaned
+        }
+
+        // Numbers assembled from a dial code need a plausible subscriber part;
+        // anything shorter is almost certainly a typo (e.g. "123").
+        if (!cleaned.startsWith("+") && !cleaned.startsWith("00")) {
+            val national = cleaned.removePrefix("0")
+            if (national.length < MIN_NATIONAL_DIGITS) return null
         }
 
         return if (isValid(candidate)) candidate else null

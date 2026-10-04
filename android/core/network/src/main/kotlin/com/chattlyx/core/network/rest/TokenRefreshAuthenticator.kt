@@ -73,5 +73,5 @@ class TokenRefreshAuthenticator(
 
 /** Minimal refresh-only surface used by the authenticator (breaks the cycle). */
 interface TokenRefreshEndpoint {
-    suspend fun refresh(body: RefreshTokenDto): Response<TokenPairDto>
+    suspend fun refresh(body: RefreshTokenDto): retrofit2.Response<TokenPairDto>
 }

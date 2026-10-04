@@ -28,6 +28,12 @@ class ChattlyxAndroidTestConventionPlugin : Plugin<Project> {
                 listOf("mockk", "turbine", "kotlinx-coroutines-test").forEach { name ->
                     libs.findLibrary(name).ifPresent { "testImplementation"(it) }
                 }
+                // Robolectric screenshot tests are JUnit 4 style; run them on the
+                // JUnit 5 platform via the vintage engine.
+                listOf("junit4", "robolectric").forEach { name ->
+                    libs.findLibrary(name).ifPresent { "testImplementation"(it) }
+                }
+                libs.findLibrary("junit-vintage-engine").ifPresent { "testRuntimeOnly"(it) }
                 libs.findLibrary("kotlin-test").ifPresent { "testImplementation"(it) }
             }
         }

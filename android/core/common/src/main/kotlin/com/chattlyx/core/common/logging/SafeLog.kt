@@ -8,7 +8,7 @@ package com.chattlyx.core.common.logging
 object SafeLog {
 
     private val PHONE_PATTERN = Regex("""\+?\d[\d\s\-()]{6,}\d""")
-    private val BEARER_PATTERN = Regex("""(?i)bearer\s+[A-Za-z0-9\-._~+/]+=*""")
+    private val BEARER_PATTERN = Regex("""(?i)(authorization\s*[:=]\s*)?bearer\s+[A-Za-z0-9\-._~+/]+=*""")
     private val TOKEN_PATTERN = Regex("""(?i)(token|authorization|apikey|otp)[=:]\s*\S+""")
     private val DIGIT_RUN_PATTERN = Regex("""\d{7,}""")
 
