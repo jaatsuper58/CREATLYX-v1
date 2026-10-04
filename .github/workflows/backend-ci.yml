@@ -5,6 +5,9 @@ on:
     branches: [main, "arena/**"]
   pull_request:
 
+permissions:
+  contents: write   # needed to post the build log excerpt as a commit comment
+
 concurrency:
   group: backend-${{ github.ref }}
   cancel-in-progress: true

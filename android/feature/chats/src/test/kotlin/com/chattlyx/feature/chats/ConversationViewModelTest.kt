@@ -63,7 +63,7 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `opening a conversation marks it read`() = runTest {
+    fun `opening a conversation marks it read`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             buildViewModel(conversationValue = null)
@@ -75,7 +75,7 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `typing is announced on input and stopped after the pause`() = runTest {
+    fun `typing is announced on input and stopped after the pause`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val viewModel = buildViewModel(conversationValue = null)
@@ -94,7 +94,7 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `send clears composer and invokes the use case`() = runTest {
+    fun `send clears composer and invokes the use case`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val conversation = Conversation(
