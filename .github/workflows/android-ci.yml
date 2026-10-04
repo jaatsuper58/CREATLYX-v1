@@ -38,7 +38,20 @@ jobs:
 
       - name: Build, unit & screenshot tests
         # Roborazzi records goldens until the first set is committed (see CONTRIBUTING.md).
-        run: gradle build -x ktlintCheck -x detekt -Proborazzi.test.record=true --stacktrace
+        run: gradle build -x ktlintCheck -x detekt -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
+
+      - name: Publish failure log excerpt
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Android CI failure @ $(git rev-parse --short HEAD)"
+            echo '```'
+            tail -c 6000 build-output.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } > failure-comment.md
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" -F body=@failure-comment.md || true
 
       - name: Upload screenshot goldens (commit these under core/designsystem/src/test/screenshots)
         if: always()

@@ -21,7 +21,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: "9.7.0" }
       - name: Build & test
-        run: gradle build --stacktrace
+        run: gradle build --stacktrace 2>&1 | tee build-output.log
+
+      - name: Publish failure log excerpt
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Backend CI failure @ $(git rev-parse --short HEAD)"
+            echo '```'
+            tail -c 6000 build-output.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } > failure-comment.md
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" -F body=@failure-comment.md || true
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
