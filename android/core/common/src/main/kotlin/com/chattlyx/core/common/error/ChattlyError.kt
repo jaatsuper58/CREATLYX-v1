@@ -30,7 +30,7 @@ sealed class ChattlyError(open val cause: Throwable? = null) {
         data object DecryptFailed : Crypto()
     }
 
-    sealed class Storage : ChattlyError() {
+    sealed class Storage(cause: Throwable? = null) : ChattlyError(cause) {
         /** Device storage full: pause transfers and prompt the user. */
         data object Full : Storage()
 

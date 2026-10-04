@@ -32,9 +32,7 @@ fun ChattlyxSheet(
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(bottom = 16.dp)) {
-            this@Column.content()
-        }
+        content()
     }
 }
 
