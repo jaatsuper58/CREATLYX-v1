@@ -102,8 +102,11 @@ fun Application.installAttachmentRoutes(attachments: AttachmentContext) {
                 val principal = call.requireAccount()
                 val id = attachmentIdParam(call.parameters["id"])
                 val (row, bytes) = attachments.service.download(principal.accountId, id)
-                val contentType = ContentType.parse(row.mimeType)
-                    .getOrDefault(ContentType.Application.OctetStream)
+                val contentType = try {
+                    ContentType.parse(row.mimeType)
+                } catch (e: IllegalArgumentException) {
+                    ContentType.Application.OctetStream
+                }
                 call.respondBytes(bytes, contentType)
             }
         }
