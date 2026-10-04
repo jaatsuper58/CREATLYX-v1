@@ -14,7 +14,7 @@ object SafeLog {
 
     fun scrub(message: String): String = message
         .let { BEARER_PATTERN.replace(it, "bearer=<redacted>") }
-        .let { TOKEN_PATTERN.replace(it) { match -> match.value.substringBefore(Regex("[=:]")) + "=<redacted>" } }
+        .let { TOKEN_PATTERN.replace(it) { match -> match.value.takeWhile { c -> c != '=' && c != ':' } + "=<redacted>" } }
         .let { PHONE_PATTERN.replace(it, "<phone-redacted>") }
         .let { DIGIT_RUN_PATTERN.replace(it, "<digits-redacted>") }
 }

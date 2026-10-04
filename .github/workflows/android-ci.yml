@@ -44,7 +44,7 @@ jobs:
         # Roborazzi records goldens until the first set is committed (see CONTRIBUTING.md).
         run: |
           set -o pipefail
-          gradle build -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
+          gradle build --continue -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
 
       - name: Publish build log excerpt
         if: always()
@@ -54,7 +54,7 @@ jobs:
           {
             echo "### Android CI failure @ $(git rev-parse --short HEAD)"
             echo '```'
-            grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]" build-output.log | head -80 || true
+            grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]|Kotlin compiler:|Location:" build-output.log | head -160 || true
             echo "~~~ what went wrong ~~~"
             sed -n '/What went wrong:/,/^$/p' build-output.log | head -15 || true
             echo "~~~ failures ~~~"
