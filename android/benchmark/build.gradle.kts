@@ -24,6 +24,10 @@ android {
             isDebuggable = true
             signingConfig = getByName("debug").signingConfig
             matchingFallbacks += listOf("release")
+            // The tested app is minified in release; the benchmark test module
+            // must shrink too or AGP's obfuscation consistency check fails.
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 
