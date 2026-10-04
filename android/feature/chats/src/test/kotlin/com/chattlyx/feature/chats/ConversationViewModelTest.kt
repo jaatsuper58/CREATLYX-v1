@@ -1,6 +1,7 @@
 package com.chattlyx.feature.chats
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import com.chattlyx.core.common.result.Result
 import com.chattlyx.domain.messaging.Conversation
@@ -67,9 +68,10 @@ class ConversationViewModelTest {
     fun `opening a conversation marks it read`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
-            buildViewModel(conversationValue = null)
+            val viewModel = buildViewModel(conversationValue = null)
             runCurrent()
             coVerify { markReadUseCase("dm:a:b") }
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -89,6 +91,7 @@ class ConversationViewModelTest {
             advanceTimeBy(3_001)
             runCurrent()
             coVerify { messageRepository.sendTyping("dm:a:b", false) }
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -121,6 +124,7 @@ class ConversationViewModelTest {
             assertEquals("", viewModel.composerText.value)
             coVerify { sendMessageUseCase("peer-b", "hello bob") }
             subscriber.cancel()
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }

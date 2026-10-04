@@ -1,5 +1,6 @@
 package com.chattlyx.feature.chats
 
+import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import app.cash.turbine.test
 import com.chattlyx.domain.messaging.RealtimeEvents
@@ -52,6 +53,7 @@ class ChatsViewModelTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }

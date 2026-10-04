@@ -16,6 +16,16 @@ class ChattlyxHiltConventionPlugin : Plugin<Project> {
                 "implementation"(libs.findLibrary("hilt-android").orElseThrow())
                 "ksp"(libs.findLibrary("hilt-compiler").orElseThrow())
             }
+
+            // Dagger 2.60 still bundles kotlin-metadata-jvm 2.3.x, which rejects
+            // Kotlin 2.4 class metadata (google/dagger#5177). Force the reader
+            // that matches our compiler until Dagger catches up.
+            val kotlinVersion = libs.findVersion("kotlin").orElseThrow().requiredVersion
+            configurations.configureEach {
+                resolutionStrategy {
+                    force("org.jetbrains.kotlin:kotlin-metadata-jvm:$kotlinVersion")
+                }
+            }
         }
     }
 }

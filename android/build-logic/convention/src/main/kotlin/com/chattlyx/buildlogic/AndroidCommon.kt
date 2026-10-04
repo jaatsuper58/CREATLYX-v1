@@ -31,6 +31,11 @@ internal fun LibraryExtension.configureDefaults(project: Project) {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all { test ->
+                // Hilt generates test-side sources for every module, so AGP
+                // believes "test sources present" even where no tests exist yet.
+                test.failOnNoDiscoveredTests.set(false)
+            }
         }
     }
     // Phase 7 hardening turns this back on; lint currently flags legacy
@@ -62,6 +67,11 @@ internal fun ApplicationExtension.configureDefaults(project: Project) {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            all { test ->
+                // Hilt generates test-side sources for every module, so AGP
+                // believes "test sources present" even where no tests exist yet.
+                test.failOnNoDiscoveredTests.set(false)
+            }
         }
     }
     // Phase 7 hardening turns this back on; lint currently flags legacy
