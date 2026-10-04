@@ -1,6 +1,10 @@
 plugins {
-    id("chattlyx.jvm.library")
+    id("chattlyx.android.library")
     id("chattlyx.android.test")
+}
+
+android {
+    namespace = "com.chattlyx.domain"
 }
 
 dependencies {
