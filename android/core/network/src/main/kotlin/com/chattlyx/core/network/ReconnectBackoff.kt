@@ -55,7 +55,7 @@ class AdaptiveHeartbeat {
 
     companion object {
         const val BASE_FOREGROUND_MS = 30_000L
-        const val CELLULAR_PENALTY_MS = 30_000L
+        const val CELLULAR_PENALTY_MS = 60_000L
         const val MIN_INTERVAL_MS = 30_000L
         const val MAX_INTERVAL_MS = 240_000L
     }

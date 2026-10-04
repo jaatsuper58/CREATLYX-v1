@@ -18,6 +18,9 @@ class ChattlyxAndroidTestConventionPlugin : Plugin<Project> {
                 failOnNoDiscoveredTests.set(false)
                 testLogging {
                     events("passed", "failed", "skipped")
+                    setExceptionFormat(org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL)
+                    showCauses = true
+                    showStackTraces = true
                 }
             }
 

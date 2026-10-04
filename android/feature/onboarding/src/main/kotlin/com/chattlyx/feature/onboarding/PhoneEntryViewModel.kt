@@ -45,7 +45,7 @@ class PhoneEntryViewModel @Inject constructor(
     }
 
     fun onNumberChange(number: String) {
-        val filtered = number.filter { it.isDigit() || it == ' ' || it == '-' }
+        val filtered = number.filter { it.isDigit() || it == ' ' || it == '-' || it == '+' }
         _state.update { it.copy(numberInput = filtered, validationErrorRes = null) }
     }
 

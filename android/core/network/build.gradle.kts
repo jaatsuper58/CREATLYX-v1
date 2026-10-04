@@ -14,8 +14,10 @@ dependencies {
     implementation(projects.core.protocol)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.okhttp)
-    implementation(libs.retrofit)
+    // Retrofit types (Response<T>) and okhttp appear in this module's public
+    // API surface, so consumers need them on their compile classpath.
+    api(libs.okhttp)
+    api(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.timber)
 

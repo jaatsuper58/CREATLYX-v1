@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
@@ -39,9 +40,11 @@ class ChatsViewModelTest {
                 assertEquals(emptyMap(), awaitItem())
 
                 typing.emit(TypingEvent("dm:a:b", "peer-b", started = true))
+                runCurrent()
                 assertEquals(mapOf("dm:a:b" to true), awaitItem())
 
                 typing.emit(TypingEvent("dm:a:b", "peer-b", started = false))
+                runCurrent()
                 assertEquals(mapOf("dm:a:b" to false), awaitItem())
 
                 cancelAndIgnoreRemainingEvents()
