@@ -53,7 +53,7 @@ jobs:
           {
             echo "### Android CI failure @ $(git rev-parse --short HEAD)"
             echo '```'
-            grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]" build-output.log | head -40 || true
+            grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]" build-output.log | head -80 || true
             echo "~~~ tail ~~~"
             tail -c 3000 build-output.log 2>/dev/null || echo "(no log captured)"
             echo '```'

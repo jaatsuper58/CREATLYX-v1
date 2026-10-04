@@ -14,7 +14,7 @@ class ChattlyxAndroidApplicationConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlin.android")
 
             extensions.configure<ApplicationExtension> {
-                configureDefaults()
+                configureDefaults(target)
 
                 defaultConfig {
                     applicationId = ChattlyxBuild.APPLICATION_ID

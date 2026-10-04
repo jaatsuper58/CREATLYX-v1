@@ -14,7 +14,7 @@ class ChattlyxAndroidLibraryConventionPlugin : Plugin<Project> {
             pluginManager.apply("org.jetbrains.kotlin.android")
 
             extensions.configure<LibraryExtension> {
-                configureDefaults()
+                configureDefaults(target)
             }
         }
     }

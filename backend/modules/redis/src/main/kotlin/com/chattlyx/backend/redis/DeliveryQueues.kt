@@ -1,5 +1,6 @@
 package com.chattlyx.backend.redis
 
+import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 
 /**
@@ -10,13 +11,13 @@ import redis.clients.jedis.JedisPool
 class DeliveryQueues(private val pool: JedisPool) {
 
     /** Next monotonic seq for a conversation (INCR is atomic). */
-    fun nextSeq(conversationId: String): Long = pool.resource.use { jedis ->
+    fun nextSeq(conversationId: String): Long = pool.resource.use { jedis: Jedis ->
         jedis.incr(seqKey(conversationId))
     }
 
     /** Enqueue an envelope id for an account's devices. */
     fun enqueue(accountId: String, envelopeId: String) {
-        pool.resource.use { jedis ->
+        pool.resource.use { jedis: Jedis ->
             jedis.lpush(queueKey(accountId), envelopeId)
             jedis.ltrim(queueKey(accountId), 0, MAX_QUEUE_DEPTH - 1)
         }
@@ -25,7 +26,7 @@ class DeliveryQueues(private val pool: JedisPool) {
     /** Drains up to [limit] envelope ids (oldest first). */
     fun drain(accountId: String, limit: Int): List<String> {
         val out = mutableListOf<String>()
-        pool.resource.use { jedis ->
+        pool.resource.use { jedis: Jedis ->
             repeat(limit) {
                 val next = jedis.rpop(queueKey(accountId)) ?: return@use
                 out += next
@@ -34,28 +35,28 @@ class DeliveryQueues(private val pool: JedisPool) {
         return out
     }
 
-    fun pendingCount(accountId: String): Long = pool.resource.use { jedis ->
+    fun pendingCount(accountId: String): Long = pool.resource.use { jedis: Jedis ->
         jedis.llen(queueKey(accountId))
     }
 
     // --- Presence (MSG-05): online flag with auto-expiry. ---
 
     fun setOnline(accountId: String, ttlSeconds: Long) {
-        pool.resource.use { jedis ->
+        pool.resource.use { jedis: Jedis ->
             jedis.setex(presenceKey(accountId), ttlSeconds, "1")
         }
     }
 
-    fun isOnline(accountId: String): Boolean = pool.resource.use { jedis ->
+    fun isOnline(accountId: String): Boolean = pool.resource.use { jedis: Jedis ->
         jedis.exists(presenceKey(accountId))
     }
 
-    fun lastSeenMillis(accountId: String): Long? = pool.resource.use { jedis ->
+    fun lastSeenMillis(accountId: String): Long? = pool.resource.use { jedis: Jedis ->
         jedis.get(lastSeenKey(accountId))?.toLongOrNull()
     }
 
     fun recordOffline(accountId: String, now: Long) {
-        pool.resource.use { jedis ->
+        pool.resource.use { jedis: Jedis ->
             jedis.del(presenceKey(accountId))
             jedis.set(lastSeenKey(accountId), now.toString())
         }
