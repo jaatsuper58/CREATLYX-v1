@@ -42,6 +42,10 @@ jobs:
             echo '```'
           } > failure-comment.md
           gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" -F body=@failure-comment.md || true
+          # Fallback channel: workflow annotations (readable without log-blob access).
+          grep -E "^e: |What went wrong:|FAILURE: Build failed|> Task .* FAILED" build-output.log | head -12 | while IFS= read -r line; do
+            echo "::error title=${title} build error::${line}"
+          done
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
