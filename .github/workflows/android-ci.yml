@@ -58,8 +58,10 @@ jobs:
             sed -n '/What went wrong:/,/^$/p' build-output.log | head -15 || true
             echo "~~~ failures ~~~"
             grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -20 || true
+            echo "~~~ exception context ~~~"
+            grep -B 70 -m 1 -E "Caused by: java.lang.(ClassNotFoundException|NoClassDefFoundError)" build-output.log | head -110 || true
             echo "~~~ tail ~~~"
-            tail -c 2500 build-output.log 2>/dev/null || echo "(no log captured)"
+            tail -c 1500 build-output.log 2>/dev/null || echo "(no log captured)"
             echo '```'
           } > failure-comment.md
           gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" -F body=@failure-comment.md || true
