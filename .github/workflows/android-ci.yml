@@ -20,13 +20,14 @@ jobs:
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
 
-      - name: Install Android SDK platform 36
-        uses: android-actions/setup-android@v3
-
       - name: Install platform & build tools
+        # ubuntu runners ship cmdline-tools under ANDROID_HOME; the old
+        # android-actions/setup-android@v3 broke on the Ubuntu 26 image.
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          SDKMANAGER="${ANDROID_HOME:+$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager}"
+          [ -x "$SDKMANAGER" ] || SDKMANAGER="sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: "9.7.0" }

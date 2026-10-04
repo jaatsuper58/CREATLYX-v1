@@ -44,7 +44,7 @@ retrofit = "2.11.0"              # verify latest stable
 retrofit-kotlinx-serialization = "2.11.0"  # verify latest stable
 play-services-auth-api-phone = "18.1.0"  # verify latest stable
 protobuf = "4.29.3"              # verify latest stable
-protobuf-plugin = "0.9.5"        # verify latest stable
+protobuf-plugin = "0.10.0"           # verify latest stable; 0.10+ required for AGP 9 / Gradle 9
 paging = "3.3.5"                 # verify latest stable
 firebase-bom = "33.7.0"          # verify latest stable
 

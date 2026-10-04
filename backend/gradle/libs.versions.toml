@@ -12,6 +12,9 @@ hikaricp = "5.1.0"                   # verify latest stable
 postgresql = "42.7.4"                # verify latest stable
 slf4j = "2.0.16"                     # verify latest stable
 testcontainers = "1.20.4"            # verify latest stable
+jedis = "5.2.0"                      # verify latest stable
+protobuf = "4.29.3"                  # verify latest stable
+protobuf-plugin = "0.10.0"           # verify latest stable; 0.10+ required for Gradle 9
 
 [libraries]
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core-jvm", version.ref = "ktor" }
