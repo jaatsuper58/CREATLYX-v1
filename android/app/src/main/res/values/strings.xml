@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible copy lives here (or in feature modules). Never hard-code. -->
+<resources>
+    <string name="app_name">ChattlyX</string>
+    <string name="tagline">Chat freely. Stay private.</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_chats">Chats</string>
+    <string name="nav_calls">Calls</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Generic states -->
+    <string name="state_loading">Loading…</string>
+    <string name="state_error_generic">Something went wrong. Please try again.</string>
+    <string name="state_retry">Retry</string>
+    <string name="state_offline_banner">Waiting for network…</string>
+
+    <!-- Accessibility -->
+    <string name="cd_avatar_of">Profile photo of %1$s</string>
+    <string name="cd_unread_count">%1$d unread messages</string>
+</resources>

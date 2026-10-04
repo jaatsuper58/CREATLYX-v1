@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_empty_title">No calls yet</string>
+    <string name="calls_empty_message">Free HD voice and video calls will appear here.</string>
+</resources>

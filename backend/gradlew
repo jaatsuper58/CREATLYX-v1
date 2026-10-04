@@ -1,0 +1,40 @@
+#!/bin/sh
+
+#
+# ChattlyX Gradle bootstrap launcher.
+#
+# The canonical Gradle wrapper jar is intentionally NOT committed in Phase 0
+# (binary artifacts are introduced via a proper `gradle wrapper` run).
+# This launcher pins the exact Gradle version used by CI, downloads the
+# distribution once on first use, then behaves like `gradlew` afterwards.
+#
+# To materialize the standard wrapper (gradle/wrapper/gradle-wrapper.jar),
+# run `gradle wrapper` with any local Gradle >= 9.0 and commit the result.
+#
+
+set -e
+
+GRADLE_VERSION="9.7.0"
+DIST_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+CACHE_ROOT="${GRADLE_USER_HOME:-$HOME/.gradle}/bootstrap"
+DIST_DIR="$CACHE_ROOT/gradle-$GRADLE_VERSION"
+
+if [ ! -x "$DIST_DIR/bin/gradle" ]; then
+    echo "Downloading Gradle $GRADLE_VERSION (one-time bootstrap)..." >&2
+    mkdir -p "$CACHE_ROOT"
+    TMP_ZIP="$(mktemp "${TMPDIR:-/tmp}/gradle-XXXXXX.zip")"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fSL --retry 3 -o "$TMP_ZIP" "$DIST_URL"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -O "$TMP_ZIP" "$DIST_URL"
+    else
+        echo "error: curl or wget is required to bootstrap Gradle" >&2
+        exit 1
+    fi
+    UNPACK_TMP="$(mktemp -d "${TMPDIR:-/tmp}/gradle-unpack-XXXXXX")"
+    unzip -q "$TMP_ZIP" -d "$UNPACK_TMP"
+    mv "$UNPACK_TMP/gradle-$GRADLE_VERSION" "$DIST_DIR"
+    rm -rf "$TMP_ZIP" "$UNPACK_TMP"
+fi
+
+exec "$DIST_DIR/bin/gradle" "$@"

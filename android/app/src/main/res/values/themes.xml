@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash (AUTH-01) hands off to the main theme; Compose takes over colours. -->
+    <style name="Theme.Chattlyx" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/chattlyx_background_light</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Chattlyx.Main</item>
+    </style>
+
+    <style name="Theme.Chattlyx.Main" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/chattlyx_background_light</item>
+    </style>
+</resources>

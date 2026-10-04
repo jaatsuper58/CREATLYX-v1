@@ -1,0 +1,44 @@
+# ---- Gradle ----
+.gradle/
+build/
+local.properties
+.kotlin/
+kotlin-js-store/
+
+# ---- Android / IntelliJ ----
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.keystore
+# Firebase config is a secret; never commit real project files.
+google-services.json
+
+# ---- Terraform / infra ----
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+
+# ---- Python ----
+__pycache__/
+*.pyc
+.venv/
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+*.swp
+
+# ---- Secrets ----
+*.env
+!*.env.example
+
+# ---- Room schema export dir is committed; nothing else generated ----

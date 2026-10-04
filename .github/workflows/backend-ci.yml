@@ -1,0 +1,31 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: "9.7.0" }
+      - name: Build & test
+        run: gradle build --stacktrace
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-failure-reports
+          path: backend/**/build/reports/**
+          if-no-files-found: ignore

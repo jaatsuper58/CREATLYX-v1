@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contacts_empty_title">No contacts yet</string>
+    <string name="contacts_empty_message">Friends on ChattlyX appear here after you sync contacts.</string>
+    <string name="contacts_empty_action">Sync contacts</string>
+</resources>

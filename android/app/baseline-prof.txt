@@ -1,0 +1,5 @@
+# Baseline Profiles scaffold (Phase 0). Generated rules replace this file when the
+# :benchmark module produces them on a reference device (Section 10 budgets).
+HSPLcom/chattlyx/app/ChattlyxApplication;->onCreate()V
+HSPLcom/chattlyx/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/chattlyx/app/ui/AppRootKt;->ChattlyxAppRoot(Landroidx/compose/runtime/Composer;I)V

@@ -1,0 +1,27 @@
+# ChattlyX detekt configuration. Runs with buildUponDefaultConfig = true;
+# only deltas from the defaults are declared here. Compose rules are supplied by
+# the detekt-composeRules artifact wired in the convention plugins.
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    threshold: 120
+  LongParameterList:
+    active: false            # Compose screens legitimately take many UI parameters
+  CyclomaticComplexMethod:
+    threshold: 20
+
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  MagicNumber:
+    active: false            # design tokens are centralised; re-enable selectively later
+  ReturnCount:
+    max: 4
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Za-z][_A-Za-z0-9]*'   # design tokens like PrimaryLight

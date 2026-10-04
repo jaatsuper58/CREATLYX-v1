@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="chats_empty_title">No chats yet</string>
+    <string name="chats_empty_message">Say hi 👋 — start a chat with someone on ChattlyX.</string>
+    <string name="chats_empty_action">Invite friends</string>
+</resources>

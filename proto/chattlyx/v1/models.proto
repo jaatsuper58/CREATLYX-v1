@@ -1,0 +1,21 @@
+// ChattlyX shared wire models.
+// Single source of truth for ids/timestamps shared by client and backend.
+syntax = "proto3";
+
+package chattlyx.v1;
+
+option java_package = "com.chattlyx.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ModelsProto";
+
+// A 128-bit UUID carried as two 64-bit halves (UUIDv7 in practice).
+message Uuid {
+  uint64 most_significant_bits = 1;
+  uint64 least_significant_bits = 2;
+}
+
+// Monotonic per-conversation cursor assigned by the server.
+message SequenceCursor {
+  string conversation_id = 1;
+  int64 seq = 2;
+}

@@ -1,0 +1,266 @@
+openapi: 3.1.0
+info:
+  title: ChattlyX API
+  version: 0.1.0-phase0
+  summary: |
+    Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
+    stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
+    traffic uses the Protobuf WebSocket contract in /proto. This document is
+    the source of truth for REST; changes are additive and backward-compatible.
+  license:
+    name: Pending (ADR-0002)
+servers:
+  - url: https://api.chattlyx.com/v1
+    description: Production (placeholder host)
+  - url: http://localhost:8080/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: OTP sign-up, tokens, device sessions (AUTH-*)
+  - name: config
+    description: Client configuration and feature flags
+  - name: profile
+    description: Profile read/write (AUTH-04)
+
+paths:
+  /config:
+    get:
+      tags: [config]
+      operationId: getConfig
+      summary: Limits, feature flags, minimum supported version (force-update)
+      security: []
+      responses:
+        "200":
+          description: Current server configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerConfig"
+
+  /auth/otp/request:
+    post:
+      tags: [auth]
+      operationId: requestOtp
+      summary: Request a one-time password (AUTH-02/03)
+      description: |
+        Rate-limited per number/IP/device with growing back-off. Dev
+        environments may echo a magic code; production never does.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequest"
+      responses:
+        "200":
+          description: OTP dispatched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpRequestResult"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/otp/verify:
+    post:
+      tags: [auth]
+      operationId: verifyOtp
+      summary: Verify the OTP and register the device (AUTH-03)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerify"
+      responses:
+        "200":
+          description: Account authenticated; token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/token/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshToken
+      summary: Rotate the refresh token, mint a new access token (AUTH-07)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "200":
+          description: New token pair (old refresh token invalidated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /profile:
+    get:
+      tags: [profile]
+      operationId: getOwnProfile
+      summary: Read own profile
+      responses:
+        "200":
+          description: Own profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    put:
+      tags: [profile]
+      operationId: updateOwnProfile
+      summary: Update display name/about/username (AUTH-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Profile"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          $ref: "#/components/responses/Validation"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived access token (15 min), device-bound.
+
+  responses:
+    RateLimited:
+      description: Rate limit exceeded; honour Retry-After
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Authentication failed or expired
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Validation:
+      description: Request failed validation
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details
+      required: [title, status]
+      properties:
+        type: { type: string, format: uri, default: "about:blank" }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string }
+        retryAfterMs: { type: integer, format: int64 }
+
+    OtpRequest:
+      type: object
+      required: [e164]
+      properties:
+        e164:
+          type: string
+          pattern: '^\+[1-9]\d{4,14}$'
+          example: "+919876543210"
+        language:
+          type: string
+          description: BCP-47 tag for the SMS template
+          example: en
+
+    OtpRequestResult:
+      type: object
+      required: [expiresInSeconds]
+      properties:
+        expiresInSeconds: { type: integer, example: 300 }
+        resendAfterSeconds: { type: integer, example: 60 }
+
+    OtpVerify:
+      type: object
+      required: [e164, code]
+      properties:
+        e164: { type: string }
+        code: { type: string, pattern: '^\d{6}$' }
+        deviceName: { type: string, maxLength: 64 }
+
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, accessTokenExpiresInSeconds, accountId, deviceId]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        accessTokenExpiresInSeconds: { type: integer, example: 900 }
+        accountId: { type: string, format: uuid }
+        deviceId: { type: integer }
+
+    Profile:
+      type: object
+      required: [displayName]
+      properties:
+        accountId: { type: string, format: uuid }
+        displayName: { type: string, minLength: 1, maxLength: 40 }
+        username:
+          type: string
+          pattern: '^[a-z0-9_]{3,32}$'
+          description: Optional unique @username
+        about: { type: string, maxLength: 140 }
+        avatarBlobId: { type: string, description: Blob id of the encrypted avatar }
+
+    ServerConfig:
+      type: object
+      required: [minSupportedVersion, latestVersion, limits]
+      properties:
+        minSupportedVersion: { type: string }
+        latestVersion: { type: string }
+        limits:
+          type: object
+          required: [maxGroupMembers, maxMessageChars, maxAttachmentBytes]
+          properties:
+            maxGroupMembers: { type: integer }
+            maxMessageChars: { type: integer }
+            maxAttachmentBytes: { type: integer, format: int64 }
+            maxForwardTargets: { type: integer }
+            deleteForEveryoneWindowHours: { type: integer }
+            editWindowMinutes: { type: integer }
+            maxPinnedChats: { type: integer }
+            maxPinnedMessagesPerChat: { type: integer }
+        features:
+          type: object
+          additionalProperties: { type: boolean }

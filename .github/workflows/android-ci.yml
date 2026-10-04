@@ -1,0 +1,58 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    defaults: { run: { working-directory: android } }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+
+      - name: Install Android SDK platform 36
+        uses: android-actions/setup-android@v3
+
+      - name: Install platform & build tools
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: "9.7.0" }
+
+      - name: Static analysis (ktlint + detekt) — soft gate in Phase 0
+        continue-on-error: true
+        run: gradle ktlintCheck detekt --continue
+
+      - name: Build, unit & screenshot tests
+        # Roborazzi records goldens until the first set is committed (see CONTRIBUTING.md).
+        run: gradle build -x ktlintCheck -x detekt -Proborazzi.test.record=true --stacktrace
+
+      - name: Upload screenshot goldens (commit these under core/designsystem/src/test/screenshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-goldens
+          path: android/core/designsystem/src/test/screenshots/**
+          if-no-files-found: ignore
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-reports
+          path: |
+            android/**/build/reports/**
+            android/**/build/test-results/**
+          if-no-files-found: ignore

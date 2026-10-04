@@ -1,0 +1,46 @@
+pluginManagement {
+    includeBuild("build-logic")
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "chattlyx-android"
+
+include(":app")
+include(":core:common")
+include(":core:designsystem")
+include(":core:ui")
+include(":core:network")
+include(":core:database")
+include(":core:datastore")
+include(":core:crypto")
+include(":core:rtc")
+include(":core:push")
+include(":core:work")
+include(":core:analytics")
+include(":core:testing")
+include(":domain")
+include(":data")
+include(":feature:onboarding")
+include(":feature:chats")
+include(":feature:chat")
+include(":feature:groups")
+include(":feature:contacts")
+include(":feature:calls")
+include(":feature:media")
+include(":feature:search")
+include(":feature:settings")
+include(":feature:backup")
+include(":feature:status")
+include(":benchmark")
