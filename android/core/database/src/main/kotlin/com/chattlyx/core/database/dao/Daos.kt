@@ -78,6 +78,15 @@ interface MessageDao {
     @Query("UPDATE messages SET status = :status WHERE server_id = :serverId")
     suspend fun updateStatusByServerId(serverId: String, status: Int)
 
+    /** MED-04: local attachment download lifecycle for one message. */
+    @Query(
+        """
+        UPDATE messages SET attachment_state = :state, attachment_local_path = :localPath
+        WHERE id = :messageId
+        """
+    )
+    suspend fun updateAttachmentState(messageId: String, state: String, localPath: String?)
+
     @Query(
         """
         UPDATE messages SET status = :status

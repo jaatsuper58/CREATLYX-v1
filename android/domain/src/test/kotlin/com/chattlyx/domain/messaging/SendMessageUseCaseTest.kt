@@ -26,6 +26,21 @@ private class FakeMessageRepository : MessageRepository {
     override suspend fun markRead(conversationId: String) = Unit
     override suspend fun sync(): Result<Unit> = Result.success(Unit)
     override suspend fun sendTyping(conversationId: String, started: Boolean) = Unit
+
+    override suspend fun sendAttachment(
+        peerAccountId: String,
+        plaintextFile: java.io.File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String?,
+        width: Int?,
+        height: Int?,
+        durationMs: Int?,
+        caption: String,
+    ): Result<String> = Result.success("client-attachment-1")
+
+    override suspend fun downloadAttachment(message: Message): Result<java.io.File> =
+        Result.failure(ChattlyError.Network())
 }
 
 private class FakeConversationRepository : ConversationRepository {

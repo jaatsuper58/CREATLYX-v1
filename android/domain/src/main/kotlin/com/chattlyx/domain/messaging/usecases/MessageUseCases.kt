@@ -38,6 +38,75 @@ class SendMessageUseCase @Inject constructor(
     }
 }
 
+/**
+ * MED-01/02/03: validates and sends one attachment message. Returns the
+ * client message id; upload progress is surfaced by the repository layer.
+ */
+class SendAttachmentUseCase @Inject constructor(
+    private val messageRepository: MessageRepository,
+    private val conversationRepository: ConversationRepository,
+) {
+
+    suspend operator fun invoke(
+        peerAccountId: String,
+        file: java.io.File,
+        kind: com.chattlyx.domain.messaging.AttachmentKind,
+        mimeType: String,
+        fileName: String? = null,
+        width: Int? = null,
+        height: Int? = null,
+        durationMs: Int? = null,
+        caption: String = "",
+    ): Result<String> {
+        if (!file.isFile) {
+            return Result.failure(
+                ChattlyError.Validation(field = "file", messageKey = "error_attachment_missing"),
+            )
+        }
+        if (file.length() < 1) {
+            return Result.failure(
+                ChattlyError.Validation(field = "file", messageKey = "error_attachment_empty"),
+            )
+        }
+        if (file.length() > MAX_ATTACHMENT_BYTES) {
+            return Result.failure(
+                ChattlyError.Validation(field = "file", messageKey = "error_attachment_too_large"),
+            )
+        }
+        if (mimeType.isBlank()) {
+            return Result.failure(
+                ChattlyError.Validation(field = "mimeType", messageKey = "error_attachment_mime"),
+            )
+        }
+        conversationRepository.openConversationWith(peerAccountId)
+        return messageRepository.sendAttachment(
+            peerAccountId = peerAccountId,
+            plaintextFile = file,
+            kind = kind,
+            mimeType = mimeType,
+            fileName = fileName,
+            width = width,
+            height = height,
+            durationMs = durationMs,
+            caption = caption.trim(),
+        )
+    }
+
+    companion object {
+        /** Client-side cap; the server also enforces its own limit. */
+        const val MAX_ATTACHMENT_BYTES = 200L * 1024 * 1024
+    }
+}
+
+/** MED-04: downloads + decrypts one message's attachment on demand. */
+class DownloadAttachmentUseCase @Inject constructor(
+    private val messageRepository: MessageRepository,
+) {
+
+    suspend operator fun invoke(message: Message): Result<java.io.File> =
+        messageRepository.downloadAttachment(message)
+}
+
 /** MSG-08: chat list stream. */
 class ObserveConversationsUseCase @Inject constructor(
     private val conversationRepository: ConversationRepository,

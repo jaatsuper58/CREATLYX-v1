@@ -58,6 +58,22 @@ data class MessageEntity(
     @ColumnInfo(name = "seq") val seq: Long = 0L,
     @ColumnInfo(name = "sent_at") val sentAt: Long,
     @ColumnInfo(name = "received_at") val receivedAt: Long? = null,
+    // Phase 3 (MED-*): attachment descriptor; null for plain text messages.
+    @ColumnInfo(name = "attachment_kind") val attachmentKind: String? = null,
+    @ColumnInfo(name = "attachment_id") val attachmentId: String? = null,
+    @ColumnInfo(name = "attachment_mime") val attachmentMime: String? = null,
+    @ColumnInfo(name = "attachment_size") val attachmentSize: Long? = null,
+    @ColumnInfo(name = "attachment_sha256") val attachmentSha256: String? = null,
+    @ColumnInfo(name = "attachment_width") val attachmentWidth: Int? = null,
+    @ColumnInfo(name = "attachment_height") val attachmentHeight: Int? = null,
+    @ColumnInfo(name = "attachment_duration_ms") val attachmentDurationMs: Int? = null,
+    @ColumnInfo(name = "attachment_file_name") val attachmentFileName: String? = null,
+    // Blob key/nonce as base64 — at rest inside the SQLCipher envelope.
+    @ColumnInfo(name = "attachment_key") val attachmentKey: String? = null,
+    @ColumnInfo(name = "attachment_nonce") val attachmentNonce: String? = null,
+    // Local lifecycle: pending_download | downloading | ready | failed.
+    @ColumnInfo(name = "attachment_state") val attachmentState: String? = null,
+    @ColumnInfo(name = "attachment_local_path") val attachmentLocalPath: String? = null,
 )
 
 /** Registered peers discovered via CON-03 or first contact. */

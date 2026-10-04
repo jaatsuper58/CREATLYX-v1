@@ -30,3 +30,16 @@ inline fun <T> Result<T>.onFailure(action: (ChattlyError) -> Unit): Result<T> {
 }
 
 fun <T> Result<T>.getOrNull(): T? = (this as? Result.Success)?.value
+
+/** Returns the value or the result of [onFailure]. */
+inline fun <T> Result<T>.getOrElse(onFailure: (ChattlyError) -> T): T = when (this) {
+    is Result.Success -> value
+    is Result.Failure -> onFailure(error)
+}
+
+/** Unwraps both branches. */
+inline fun <T, R> Result<T>.fold(onSuccess: (T) -> R, onFailure: (ChattlyError) -> R): R =
+    when (this) {
+        is Result.Success -> onSuccess(value)
+        is Result.Failure -> onFailure(error)
+    }

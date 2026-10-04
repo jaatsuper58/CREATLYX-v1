@@ -35,6 +35,7 @@ object DatabaseModule {
     ): ChattlyxDatabase = Room.databaseBuilder(context, ChattlyxDatabase::class.java, ChattlyxDatabase.NAME)
         .openHelperFactory(factory)
         .addCallback(ChattlyxDatabase.FTS_SYNC_CALLBACK)
+        .addMigrations(ChattlyxDatabase.MIGRATION_1_2)
         .build()
 
     @Provides

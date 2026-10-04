@@ -67,4 +67,8 @@ message AttachmentContent {
   string file_name = 9;
   // Optional inline thumbnail (small JPEG/WEBP) so lists render instantly.
   bytes thumbnail = 10;
+  // Blob key + nonce (only inside this E2EE payload; the server never sees
+  // them). AES-256-GCM via AttachmentCipher.
+  bytes key = 11;
+  bytes nonce = 12;
 }

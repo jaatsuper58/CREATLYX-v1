@@ -24,6 +24,25 @@ interface MessageRepository {
 
     /** Best-effort typing indicator (plaintext routing, metadata only). */
     suspend fun sendTyping(conversationId: String, started: Boolean)
+
+    /**
+     * MED-01/02/03: encrypts [plaintextFile], uploads the ciphertext and sends
+     * the attachment message. Returns the client message id.
+     */
+    suspend fun sendAttachment(
+        peerAccountId: String,
+        plaintextFile: java.io.File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String? = null,
+        width: Int? = null,
+        height: Int? = null,
+        durationMs: Int? = null,
+        caption: String = "",
+    ): Result<String>
+
+    /** MED-04: fetches + decrypts the blob for [message]; updates local state. */
+    suspend fun downloadAttachment(message: Message): Result<java.io.File>
 }
 
 /** Chat list + conversation observers. */

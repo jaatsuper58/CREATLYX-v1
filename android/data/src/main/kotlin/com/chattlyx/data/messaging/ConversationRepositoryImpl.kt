@@ -133,7 +133,40 @@ class ConversationRepositoryImpl @Inject constructor(
         sentAt = sentAt,
         receivedAt = receivedAt,
         isMine = selfId != null && senderAccountId == selfId,
+        attachment = toAttachmentInfo(),
     )
+
+    /** MED-*: rebuilds the attachment descriptor from persisted columns. */
+    private fun MessageEntity.toAttachmentInfo(): com.chattlyx.domain.messaging.AttachmentInfo? {
+        val id = attachmentId ?: return null
+        val kind = when (attachmentKind) {
+            "image" -> com.chattlyx.domain.messaging.AttachmentKind.IMAGE
+            "video" -> com.chattlyx.domain.messaging.AttachmentKind.VIDEO
+            "file" -> com.chattlyx.domain.messaging.AttachmentKind.FILE
+            "voice" -> com.chattlyx.domain.messaging.AttachmentKind.VOICE
+            else -> com.chattlyx.domain.messaging.AttachmentKind.FILE
+        }
+        return com.chattlyx.domain.messaging.AttachmentInfo(
+            kind = kind,
+            attachmentId = id,
+            mimeType = attachmentMime ?: "application/octet-stream",
+            sizeBytes = attachmentSize ?: 0L,
+            sha256 = attachmentSha256?.let(::hexToBytes) ?: ByteArray(0),
+            width = attachmentWidth,
+            height = attachmentHeight,
+            durationMs = attachmentDurationMs,
+            fileName = attachmentFileName,
+            key = attachmentKey?.let { java.util.Base64.getDecoder().decode(it) },
+            nonce = attachmentNonce?.let { java.util.Base64.getDecoder().decode(it) },
+            state = when (attachmentState) {
+                STATE_DOWNLOADING -> com.chattlyx.domain.messaging.AttachmentState.DOWNLOADING
+                STATE_READY -> com.chattlyx.domain.messaging.AttachmentState.READY
+                STATE_FAILED -> com.chattlyx.domain.messaging.AttachmentState.FAILED
+                else -> com.chattlyx.domain.messaging.AttachmentState.PENDING_DOWNLOAD
+            },
+            localPath = attachmentLocalPath,
+        )
+    }
 
     /** Read once; the account id never changes within a session. */
     private val selfAccountId: String? by lazy {
@@ -144,3 +177,9 @@ class ConversationRepositoryImpl @Inject constructor(
         const val PAGE_SIZE = 30
     }
 }
+
+
+private fun hexToBytes(hex: String): ByteArray =
+    ByteArray(hex.length / 2) { i ->
+        hex.substring(i * 2, i * 2 + 2).toInt(16).toByte()
+    }

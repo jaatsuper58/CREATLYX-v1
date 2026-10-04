@@ -15,13 +15,17 @@ import com.chattlyx.core.protocol.toJavaUuid
 import com.chattlyx.core.protocol.toProtoUuid
 import com.chattlyx.data.auth.SecureTokenStore
 import com.chattlyx.domain.messaging.MessageRepository
+import com.chattlyx.domain.messaging.AttachmentKind
+import com.chattlyx.domain.messaging.Message
 import com.chattlyx.proto.AckFrame
+import com.chattlyx.proto.AttachmentContent
 import com.chattlyx.proto.Envelope
 import com.chattlyx.proto.EnvelopeType
 import com.chattlyx.proto.Frame
 import com.chattlyx.proto.SessionContent
 import com.chattlyx.proto.TextContent
 import com.google.protobuf.ByteString
+import java.io.File
 import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -48,6 +52,7 @@ data class IncomingMessage(
  */
 @Singleton
 class MessageRepositoryImpl @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     private val api: ChattlyxServiceApi,
     private val realtime: RealtimeClient,
     private val messageDao: MessageDao,
@@ -55,6 +60,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val tokenStore: SecureTokenStore,
     private val peerKeyResolver: PeerKeyResolver,
     private val conversationIds: ClientConversationIds,
+    private val attachmentPipeline: AttachmentPipeline,
     @Dispatcher(ChattlyxDispatcher.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : MessageRepository {
 
@@ -117,6 +123,151 @@ class MessageRepositoryImpl @Inject constructor(
             Result.success(clientId)
         }
 
+    override suspend fun sendAttachment(
+        peerAccountId: String,
+        plaintextFile: File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String?,
+        width: Int?,
+        height: Int?,
+        durationMs: Int?,
+        caption: String,
+    ): Result<String> = withContext(ioDispatcher) {
+        val selfAccountId = tokenStore.accountId() ?: return@withContext Result.failure(ChattlyError.Auth)
+        val conversationId = conversationIds.direct(selfAccountId, peerAccountId)
+        val clientId = UuidV7.generate().toString()
+
+        // Stage a durable copy: the caller's file may be a picker temp file.
+        val stagedDir = File(context.filesDir, "attachments").apply { mkdirs() }
+        val staged = File(stagedDir, "att-local-$clientId")
+        try {
+            plaintextFile.inputStream().use { input -> staged.outputStream().use { input.copyTo(it) } }
+        } catch (e: java.io.IOException) {
+            Timber.w(e, "Attachment staging failed")
+            return@withContext Result.failure(ChattlyError.Storage.Io(e))
+        }
+
+        val uploaded = attachmentPipeline.upload(
+            plaintext = staged,
+            kind = kind,
+            mimeType = mimeType,
+            recipientAccountId = peerAccountId,
+            conversationId = conversationId,
+            width = width,
+            height = height,
+            durationMs = durationMs,
+            fileName = fileName,
+        ).getOrElse {
+            if (!staged.delete()) staged.deleteOnExit()
+            return@withContext Result.failure(it)
+        }
+
+        val content = SessionContent.newBuilder()
+            .setAttachment(
+                AttachmentContent.newBuilder()
+                    .setKind(kind.toProtoKind())
+                    .setAttachmentId(uploaded.attachmentId)
+                    .setMimeType(mimeType)
+                    .setSizeBytes(uploaded.plaintextSizeBytes)
+                    .setSha256(ByteString.copyFrom(uploaded.ciphertextSha256))
+                    .apply { width?.takeIf { it > 0 }?.let(::setWidth) }
+                    .apply { height?.takeIf { it > 0 }?.let(::setHeight) }
+                    .apply { durationMs?.takeIf { it > 0 }?.let(::setDurationMs) }
+                    .apply { fileName?.takeIf { it.isNotEmpty() }?.let(::setFileName) }
+                    .setKey(ByteString.copyFrom(uploaded.key))
+                    .setNonce(ByteString.copyFrom(uploaded.nonce))
+                    .build(),
+            )
+            .build()
+        val ciphertext = try {
+            val peerKey = peerKeyResolver.publicKeyFor(peerAccountId)
+                ?: return@withContext Result.failure(ChattlyError.Crypto.NoSession)
+            cipher.encrypt(peerKey, content.toByteArray())
+        } catch (e: Exception) {
+            Timber.w(e, "Attachment message encrypt failed")
+            return@withContext Result.failure(ChattlyError.Crypto.DecryptFailed)
+        }
+
+        val now = System.currentTimeMillis()
+        messageDao.insertOrIgnore(
+            MessageEntity(
+                id = clientId,
+                clientId = clientId,
+                conversationId = conversationId,
+                senderAccountId = selfAccountId,
+                body = caption,
+                status = MessageStatus.PENDING.wire,
+                sentAt = now,
+                attachmentKind = kind.toWireName(),
+                attachmentId = uploaded.attachmentId,
+                attachmentMime = mimeType,
+                attachmentSize = uploaded.plaintextSizeBytes,
+                attachmentSha256 = uploaded.ciphertextSha256.toHex(),
+                attachmentWidth = width,
+                attachmentHeight = height,
+                attachmentDurationMs = durationMs,
+                attachmentFileName = fileName,
+                attachmentKey = Base64.getEncoder().encodeToString(uploaded.key),
+                attachmentNonce = Base64.getEncoder().encodeToString(uploaded.nonce),
+                attachmentState = STATE_READY,
+                attachmentLocalPath = staged.absolutePath,
+            ),
+        )
+
+        val envelope = Envelope.newBuilder()
+            .setType(EnvelopeType.ENVELOPE_TYPE_SIGNAL)
+            .setSenderAccountId(selfAccountId)
+            .setCiphertext(ByteString.copyFrom(ciphertext))
+            .setClientMessageId(java.util.UUID.fromString(clientId).toProtoUuid())
+            .setConversationId(conversationId)
+            .build()
+
+        val sent = realtime.send(
+            Frame.newBuilder()
+                .setSend(
+                    com.chattlyx.proto.SendFrame.newBuilder()
+                        .setEnvelope(envelope)
+                        .setRecipientAccountId(peerAccountId),
+                )
+                .build(),
+        )
+        if (!sent) {
+            messageDao.markAcked(clientId, "", MessageStatus.FAILED.wire)
+            return@withContext Result.failure(ChattlyError.Network())
+        }
+        Result.success(clientId)
+    }
+
+    override suspend fun downloadAttachment(message: Message): Result<File> = withContext(ioDispatcher) {
+        val attachment = message.attachment
+            ?: return@withContext Result.failure(ChattlyError.Validation("attachment", "error_attachment_missing"))
+        val key = attachment.key ?: return@withContext Result.failure(ChattlyError.Crypto.NoSession)
+        val nonce = attachment.nonce ?: return@withContext Result.failure(ChattlyError.Crypto.NoSession)
+
+        attachment.localPath?.let { path ->
+            val existing = File(path)
+            if (existing.isFile) return@withContext Result.success(existing)
+        }
+
+        messageDao.updateAttachmentState(message.id, STATE_DOWNLOADING, null)
+        val result = attachmentPipeline.download(
+            attachmentId = attachment.attachmentId,
+            key = key,
+            nonce = nonce,
+            expectedSha256 = attachment.sha256,
+        )
+        result.fold(
+            onSuccess = { file ->
+                messageDao.updateAttachmentState(message.id, STATE_READY, file.absolutePath)
+            },
+            onFailure = {
+                messageDao.updateAttachmentState(message.id, STATE_FAILED, null)
+            },
+        )
+        result
+    }
+
     /** Called by the realtime coordinator for every server AckFrame. */
     suspend fun onServerAck(ack: AckFrame) = withContext(ioDispatcher) {
         val clientId = ack.clientMessageId.toJavaUuid().toString()
@@ -160,10 +311,11 @@ class MessageRepositoryImpl @Inject constructor(
 
         if (content.hasTyping()) return@withContext null // handled by coordinator
 
-        if (!content.hasText()) return@withContext null
+        if (!content.hasText() && !content.hasAttachment()) return@withContext null
 
         val now = System.currentTimeMillis()
         val clientId = envelope.clientMessageId.toJavaUuid().toString()
+        val attachment = if (content.hasAttachment()) content.attachment else null
         messageDao.insertOrIgnore(
             MessageEntity(
                 id = clientId,
@@ -171,11 +323,23 @@ class MessageRepositoryImpl @Inject constructor(
                 serverId = envelope.serverMessageId,
                 conversationId = envelope.conversationId,
                 senderAccountId = envelope.senderAccountId,
-                body = content.text.body,
+                body = if (content.hasText()) content.text.body else "",
                 status = MessageStatus.DELIVERED.wire,
                 seq = envelope.serverSeq,
                 sentAt = envelope.serverTimestampMs,
                 receivedAt = now,
+                attachmentKind = attachment?.kind?.let(::attachmentKindWireName),
+                attachmentId = attachment?.attachmentId,
+                attachmentMime = attachment?.mimeType,
+                attachmentSize = attachment?.sizeBytes?.takeIf { it > 0 },
+                attachmentSha256 = attachment?.sha256?.toByteArray()?.toHex(),
+                attachmentWidth = attachment?.width?.takeIf { it > 0 },
+                attachmentHeight = attachment?.height?.takeIf { it > 0 },
+                attachmentDurationMs = attachment?.durationMs?.takeIf { it > 0 },
+                attachmentFileName = attachment?.fileName?.takeIf { it.isNotEmpty() },
+                attachmentKey = attachment?.key?.toByteArray()?.let(Base64.getEncoder()::encodeToString),
+                attachmentNonce = attachment?.nonce?.toByteArray()?.let(Base64.getEncoder()::encodeToString),
+                attachmentState = attachment?.let { STATE_PENDING_DOWNLOAD },
             ),
         )
 
@@ -186,7 +350,7 @@ class MessageRepositoryImpl @Inject constructor(
             clientMessageId = clientId,
             seq = envelope.serverSeq,
             timestamp = envelope.serverTimestampMs,
-            body = content.text.body,
+            body = if (content.hasText()) content.text.body else "",
         )
     }
 
@@ -321,3 +485,34 @@ class ClientConversationIds @Inject constructor() {
         }
     }
 }
+
+// MED-* attachment state literals persisted on message rows.
+internal const val STATE_PENDING_DOWNLOAD = "pending_download"
+internal const val STATE_DOWNLOADING = "downloading"
+internal const val STATE_READY = "ready"
+internal const val STATE_FAILED = "failed"
+
+internal fun AttachmentKind.toProtoKind(): AttachmentContent.Kind = when (this) {
+    AttachmentKind.IMAGE -> AttachmentContent.Kind.KIND_IMAGE
+    AttachmentKind.VIDEO -> AttachmentContent.Kind.KIND_VIDEO
+    AttachmentKind.FILE -> AttachmentContent.Kind.KIND_FILE
+    AttachmentKind.VOICE -> AttachmentContent.Kind.KIND_VOICE
+}
+
+internal fun attachmentKindWireName(kind: AttachmentContent.Kind): String? = when (kind) {
+    AttachmentContent.Kind.KIND_IMAGE -> "image"
+    AttachmentContent.Kind.KIND_VIDEO -> "video"
+    AttachmentContent.Kind.KIND_FILE -> "file"
+    AttachmentContent.Kind.KIND_VOICE -> "voice"
+    else -> null
+}
+
+internal fun AttachmentKind.toWireName(): String = when (this) {
+    AttachmentKind.IMAGE -> "image"
+    AttachmentKind.VIDEO -> "video"
+    AttachmentKind.FILE -> "file"
+    AttachmentKind.VOICE -> "voice"
+}
+
+internal fun ByteArray.toHex(): String =
+    joinToString("") { "%02x".format(java.util.Locale.ROOT, it) }

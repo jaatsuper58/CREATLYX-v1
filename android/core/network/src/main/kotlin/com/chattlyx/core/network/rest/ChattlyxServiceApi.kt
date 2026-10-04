@@ -9,6 +9,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 /**
  * Retrofit contract for the Phase 1 REST API (AUTH-02..07, AUTH-10, key
@@ -88,4 +89,26 @@ interface ChattlyxServiceApi {
     /** NOT-01: register the FCM data-only push token. */
     @PUT("v1/devices/push")
     suspend fun registerPushToken(@Body body: PushTokenDto): Response<Unit>
+
+    // --- Phase 3 (MED-01..04) attachments ---
+
+    /** MED-02: declares a ciphertext upload; server returns id + upload path. */
+    @POST("v1/attachments")
+    suspend fun declareAttachment(@Body body: DeclareAttachmentDto): Response<DeclaredAttachmentDto>
+
+    /** MED-02: uploads the ciphertext blob (Content-Type: application/octet-stream). */
+    @PUT("v1/attachments/{id}/data")
+    suspend fun uploadAttachmentData(
+        @Path("id") attachmentId: String,
+        @Body ciphertext: RequestBody,
+    ): Response<Unit>
+
+    /** MED-04: attachment metadata; `status` tells whether the blob is uploaded. */
+    @GET("v1/attachments/{id}")
+    suspend fun attachmentMeta(@Path("id") attachmentId: String): Response<AttachmentMetaDto>
+
+    /** MED-04: downloads the ciphertext blob (streamed; caller decrypts). */
+    @Streaming
+    @GET("v1/attachments/{id}/data")
+    suspend fun downloadAttachmentData(@Path("id") attachmentId: String): Response<okhttp3.ResponseBody>
 }

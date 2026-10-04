@@ -12,7 +12,7 @@ import com.chattlyx.core.database.entity.MessageEntity
 import com.chattlyx.core.database.entity.MessageFtsEntity
 
 /**
- * SQLCipher-backed Room database (Section 7.1), version 1. Schema exports
+ * SQLCipher-backed Room database (Section 7.1), version 2. Schema exports
  * live in core/database/schemas for migration testing.
  */
 @Database(
@@ -22,7 +22,7 @@ import com.chattlyx.core.database.entity.MessageFtsEntity
         ContactEntity::class,
         MessageFtsEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class ChattlyxDatabase : RoomDatabase() {
@@ -33,6 +33,28 @@ abstract class ChattlyxDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "chattlyx.db"
+
+        /** Phase 3 (MED-*): attachment descriptor columns on messages. */
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val columns = listOf(
+                    "attachment_kind TEXT",
+                    "attachment_id TEXT",
+                    "attachment_mime TEXT",
+                    "attachment_size INTEGER",
+                    "attachment_sha256 TEXT",
+                    "attachment_width INTEGER",
+                    "attachment_height INTEGER",
+                    "attachment_duration_ms INTEGER",
+                    "attachment_file_name TEXT",
+                    "attachment_key TEXT",
+                    "attachment_nonce TEXT",
+                    "attachment_state TEXT",
+                    "attachment_local_path TEXT",
+                )
+                columns.forEach { db.execSQL("ALTER TABLE messages ADD COLUMN $it") }
+            }
+        }
 
         /** Keeps messages_fts in step with messages (FTS4 external content). */
         val FTS_SYNC_CALLBACK = object : Callback() {
