@@ -142,7 +142,7 @@ class AttachmentIntegrationTest {
                     """"sha256Hex":"$sha","width":640,"height":480}""",
             )
         }
-        assertEquals(HttpStatusCode.Created, declared.status)
+        assertEquals(HttpStatusCode.Created, declared.status, declared.bodyAsText())
         val declaredObj = json.parseToJsonElement(declared.bodyAsText()).jsonObject
         val attachmentId = assertNotNull(declaredObj["attachmentId"]).jsonPrimitive.content
 
@@ -183,7 +183,7 @@ class AttachmentIntegrationTest {
                     """"fileName":"contract.pdf"}""",
             )
         }
-        assertEquals(HttpStatusCode.Created, declared.status)
+        assertEquals(HttpStatusCode.Created, declared.status, declared.bodyAsText())
         val attachmentId = json.parseToJsonElement(declared.bodyAsText())
             .jsonObject["attachmentId"]!!.jsonPrimitive.content
 
@@ -241,7 +241,7 @@ class AttachmentIntegrationTest {
                     """"durationMs":1500}""",
             )
         }
-        assertEquals(HttpStatusCode.Created, declared.status)
+        assertEquals(HttpStatusCode.Created, declared.status, declared.bodyAsText())
         val attachmentId = json.parseToJsonElement(declared.bodyAsText())
             .jsonObject["attachmentId"]!!.jsonPrimitive.content
 
