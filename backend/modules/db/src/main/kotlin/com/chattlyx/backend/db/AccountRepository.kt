@@ -58,7 +58,7 @@ class AccountRepository(private val db: DataSource) {
                 }
                 statement.executeQuery().use { rs ->
                     val rows = mutableListOf<AccountRow>()
-                    while (rs.next()) rows += mapRow(rs)
+                    while (rs.next()) rows += rs.toAccountRow()
                     return rows
                 }
             }
