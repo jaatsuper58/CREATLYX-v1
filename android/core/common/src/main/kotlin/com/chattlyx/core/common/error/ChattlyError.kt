@@ -52,7 +52,7 @@ sealed class ChattlyError(open val cause: Throwable? = null) {
             is Network -> true
             is RateLimited -> true
             is Server -> httpStatus in 500..599
-            Auth, is Crypto, is Storage, is Validation, Unknown -> false
+            Auth, is Crypto, is Storage, is Validation, is Unknown -> false
         }
 }
 

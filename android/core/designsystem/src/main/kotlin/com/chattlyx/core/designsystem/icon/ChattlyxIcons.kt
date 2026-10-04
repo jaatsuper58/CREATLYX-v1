@@ -57,13 +57,13 @@ object ChattlyxIcons {
                 lineTo(8f, 4f)
                 lineTo(9.5f, 8f)
                 lineTo(7.5f, 9.5f)
-                cubicTo(8.5f, 12f, 10.5f, 14f, 13f, 15f)
+                curveTo(8.5f, 12f, 10.5f, 14f, 13f, 15f)
                 lineTo(14.5f, 13f)
                 lineTo(18.5f, 14.5f)
                 lineTo(18.5f, 17.5f)
-                cubicTo(18.5f, 18.5f, 17.5f, 19.5f, 16.5f, 19.5f)
-                cubicTo(9.5f, 19f, 5f, 14.5f, 4.5f, 7.5f)
-                cubicTo(4.5f, 6.5f, 4.5f, 4f, 5f, 4f)
+                curveTo(18.5f, 18.5f, 17.5f, 19.5f, 16.5f, 19.5f)
+                curveTo(9.5f, 19f, 5f, 14.5f, 4.5f, 7.5f)
+                curveTo(4.5f, 6.5f, 4.5f, 4f, 5f, 4f)
                 close()
             }
         }
@@ -90,8 +90,8 @@ object ChattlyxIcons {
             ) {
                 // Shoulders
                 moveTo(4.5f, 20f)
-                cubicTo(5f, 16.5f, 8f, 14.5f, 12f, 14.5f)
-                cubicTo(16f, 14.5f, 19f, 16.5f, 19.5f, 20f)
+                curveTo(5f, 16.5f, 8f, 14.5f, 12f, 14.5f)
+                curveTo(16f, 14.5f, 19f, 16.5f, 19.5f, 20f)
             }
         }
     }
