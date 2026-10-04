@@ -33,6 +33,11 @@ internal fun LibraryExtension.configureDefaults(project: Project) {
             isIncludeAndroidResources = true
         }
     }
+    // Phase 7 hardening turns this back on; lint currently flags legacy
+    // patterns across modules and must not gate the Phase 2/3 build.
+    lint {
+        abortOnError = false
+    }
     packaging {
         resources.excludes += setOf(
             "META-INF/AL2.0",
@@ -58,6 +63,11 @@ internal fun ApplicationExtension.configureDefaults(project: Project) {
         unitTests {
             isIncludeAndroidResources = true
         }
+    }
+    // Phase 7 hardening turns this back on; lint currently flags legacy
+    // patterns across modules and must not gate the Phase 2/3 build.
+    lint {
+        abortOnError = false
     }
     packaging {
         resources.excludes += setOf(

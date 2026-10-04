@@ -13,6 +13,9 @@ class ChattlyxAndroidTestConventionPlugin : Plugin<Project> {
         with(target) {
             tasks.withType<Test>().configureEach {
                 useJUnitPlatform()
+                // Scaffolded feature modules carry test sources but no tests
+                // yet (Phases 4-6); do not fail the build on them.
+                failOnNoDiscoveredTests = false
                 testLogging {
                     events("passed", "failed", "skipped")
                 }

@@ -58,7 +58,11 @@ jobs:
             echo "~~~ what went wrong (all) ~~~"
             grep -A 6 "What went wrong:" build-output.log | head -150 || true
             echo "~~~ failures ~~~"
-            grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -20 || true
+            grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -40 || true
+            echo "~~~ test failure details ~~~"
+            grep -A 14 "FAILED$" build-output.log | head -140 || true
+            echo "~~~ ksp messages ~~~"
+            grep -iE "\[ksp\]|ksp: " build-output.log | head -30 || true
             echo "~~~ exception context ~~~"
             sed -n '/^* What went wrong:/,/^* Try:/p' build-output.log | head -25 || true
             echo "~~~ cause frames ~~~"

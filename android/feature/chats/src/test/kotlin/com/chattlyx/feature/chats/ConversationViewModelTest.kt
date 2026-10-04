@@ -33,6 +33,7 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModelTest {
 
+    private val dispatcher = StandardTestDispatcher()
     private val messageRepository = mockk<MessageRepository>(relaxed = true)
     private val sendMessageUseCase = mockk<SendMessageUseCase> {
         coEvery { this@mockk(any(), any()) } returns Result.success("client-1")

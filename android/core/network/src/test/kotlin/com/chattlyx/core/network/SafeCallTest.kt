@@ -59,7 +59,7 @@ class SafeCallTest {
 
     @Test
     fun `io exceptions map to Network`() = runTest {
-        val result = safeCall { throw java.net.SocketTimeoutException("timeout") }
+        val result = safeCall<String> { throw java.net.SocketTimeoutException("timeout") }
         val failure = assertIs<Result.Failure>(result)
         assertIs<ChattlyError.Network>(failure.error)
     }
