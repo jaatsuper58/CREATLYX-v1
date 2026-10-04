@@ -1,3 +1,6 @@
+import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.plugins.ExtensionAware
+
 plugins {
     id("chattlyx.android.library")
     alias(libs.plugins.protobuf)
@@ -5,16 +8,16 @@ plugins {
 
 android {
     namespace = "com.chattlyx.core.protocol"
-
-    // Wire contract classes (javalite) generated from the shared /proto tree.
-    sourceSets {
-        main {
-            proto {
-                srcDir("../../../proto")
-            }
-        }
-    }
 }
+
+// protobuf 0.10 adds the "proto" SourceDirectorySet to each Android source
+// set dynamically, so Kotlin DSL has no static accessor — look it up.
+val protoSources = android.sourceSets.getByName("main")
+    .let { it as ExtensionAware }
+    .extensions
+    .getByName("proto") as SourceDirectorySet
+// Wire contract sources live in the shared /proto tree (single copy, both sides).
+protoSources.srcDir("../../../proto")
 
 protobuf {
     protoc {
