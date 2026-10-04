@@ -29,7 +29,7 @@ jobs:
           gradle build --stacktrace 2>&1 | tee build-output.log
 
       - name: Publish build log excerpt
-        if: always()
+        if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -27,7 +27,7 @@ composeBom = "2026.04.01"        # verified (Compose 1.11.0)
 
 # --- DI ---
 hilt = "2.59.2"                  # verified current
-androidxHilt = "1.4.0"           # verified (hilt-navigation-compose)
+androidxHilt = "1.2.0"           # 1.4.0 requires compileSdk 37 (platform not published yet)
 
 # --- Concurrency / serialization ---
 coroutines = "1.10.1"            # verify latest stable
