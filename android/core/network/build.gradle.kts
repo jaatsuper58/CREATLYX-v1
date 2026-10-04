@@ -11,6 +11,7 @@ android {
 
 dependencies {
     implementation(projects.core.common)
+    implementation(projects.core.protocol)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)

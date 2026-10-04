@@ -83,6 +83,50 @@ class DeviceRepository(private val db: DataSource) {
         }
     }
 
+    /** NOT-01: stores the FCM data-only push token for a device. */
+    fun setPushToken(accountId: UUID, deviceId: Long, token: String, now: Long) {
+        db.connection.use { connection ->
+            connection.prepareStatement(
+                "UPDATE devices SET push_token = ?, push_updated_at = ? WHERE id = ? AND account_id = ?",
+            ).use { s2 ->
+                s2.setString(1, token.take(MAX_PUSH_TOKEN))
+                s2.setLong(2, now)
+                s2.setLong(3, deviceId)
+                s2.setObject(4, accountId)
+                s2.executeUpdate()
+            }
+        }
+    }
+
+    fun pushToken(accountId: UUID, deviceId: Long): String? {
+        db.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT push_token FROM devices WHERE id = ? AND account_id = ? AND revoked_at IS NULL",
+            ).use { s2 ->
+                s2.setLong(1, deviceId)
+                s2.setObject(2, accountId)
+                s2.executeQuery().use { rs ->
+                    return if (rs.next()) rs.getString(1) else null
+                }
+            }
+        }
+    }
+
+    fun pushTokensForAccount(accountId: UUID): List<Pair<Long, String>> {
+        db.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT id, push_token FROM devices WHERE account_id = ? AND revoked_at IS NULL AND push_token IS NOT NULL",
+            ).use { s2 ->
+                s2.setObject(1, accountId)
+                s2.executeQuery().use { rs ->
+                    val out = mutableListOf<Pair<Long, String>>()
+                    while (rs.next()) out += rs.getLong(1) to rs.getString(2)
+                    return out
+                }
+            }
+        }
+    }
+
     fun touch(accountId: UUID, deviceId: Long, now: Long) {
         db.connection.use { connection ->
             connection.prepareStatement("UPDATE devices SET last_seen_at = ? WHERE id = ? AND account_id = ?")
@@ -97,5 +141,6 @@ class DeviceRepository(private val db: DataSource) {
 
     private companion object {
         const val MAX_NAME = 64
+        const val MAX_PUSH_TOKEN = 512
     }
 }

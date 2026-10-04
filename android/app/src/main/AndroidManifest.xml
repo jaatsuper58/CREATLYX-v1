@@ -9,6 +9,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- NOT-02: message notifications on Android 13+. Contacts sync is
+         requested in-flow by feature:contacts (CON-02), never declared here. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".ChattlyxApplication"

@@ -8,6 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Retrofit contract for the Phase 1 REST API (AUTH-02..07, AUTH-10, key
@@ -65,4 +66,26 @@ interface ChattlyxServiceApi {
         @Path("accountId") accountId: String,
         @Path("deviceId") deviceId: Long,
     ): Response<KeyBundleDto>
+
+    /** AUTH-06 directory: bundles for all active devices of an account. */
+    @GET("v1/keys/{accountId}")
+    suspend fun keyBundles(@Path("accountId") accountId: String): Response<KeyBundleListDto>
+
+    // --- Phase 2 ---
+
+    /** MSG-06: unacked envelopes for a conversation past a cursor. */
+    @GET("v1/messages/{conversationId}")
+    suspend fun history(
+        @Path("conversationId", encoded = true) conversationId: String,
+        @Query("afterSeq") afterSeq: Long,
+        @Query("limit") limit: Int,
+    ): Response<HistoryResponseDto>
+
+    /** CON-03: private contact discovery by SHA-256 E.164 hashes. */
+    @POST("v1/contacts/discovery")
+    suspend fun discoverContacts(@Body body: DiscoveryRequestDto): Response<DiscoveryResponseDto>
+
+    /** NOT-01: register the FCM data-only push token. */
+    @PUT("v1/devices/push")
+    suspend fun registerPushToken(@Body body: PushTokenDto): Response<Unit>
 }

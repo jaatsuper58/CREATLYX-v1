@@ -37,6 +37,8 @@ message AuthFrame {
 
 message SendFrame {
   Envelope envelope = 1;
+  // Routing hint for 1:1 delivery; validated against the conversation id.
+  string recipient_account_id = 2;
 }
 
 message AckFrame {

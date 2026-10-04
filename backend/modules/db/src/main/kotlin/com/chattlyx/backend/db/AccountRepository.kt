@@ -39,8 +39,39 @@ class AccountRepository(private val db: DataSource) {
         }
     }
 
+    /** Contact-discovery lookup by unpeppered SHA-256 (CON-03). */
+    fun findByE164Sha256(sha256: String): AccountRow? = queryOne(
+        "SELECT * FROM accounts WHERE e164_sha256 = ? AND deleted_at IS NULL",
+        sha256,
+    )
+
+    /** Bulk discovery: returns live accounts matching any of the hashes. */
+    fun findDiscoveryMatches(sha256Hashes: Collection<String>): List<AccountRow> {
+        if (sha256Hashes.isEmpty()) return emptyList()
+        val placeholders = sha256Hashes.joinToString(",") { "?" }
+        db.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT * FROM accounts WHERE e164_sha256 IN ($placeholders) AND deleted_at IS NULL",
+            ).use { statement ->
+                sha256Hashes.forEachIndexed { index, hash ->
+                    statement.setString(index + 1, hash)
+                }
+                statement.executeQuery().use { rs ->
+                    val rows = mutableListOf<AccountRow>()
+                    while (rs.next()) rows += mapRow(rs)
+                    return rows
+                }
+            }
+        }
+    }
+
     /** Upserts by e164_hash; returns the account id. */
-    fun createOrTouch(e164Hash: String, e164Encrypted: ByteArray, now: Long): UUID {
+    fun createOrTouch(
+        e164Hash: String,
+        e164Encrypted: ByteArray,
+        e164Sha256: String,
+        now: Long,
+    ): UUID {
         val existing = findByE164Hash(e164Hash)
         if (existing != null) {
             if (existing.deletedAt != null) restore(existing.id, now)
@@ -51,15 +82,16 @@ class AccountRepository(private val db: DataSource) {
         db.connection.use { connection ->
             connection.prepareStatement(
                 """
-                INSERT INTO accounts (id, e164_hash, e164_encrypted, username, display_name, about, avatar_blob_id, created_at)
-                VALUES (?, ?, ?, NULL, ?, '', NULL, ?)
+                INSERT INTO accounts (id, e164_hash, e164_encrypted, e164_sha256, username, display_name, about, avatar_blob_id, created_at)
+                VALUES (?, ?, ?, ?, NULL, ?, '', NULL, ?)
                 """.trimIndent(),
             ).use { statement ->
                 statement.setObject(1, id)
                 statement.setString(2, e164Hash)
                 statement.setBytes(3, e164Encrypted)
-                statement.setString(4, defaultDisplayName(e164Hash))
-                statement.setLong(5, now)
+                statement.setString(4, e164Sha256)
+                statement.setString(5, defaultDisplayName(e164Hash))
+                statement.setLong(6, now)
                 statement.executeUpdate()
             }
         }

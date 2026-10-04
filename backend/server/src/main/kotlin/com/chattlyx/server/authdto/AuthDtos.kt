@@ -92,3 +92,6 @@ data class KeyBundleDto(
     val oneTimePrekey: PrekeyDto?,
     val kyberPrekey: PrekeyDto?,
 )
+
+@Serializable
+data class KeyBundleListDto(val bundles: List<KeyBundleDto>)

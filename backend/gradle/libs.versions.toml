@@ -34,7 +34,12 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 testcontainers-core = { group = "org.testcontainers", name = "testcontainers", version.ref = "testcontainers" }
 testcontainers-postgresql = { group = "org.testcontainers", name = "postgresql", version.ref = "testcontainers" }
 testcontainers-junit = { group = "org.testcontainers", name = "junit-jupiter", version.ref = "testcontainers" }
+jedis = { group = "redis.clients", name = "jedis", version.ref = "jedis" }
+protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
+ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets-jvm", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
 
 [plugins]
+protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }  # verify latest stable
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

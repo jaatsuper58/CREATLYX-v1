@@ -4,6 +4,68 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.3.0] — Phase 2: Core 1:1 messaging (2026-10-04)
+
+### Added
+- Proto contract: `SessionContent` (encrypted session payload: text, receipt,
+  typing oneof) in `proto/chattlyx/v1/content.proto`; `SendFrame.recipientAccountId`
+  and `Envelope.serverSeq/serverMessageId` fields.
+- Backend `modules:messaging`: conversation id canonicalisation (`dm:<sorted
+  uuid pair>`), send/receive pipeline with Redis per-recipient delivery queues
+  + Postgres envelope rows (delete-on-ack, 30-day TTL sweep), idempotent sends
+  (UNIQUE sender+clientMessageId), fan-out, and a fake push gateway emitting
+  data-only wakes (`cx_env=<envelopeId>`).
+- Backend `modules:redis` + `modules:db` V4: envelope store, discovery hash
+  table, push token table, delivery queue keys with seq counters.
+- Backend `server`: authenticated Protobuf WebSocket gateway at `/v1/ws`
+  (AUTH frame first, connection registry, reconnect drain), contact discovery
+  (`POST /v1/contacts/discovery`, ≤1000 SHA-256 hex digests, public fields
+  only), history sync (`GET /v1/messages/{conversationId}`), FCM token
+  registration (`PUT /v1/devices/push`), account key-bundle directory
+  (`GET /v1/keys/{accountId}`). Integration tests cover enqueue/ack/reconnect
+  drain and discovery.
+- Android `core:protocol`: protobuf-javalite frame models + proto id registry.
+- Android `core:database`: Room V1 schema — conversations, messages (+FTS5
+  body search table and triggers), conversation cursors; SQLCipher passphrase
+  from Keystore; Paging3 sources.
+- Android `core:network`: OkHttp WebSocket `RealtimeClient` (auth first-frame,
+  ping/pong heartbeat, ack protocol, reconnect back-off) and REST endpoints for
+  history/discovery/push/bundles.
+- Android `core:push`: FCM data-only service (zero-plaintext wakes via
+  `PushWakeHandler`), token registrar with soft-fail when FCM is unavailable.
+- Android `domain`/`data`: messaging models, ports and use cases
+  (send/observe/sync/acknowledge/mark-read/typing, discovery, open
+  conversation); `MessageRepositoryImpl`, `ConversationRepositoryImpl`,
+  `ContactRepositoryImpl`, `RealtimeCoordinator` (WS → decrypt → store → ack),
+  `SyncEngine` (MSG-06 reconnect drain), placeholder `SessionCipher`
+  (documented libsignal swap point, see SECURITY.md), `IdentityKeyStore`.
+- Android `feature:chats`: paged chat list with typing hints + unread pills,
+  conversation screen (composer, delivery ticks, read receipts, typing
+  indicator with auto-stop), empty state with invite CTA.
+- Android `feature:contacts`: device contact permission flow (in-flow, never
+  silent), E.164 reading, discovery against the directory, known-contacts list
+  that opens conversations.
+- App: conversation route wired into navigation; realtime + push lifecycle tied
+  to auth state; `POST_NOTIFICATIONS` runtime request (NOT-02).
+- OpenAPI bumped to `0.2.0-phase2` (discovery, push, history, key directory).
+- Tests: session cipher roundtrip/tamper, conversation id canonicalisation,
+  send + discovery use cases, chat/conversation/contacts ViewModels; backend
+  messaging integration suite.
+
+### Fixed
+- `E164.SEPARATORS` regex used escaped backslashes, so spaces/dashes were not
+  stripped from pasted numbers.
+
+### Known limitations (tracked)
+- Session content uses the placeholder static-ECDH cipher (no forward secrecy)
+  until the libsignal licence decision — see SECURITY.md "Phase 2 notes".
+- Discovery hashes are unpeppered (batch-capped + rate-limited; server-side
+  pepper is a Phase 7 item).
+- One active device per peer for session establishment (multi-device fans out
+  once device lists land with groups).
+- Push delivery uses the fake gateway; FCM admin wiring point documented in
+  `FakePushGateway`.
+
 ## [0.2.0] — Phase 1: Auth, keys & profile (2026-10-04)
 
 ### Added

@@ -121,7 +121,12 @@ class OtpService(
         otpSessions.consume(hash, now)
 
         val isNewAccount = accounts.findByE164Hash(hash) == null
-        val accountId = accounts.createOrTouch(hash, vault.encrypt(e164), now)
+        val accountId = accounts.createOrTouch(
+            e164Hash = hash,
+            e164Encrypted = vault.encrypt(e164),
+            e164Sha256 = vault.discoveryHash(e164),
+            now = now,
+        )
         val deviceId = devices.register(accountId, deviceName, now)
         audit.record(accountId, "auth.verified", "device=$deviceId")
 

@@ -30,6 +30,7 @@ dependencies {
     implementation(projects.core.datastore)
     implementation(projects.core.network)
     implementation(projects.core.analytics)
+    implementation(projects.core.push)
 
     implementation(projects.domain)
     implementation(projects.data)

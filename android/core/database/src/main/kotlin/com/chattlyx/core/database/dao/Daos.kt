@@ -1,0 +1,117 @@
+package com.chattlyx.core.database.dao
+
+import androidx.paging.PagingSource
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import com.chattlyx.core.database.entity.ContactEntity
+import com.chattlyx.core.database.entity.ConversationCursor
+import com.chattlyx.core.database.entity.ConversationEntity
+import com.chattlyx.core.database.entity.MessageEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ConversationDao {
+
+    @Query(
+        """
+        SELECT * FROM conversations
+        WHERE archived = 0
+        ORDER BY pinned DESC, last_message_at DESC
+        """,
+    )
+    fun paged(): PagingSource<Int, ConversationEntity>
+
+    @Query("SELECT * FROM conversations WHERE id = :id")
+    fun byId(id: String): Flow<ConversationEntity?>
+
+    @Query("SELECT * FROM conversations WHERE id = :id")
+    suspend fun byIdOnce(id: String): ConversationEntity?
+
+    @Query("SELECT id, last_seq AS lastSeq FROM conversations")
+    suspend fun allCursors(): List<ConversationCursor>
+
+    @Query("SELECT * FROM conversations WHERE peer_account_id = :peerAccountId LIMIT 1")
+    suspend fun byPeer(peerAccountId: String): ConversationEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(conversation: ConversationEntity)
+
+    @Query(
+        """
+        UPDATE conversations
+        SET last_message_text = :preview, last_message_at = :at, last_seq = :seq
+        WHERE id = :id
+        """,
+    )
+    suspend fun touch(id: String, preview: String, at: Long, seq: Long)
+
+    @Query("UPDATE conversations SET unread_count = unread_count + 1 WHERE id = :id")
+    suspend fun incrementUnread(id: String)
+
+    @Query("UPDATE conversations SET unread_count = 0 WHERE id = :id")
+    suspend fun clearUnread(id: String)
+
+    @Query("UPDATE conversations SET pinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: String, pinned: Boolean)
+}
+
+@Dao
+interface MessageDao {
+
+    @Query(
+        """
+        SELECT * FROM messages
+        WHERE conversation_id = :conversationId
+        ORDER BY sent_at DESC
+        """,
+    )
+    fun pagedByConversation(conversationId: String): PagingSource<Int, MessageEntity>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnore(message: MessageEntity): Long
+
+    @Query("UPDATE messages SET status = :status, server_id = :serverId WHERE client_id = :clientId")
+    suspend fun markAcked(clientId: String, serverId: String, status: Int)
+
+    @Query("UPDATE messages SET status = :status WHERE server_id = :serverId")
+    suspend fun updateStatusByServerId(serverId: String, status: Int)
+
+    @Query(
+        """
+        UPDATE messages SET status = :status
+        WHERE conversation_id = :conversationId AND status < :status
+          AND sender_account_id != :notFromSender
+        """
+    )
+    suspend fun raiseIncomingStatus(conversationId: String, status: Int, notFromSender: String)
+
+    @Query(
+        """
+        SELECT server_id FROM messages
+        WHERE conversation_id = :conversationId AND sender_account_id != :notFromSender
+          AND server_id IS NOT NULL AND status < :belowStatus
+        """
+    )
+    suspend fun incomingServerIds(conversationId: String, belowStatus: Int, notFromSender: String): List<String>
+
+    @Query("SELECT count(*) FROM messages WHERE conversation_id = :conversationId")
+    suspend fun count(conversationId: String): Int
+
+    @Query("SELECT body FROM messages_fts WHERE messages_fts MATCH :query LIMIT :limit")
+    suspend fun search(query: String, limit: Int): List<String>
+}
+
+@Dao
+interface ContactDao {
+
+    @Query("SELECT * FROM contacts ORDER BY display_name COLLATE NOCASE ASC")
+    fun observeAll(): Flow<List<ContactEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(contacts: List<ContactEntity>)
+
+    @Query("SELECT * FROM contacts WHERE account_id = :accountId")
+    suspend fun byAccountId(accountId: String): ContactEntity?
+}

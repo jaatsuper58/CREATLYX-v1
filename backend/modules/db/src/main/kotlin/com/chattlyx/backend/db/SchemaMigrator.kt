@@ -91,6 +91,7 @@ class SchemaMigrator(
                 "migrations/V1__accounts_devices.sql",
                 "migrations/V2__otp_sessions.sql",
                 "migrations/V3__avatar_blobs.sql",
+                "migrations/V4__messaging.sql",
             )
     }
 }

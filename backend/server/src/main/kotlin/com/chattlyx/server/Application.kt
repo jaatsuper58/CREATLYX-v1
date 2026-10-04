@@ -5,6 +5,8 @@ import com.chattlyx.backend.auth.AuthServices
 import com.chattlyx.backend.db.DbConfig
 import com.chattlyx.backend.db.DbFactory
 import com.chattlyx.backend.db.SchemaMigrator
+import com.chattlyx.backend.redis.RedisConfig
+import com.chattlyx.server.messaging.MessagingContext
 import com.chattlyx.server.plugins.chattlyxBearer
 import com.chattlyx.server.plugins.configureErrorHandling
 import com.chattlyx.server.plugins.configureLogging
@@ -13,14 +15,16 @@ import com.chattlyx.server.routes.configureRouting
 import com.chattlyx.server.routes.installAccountRoutes
 import com.chattlyx.server.routes.installAuthRoutes
 import com.chattlyx.server.routes.installKeyRoutes
+import com.chattlyx.server.routes.installMessagingRoutes
+import com.chattlyx.server.websocket.installWsGateway
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
-import javax.sql.DataSource
+import io.ktor.server.websocket.WebSockets
 
 /**
- * ChattlyX API module wiring. Stateless per node; the shared DataSource is
- * the only local resource. For tests, use [moduleWithContext].
+ * ChattlyX API module wiring. Stateless per node except the WebSocket
+ * registry; shared state lives in Postgres + Redis.
  */
 fun Application.module() {
     val dbConfig = DbConfig.fromEnv()
@@ -30,11 +34,18 @@ fun Application.module() {
     val authConfig = AuthServiceConfig.fromEnv()
     val authServices = AuthServices.create(authConfig, dataSource)
 
-    moduleWithContext(authServices)
+    val messaging = MessagingContext.create(
+        dataSource = dataSource,
+        redisConfig = RedisConfig.fromEnv(),
+        accountRepository = authServices.accountRepository,
+        deviceRepository = authServices.deviceRepository,
+    )
+
+    moduleWithContext(authServices, messaging)
 }
 
-/** Test-friendly wiring: injects pre-built services. */
-fun Application.moduleWithContext(auth: AuthServices) {
+/** Test-friendly wiring: injects pre-built services (messaging optional). */
+fun Application.moduleWithContext(auth: AuthServices, messaging: MessagingContext? = null) {
     configureSerialization()
     configureLogging()
     configureErrorHandling()
@@ -47,4 +58,10 @@ fun Application.moduleWithContext(auth: AuthServices) {
     installAuthRoutes(auth)
     installAccountRoutes(auth)
     installKeyRoutes(auth)
+
+    if (messaging != null) {
+        install(WebSockets)
+        installMessagingRoutes(auth, messaging)
+        installWsGateway(auth.tokenService, messaging)
+    }
 }

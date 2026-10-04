@@ -1,0 +1,37 @@
+// ChattlyX session-layer content. This is the payload INSIDE the E2EE
+// ciphertext envelope: the server never sees it. Phase 2 ships text,
+// receipts and typing; media descriptors land in Phase 3 (MED-*).
+syntax = "proto3";
+
+package chattlyx.v1;
+
+option java_package = "com.chattlyx.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ContentProto";
+
+message SessionContent {
+  oneof content {
+    TextContent text = 1;
+    ReceiptContent receipt = 2;
+    TypingContent typing = 3;
+  }
+}
+
+message TextContent {
+  string body = 1;
+}
+
+message ReceiptContent {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_DELIVERED = 1;
+    KIND_READ = 2;
+  }
+  Kind kind = 1;
+  // Server ids of the messages being receipted.
+  repeated string server_message_ids = 2;
+}
+
+message TypingContent {
+  bool started = 1;
+}

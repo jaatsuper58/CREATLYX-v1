@@ -3,6 +3,7 @@ package com.chattlyx.server.routes
 import com.chattlyx.backend.auth.AuthServices
 import com.chattlyx.backend.common.ChattlyxServerException
 import com.chattlyx.server.authdto.KeyBundleDto
+import com.chattlyx.server.authdto.KeyBundleListDto
 import com.chattlyx.server.authdto.KeyCountDto
 import com.chattlyx.server.authdto.PrekeyDto
 import com.chattlyx.server.authdto.SignedPrekeyDto
@@ -74,6 +75,42 @@ fun Application.installKeyRoutes(auth: AuthServices) {
                         kyberPrekeys = keys.kyberPreKeyCount(principal.accountId, principal.deviceId),
                     ),
                 )
+            }
+
+            /**
+             * Directory fetch (Phase 2): bundles for every active device of an
+             * account. One-time prekeys are consumed per device as usual.
+             */
+            get("/v1/keys/{accountId}") {
+                call.requireAccount()
+                val targetAccount = call.parameters["accountId"]?.let {
+                    try {
+                        UUID.fromString(it)
+                    } catch (e: IllegalArgumentException) {
+                        throw ChattlyxServerException.Validation("accountId must be a UUID")
+                    }
+                } ?: throw ChattlyxServerException.Validation("accountId required")
+
+                val keys = auth.keyRepository
+                val devices = auth.deviceRepository.listActive(targetAccount)
+                val bundles = devices.map { device ->
+                    val identity = keys.identityKey(targetAccount, device.id)
+                    val signed = keys.signedPreKey(targetAccount, device.id)
+                    val oneTime = keys.consumeOneTimePreKey(targetAccount, device.id)
+                    KeyBundleDto(
+                        accountId = targetAccount.toString(),
+                        deviceId = device.id,
+                        identityKey = identity?.let(encoder::encodeToString),
+                        signedPrekey = signed?.let { (id, record) ->
+                            SignedPrekeyDto(id, encoder.encodeToString(record))
+                        },
+                        oneTimePrekey = oneTime?.let { (id, record) ->
+                            PrekeyDto(id, encoder.encodeToString(record))
+                        },
+                        kyberPrekey = null,
+                    )
+                }
+                call.respond(KeyBundleListDto(bundles))
             }
 
             get("/v1/keys/{accountId}/{deviceId}") {

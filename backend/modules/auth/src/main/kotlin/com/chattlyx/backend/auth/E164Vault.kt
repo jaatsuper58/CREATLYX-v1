@@ -35,6 +35,13 @@ class E164Vault(keyBytes: ByteArray) {
     fun hash(e164: String, pepper: String): String =
         Hashing.sha256Hex(Hashing.hmacSha256(pepper.encodeToByteArray(), e164.encodeToByteArray()))
 
+    /**
+     * Unpeppered SHA-256 used only for contact discovery (CON-03) — the
+     * client computes the same value so neither side shares raw numbers.
+     */
+    fun discoveryHash(e164: String): String =
+        Hashing.sha256Hex(e164.encodeToByteArray())
+
     companion object {
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
 

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ChattlyX API
-  version: 0.1.0-phase1
+  version: 0.2.0-phase2
   summary: |
     Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
     stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
@@ -29,6 +29,10 @@ tags:
     description: Linked device management (AUTH-07)
   - name: keys
     description: Public key distribution (AUTH-06)
+  - name: contacts
+    description: Contact discovery (CON-03)
+  - name: messaging
+    description: Encrypted message history sync (MSG-06)
 
 paths:
   /config:
@@ -286,6 +290,92 @@ paths:
         "404":
           description: No bundle registered for that device
 
+  /keys/{accountId}:
+    get:
+      tags: [keys]
+      operationId: getKeyBundlesForAccount
+      summary: List bundles for every active device of an account (Phase 2)
+      description: |
+        Directory lookup used by the 1:1 pipeline before the first send.
+        One one-time/Kyber prekey is consumed per returned bundle.
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Bundles for all active devices (may be empty)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyBundleList" }
+
+  /contacts/discovery:
+    post:
+      tags: [contacts]
+      operationId: discoverContacts
+      summary: Discover which hashed numbers are on ChattlyX (CON-03)
+      description: |
+        The client sends up to 1000 unpeppered SHA-256 hex digests of E.164
+        numbers. The server answers with registered public profiles only;
+        the echoed hash is never returned, so matches cannot be attributed
+        back to a specific number. See SECURITY.md for the privacy trade-off.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryRequest" }
+      responses:
+        "200":
+          description: Registered accounts whose stored hash is in the batch
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryResponse" }
+        "400":
+          description: More than 1000 hashes or malformed digest
+
+  /devices/push:
+    put:
+      tags: [devices]
+      operationId: registerPushToken
+      summary: Register or rotate the FCM data-only push token (NOT-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PushToken" }
+      responses:
+        "204":
+          description: Token stored for this device
+
+  /messages/{conversationId}:
+    get:
+      tags: [messaging]
+      operationId: getConversationHistory
+      summary: Undelivered/undrained envelopes for a conversation (MSG-06)
+      description: |
+        History sync after reconnect or fresh install. Envelopes are opaque
+        ciphertext; `complete=false` means more pages exist beyond `limit`.
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: afterSeq
+          in: query
+          required: false
+          schema: { type: integer, format: int64, default: 0 }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 100, maximum: 500 }
+      responses:
+        "200":
+          description: Envelope page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HistoryResponse" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -318,6 +408,68 @@ components:
             $ref: "#/components/schemas/Problem"
 
   schemas:
+    KeyBundleList:
+      type: object
+      required: [bundles]
+      properties:
+        bundles:
+          type: array
+          items: { $ref: "#/components/schemas/KeyBundle" }
+
+    DiscoveryRequest:
+      type: object
+      required: [hashes]
+      properties:
+        hashes:
+          type: array
+          maxItems: 1000
+          items:
+            type: string
+            pattern: "^[0-9a-f]{64}$"
+
+    DiscoveredContact:
+      type: object
+      required: [accountId, displayName]
+      properties:
+        accountId: { type: string, format: uuid }
+        displayName: { type: string }
+        username: { type: string, nullable: true }
+        avatarBlobId: { type: string, nullable: true }
+
+    DiscoveryResponse:
+      type: object
+      required: [matches]
+      properties:
+        matches:
+          type: array
+          items: { $ref: "#/components/schemas/DiscoveredContact" }
+
+    PushToken:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    SyncEnvelope:
+      type: object
+      required: [envelopeB64]
+      properties:
+        envelopeB64:
+          type: string
+          description: Base64 proto Envelope with serverSeq/serverMessageId set
+
+    HistoryResponse:
+      type: object
+      required: [conversationId, envelopes, complete]
+      properties:
+        conversationId: { type: string }
+        envelopes:
+          type: array
+          items: { $ref: "#/components/schemas/SyncEnvelope" }
+        complete:
+          type: boolean
+          description: False when more envelopes exist beyond this page
+
     Problem:
       type: object
       description: RFC 9457 problem details

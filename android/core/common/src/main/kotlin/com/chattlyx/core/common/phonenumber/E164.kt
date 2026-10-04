@@ -10,7 +10,7 @@ object E164 {
     const val MIN_LENGTH = 5
     const val MAX_LENGTH = 15
 
-    private val SEPARATORS = Regex("[\\s\\-()./]")
+    private val SEPARATORS = Regex("[\s\-()./]")
 
     /**
      * Normalises a user-entered number to E.164 given the SIM/network region's

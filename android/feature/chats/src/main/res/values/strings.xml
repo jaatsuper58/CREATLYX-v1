@@ -1,6 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="chats_empty_title">No chats yet</string>
-    <string name="chats_empty_message">Say hi 👋 — start a chat with someone on ChattlyX.</string>
-    <string name="chats_empty_action">Invite friends</string>
+    <string name="chats_empty_message">Find people you know on ChattlyX and start a private conversation.</string>
+    <string name="chats_empty_action">Find people</string>
+    <string name="chats_typing">typing…</string>
+
+    <string name="conversation_loading">Loading…</string>
+    <string name="conversation_typing">typing…</string>
+    <string name="conversation_back">Back</string>
+    <string name="conversation_composer_hint">Message</string>
+    <string name="conversation_send">Send</string>
 </resources>

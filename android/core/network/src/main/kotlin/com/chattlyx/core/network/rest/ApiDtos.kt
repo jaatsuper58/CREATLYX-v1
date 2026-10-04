@@ -87,3 +87,36 @@ data class KeyBundleDto(
     val oneTimePrekey: PrekeyDto?,
     val kyberPrekey: PrekeyDto?,
 )
+
+@Serializable
+data class KeyBundleListDto(val bundles: List<KeyBundleDto>)
+
+
+// ---- Phase 2: MSG-06 history sync, CON-03 discovery, NOT-01 push ----
+
+@Serializable
+data class SyncEnvelopeDto(val envelopeB64: String)
+
+@Serializable
+data class HistoryResponseDto(
+    val conversationId: String,
+    val envelopes: List<SyncEnvelopeDto>,
+    val complete: Boolean,
+)
+
+@Serializable
+data class DiscoveryRequestDto(val hashes: List<String>)
+
+@Serializable
+data class DiscoveredContactDto(
+    val accountId: String,
+    val displayName: String,
+    val username: String? = null,
+    val avatarBlobId: String? = null,
+)
+
+@Serializable
+data class DiscoveryResponseDto(val matches: List<DiscoveredContactDto>)
+
+@Serializable
+data class PushTokenDto(val token: String)

@@ -14,6 +14,8 @@ dependencies {
     implementation(projects.core.database)
     implementation(projects.core.datastore)
     implementation(projects.core.crypto)
+    implementation(projects.core.push)
+    implementation(projects.core.protocol)
     implementation(projects.domain)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp)

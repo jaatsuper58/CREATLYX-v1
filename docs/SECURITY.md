@@ -29,6 +29,33 @@ Please report suspected vulnerabilities privately:
    `android/app/src/main/res/xml/network_security_config.xml` (pins are added
    when the production host exists — see comments in that file).
 
+## Phase 2 notes and accepted trade-offs
+
+1. **Placeholder session cipher (temporary, pre-libsignal).** The 1:1 message
+   path uses a stop-gap cipher — static-static ECDH (X25519/EC) → HKDF-SHA256 →
+   AES-256-GCM — implemented in `SessionCipher` (Android `data` module). It
+   provides confidentiality + integrity but **no forward secrecy and no
+   ratcheting**. This contradicts posture §1 and is acceptable only because
+   ADR-0002 (libsignal adoption, pending counsel's AGPL review) blocks the
+   real protocol. The swap replaces `SessionCipher` wholesale; the server is
+   opaque to session content either way. Messages sent on the placeholder
+   cipher must be treated as best-effort confidential until libsignal lands.
+2. **Contact discovery trade-off (CON-03).** Clients upload up to 1,000
+   unpeppered SHA-256 digests of E.164 numbers per request; the server answers
+   with matching registered public profiles only and never echoes the matched
+   hash, so responses cannot be attributed to a specific number. Residual
+   risks, accepted for Phase 2: (a) an authenticated attacker who can query the
+   endpoint can probe individual numbers (unpeppered hashes are precomputable
+   over the global E.164 space); mitigations in place are authentication,
+   per-account rate limiting and batch caps. Planned hardening: server-side
+   pepper issued at registration, and a PSI/CDSI-style protocol once scale
+   justifies it.
+3. **Receipts and typing metadata.** Read/delivered receipts ride inside
+   encrypted session content (zero-knowledge preserved). Typing indicators are
+   server-routed envelopes whose *content* is encrypted; the envelope
+   metadata (sender, recipient, timing) is visible to the server by design —
+   metadata minimisation is a Phase 7 hardening item.
+
 ## Pre-launch gates
 
 - OWASP MASVS L2 checklist + MASTG cases (`docs/masvs-l2-checklist.md`, created

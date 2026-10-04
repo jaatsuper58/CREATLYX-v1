@@ -28,4 +28,8 @@ message Envelope {
   bytes ciphertext = 5;          // opaque to the server
   Uuid client_message_id = 6;    // idempotency key (UUIDv7)
   string conversation_id = 7;
+  // Server-assigned per-conversation cursor (set on delivery/sync only).
+  int64 server_seq = 8;
+  // Server envelope id; clients echo it in AckFrame.
+  string server_message_id = 9;
 }
