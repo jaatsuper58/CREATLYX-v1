@@ -152,7 +152,7 @@ private fun CallVideoSurface(
     engine: com.chattlyx.core.rtc.CallEngine,
     modifier: Modifier = Modifier,
 ) {
-    androidx.compose.ui.viewinterop.AndroidView(
+    androidx.compose.ui.viewinterop.AndroidView<org.webrtc.SurfaceViewRenderer>(
         modifier = modifier,
         factory = { ctx ->
             org.webrtc.SurfaceViewRenderer(ctx).apply {
