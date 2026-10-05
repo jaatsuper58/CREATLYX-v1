@@ -24,20 +24,25 @@ class CallNotifications @Inject constructor(
     private val manager = context.getSystemService(NotificationManager::class.java)
 
     init {
-        val channel = NotificationChannel(
-            CHANNEL_INCOMING_CALLS,
-            context.getString(R.string.call_notifications_channel),
-            NotificationManager.IMPORTANCE_HIGH,
-        ).apply {
-            description = context.getString(R.string.call_notifications_channel_desc)
-            setSound(null, null) // the in-app ringtone owns audio
-            vibrationPattern = longArrayOf(0, 500, 250, 500)
+        // Channels exist from API 26; below that the in-app overlay is the
+        // ring surface and this class stays a no-op.
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_INCOMING_CALLS,
+                context.getString(R.string.call_notifications_channel),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = context.getString(R.string.call_notifications_channel_desc)
+                setSound(null, null) // the in-app ringtone owns audio
+                vibrationPattern = longArrayOf(0, 500, 250, 500)
+            }
+            manager.createNotificationChannel(channel)
         }
-        manager.createNotificationChannel(channel)
     }
 
     /** Raises the full-screen incoming-call notification for [peerDisplay]. */
     fun showIncomingCall(peerDisplay: String) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) return
         val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)
             ?: return
         val intent = PendingIntent.getActivity(
