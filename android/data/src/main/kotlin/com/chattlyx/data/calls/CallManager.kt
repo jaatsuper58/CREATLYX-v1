@@ -27,6 +27,11 @@ import com.chattlyx.domain.calls.CallLogEntry
 import com.chattlyx.domain.calls.CallMedia
 import com.chattlyx.domain.calls.CallSession
 import com.chattlyx.domain.calls.CallSessionState
+<<<<<<< HEAD
+=======
+import com.chattlyx.domain.calls.CallTelecomNotifier
+import com.chattlyx.domain.calls.NoopCallTelecomNotifier
+>>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
 import com.chattlyx.domain.calls.CallSignal
 import com.chattlyx.domain.calls.CallSignalKind
 import com.chattlyx.proto.CallSignalContent
@@ -64,6 +69,10 @@ class CallManager @Inject constructor(
     private val tokenStore: SecureTokenStore,
     private val callLogDao: CallLogDao,
     private val callNotifications: CallNotifications,
+<<<<<<< HEAD
+=======
+    private val telecomNotifier: CallTelecomNotifier = NoopCallTelecomNotifier,
+>>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
     @Dispatcher(ChattlyxDispatcher.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : CallSession, CallHistoryRepository {
 
@@ -126,6 +135,10 @@ class CallManager @Inject constructor(
         }
 
         _state.value = CallSessionState.Outgoing(callId, peerAccountId, media)
+<<<<<<< HEAD
+=======
+        telecomNotifier.onOutgoingStarted(callId, peerAccountId)
+>>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
         ringTimeoutJob = scope.launch {
             kotlinx.coroutines.delay(RING_TIMEOUT_MS)
             if (_state.value is CallSessionState.Outgoing) {
@@ -354,6 +367,10 @@ class CallManager @Inject constructor(
         wasOutgoing = false
         _state.value = CallSessionState.Incoming(signal.callId, sender, signal.media)
         callNotifications.showIncomingCall(sender)
+<<<<<<< HEAD
+=======
+        telecomNotifier.onIncomingStarted(signal.callId, sender)
+>>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
         ringTimeoutJob = scope.launch {
             kotlinx.coroutines.delay(RING_TIMEOUT_MS)
             if (_state.value is CallSessionState.Incoming) {
@@ -471,6 +488,10 @@ class CallManager @Inject constructor(
         media: CallMedia,
     ) {
         callNotifications.dismiss()
+<<<<<<< HEAD
+=======
+        telecomNotifier.onCallEnded()
+>>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
         ringTimeoutJob?.cancel()
         ringTimeoutJob = null
         iceForwardJob?.cancel()

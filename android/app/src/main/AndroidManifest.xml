@@ -18,6 +18,8 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- CALL-02 (Phase 7): full-screen incoming-call surface. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- CALL-06 (Phase 8): self-managed calls in the system telecom stack. -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <application
         android:name=".ChattlyxApplication"
@@ -44,6 +46,18 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- CALL-06 (Phase 8): self-managed ConnectionService so ChattlyX
+             calls integrate with system call UIs, Bluetooth and car modes.
+             System-created; not user-launchable. -->
+        <service
+            android:name=".telecom.ChattlyxCallService"
+            android:exported="true"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".MainActivity"
