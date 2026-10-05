@@ -54,14 +54,10 @@ class TelecomCallNotifier @Inject constructor(
                 putString(ChattlyxCallService.EXTRA_CALL_ID, callId)
                 putString(ChattlyxCallService.EXTRA_PEER_ACCOUNT_ID, peerAccountId)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                telecomManager.addNewOutgoingCall(accountHandle, extras)
-            } else {
-                telecomManager.placeCall(
-                    android.net.Uri.fromParts("tel", PEER_PLACEHOLDER, null),
-                    extras,
-                )
-            }
+            telecomManager.placeCall(
+                android.net.Uri.fromParts("tel", PEER_PLACEHOLDER, null),
+                extras,
+            )
         }.onFailure { Timber.w(it, "Telecom outgoing report failed") }
     }
 

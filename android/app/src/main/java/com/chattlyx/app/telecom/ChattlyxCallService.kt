@@ -6,6 +6,7 @@ import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
 import android.telecom.DisconnectCause
+import android.telecom.PhoneAccountHandle
 import android.telecom.TelecomManager
 import com.chattlyx.domain.calls.CallSession
 import dagger.hilt.EntryPoint
@@ -21,17 +22,18 @@ import kotlinx.coroutines.launch
 /**
  * CALL-06 (Phase 8): self-managed ConnectionService. Android instantiates
  * this class directly, so dependencies are pulled through a Hilt entry point
- * rather than injection.
+ * rather than injection. Signatures follow the public API 23 contract
+ * (`onCreate{Incoming,Outgoing}Connection(PhoneAccountHandle, ConnectionRequest)`).
  */
 class ChattlyxCallService : ConnectionService() {
 
-    override fun onCreateOutgoingCall(
-        connectionManager: android.telecom.ConnectionManager?,
+    override fun onCreateOutgoingConnection(
+        connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?,
     ): Connection = buildConnection(request)
 
-    override fun onCreateIncomingCall(
-        connectionManager: android.telecom.ConnectionManager?,
+    override fun onCreateIncomingConnection(
+        connectionManagerPhoneAccount: PhoneAccountHandle?,
         request: ConnectionRequest?,
     ): Connection = buildConnection(request)
 
@@ -89,6 +91,7 @@ class ChattlyxCallService : ConnectionService() {
             val connection = activeConnection ?: return
             activeConnection = null
             connection.setDisconnected(DisconnectCause(DisconnectCause.LOCAL))
+            connection.release()
             connection.destroy()
         }
     }
@@ -122,9 +125,9 @@ class SelfManagedConnection(
         scope.launch { session.hangUp() }
     }
 
-    override fun onDestroy() {
+    /** Stops the delegation scope once the platform tears the call down. */
+    fun release() {
         scope.cancel()
-        super.onDestroy()
     }
 }
 
