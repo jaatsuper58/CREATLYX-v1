@@ -5,6 +5,8 @@ import com.chattlyx.core.common.dispatchers.ChattlyxDispatcher
 import com.chattlyx.core.common.dispatchers.Dispatcher
 import com.chattlyx.core.common.error.ChattlyError
 import com.chattlyx.core.common.result.Result
+import com.chattlyx.core.common.result.fold
+import com.chattlyx.core.common.result.getOrElse
 import com.chattlyx.core.crypto.AttachmentCipher
 import com.chattlyx.core.network.rest.ChattlyxServiceApi
 import com.chattlyx.core.network.rest.DeclareAttachmentDto
