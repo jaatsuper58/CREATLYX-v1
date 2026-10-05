@@ -38,3 +38,13 @@ data class AddMembersBody(val accountIds: List<String>)
 
 @Serializable
 data class MembershipVersionResponse(val membershipVersion: Long)
+
+@Serializable
+data class PresenceDto(
+    val accountId: String,
+    val online: Boolean,
+    val lastSeenMs: Long? = null,
+)
+
+@Serializable
+data class BlockListResponse(val blockedAccountIds: List<String>)

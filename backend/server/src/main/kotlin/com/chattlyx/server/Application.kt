@@ -2,6 +2,7 @@ package com.chattlyx.server
 
 import com.chattlyx.backend.auth.AuthServiceConfig
 import com.chattlyx.backend.auth.AuthServices
+import com.chattlyx.backend.db.BlockRepository
 import com.chattlyx.backend.db.DbConfig
 import com.chattlyx.backend.db.DbFactory
 import com.chattlyx.backend.db.SchemaMigrator
@@ -16,6 +17,8 @@ import com.chattlyx.server.plugins.configureSerialization
 import com.chattlyx.server.routes.configureRouting
 import com.chattlyx.server.routes.installAccountRoutes
 import com.chattlyx.server.routes.installAttachmentRoutes
+import com.chattlyx.server.routes.installBlockRoutes
+import com.chattlyx.server.routes.installPresenceRoutes
 import com.chattlyx.server.routes.installGroupRoutes
 import com.chattlyx.server.routes.installAuthRoutes
 import com.chattlyx.server.routes.installKeyRoutes
@@ -53,7 +56,9 @@ fun Application.module() {
         registry = messaging.registry,
     )
 
-    moduleWithContext(authServices, messaging, attachments, groups)
+    val blocks = BlockRepository(dataSource)
+
+    moduleWithContext(authServices, messaging, attachments, groups, blocks)
 }
 
 /** Test-friendly wiring: injects pre-built services (messaging/attachments optional). */
@@ -62,6 +67,7 @@ fun Application.moduleWithContext(
     messaging: MessagingContext? = null,
     attachments: AttachmentContext? = null,
     groups: GroupContext? = null,
+    blocks: BlockRepository? = null,
 ) {
     configureSerialization()
     configureLogging()
@@ -88,5 +94,12 @@ fun Application.moduleWithContext(
 
     if (groups != null) {
         installGroupRoutes(groups)
+    }
+
+    if (blocks != null) {
+        installBlockRoutes(blocks)
+        if (messaging != null) {
+            installPresenceRoutes(messaging, blocks)
+        }
     }
 }

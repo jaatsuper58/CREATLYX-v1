@@ -94,6 +94,7 @@ class SchemaMigrator(
                 "migrations/V4__messaging.sql",
                 "migrations/V5__attachments.sql",
                 "migrations/V6__groups.sql",
+                "migrations/V7__blocked_peers.sql",
             )
     }
 }
