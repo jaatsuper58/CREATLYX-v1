@@ -56,6 +56,27 @@ Please report suspected vulnerabilities privately:
    metadata (sender, recipient, timing) is visible to the server by design —
    metadata minimisation is a Phase 7 hardening item.
 
+## Phase 3/4 notes and accepted trade-offs
+
+1. **Attachment ids are capability tokens (MED-01..04).** Attachment UUIDs are
+   never enumerable: they travel only inside E2EE `AttachmentContent` payloads,
+   and every `/v1/attachments/{id}` endpoint answers **404** for anyone who is
+   neither the sender nor the declared recipient — including an existence
+   check. Blob keys and nonces exist only inside those E2EE payloads and in
+   the client's encrypted local store; the server stores ciphertext only and
+   verifies uploads against the declared SHA-256. Download paths verify the
+   ciphertext digest before decrypting, so a tampered blob fails closed.
+2. **Group membership metadata is server-visible (GRP-*).** By design the
+   server knows group membership, roles and names — this is the same metadata
+   model as the 1:1 transport (envelope headers). Group *message content*
+   stays E2EE: with the placeholder cipher (note §1 under Phase 2) the client
+   fans out one pairwise-encrypted envelope per member; Sender Keys (libsignal)
+   replace that fan-out once ADR-0002 clears. Strangers receive 404 for group
+   reads, mirroring the attachment capability model.
+3. **Voice notes and media files are plaintext only inside app-private
+   storage** (`filesDir/attachments`, never shared except through the
+   FileProvider grant for an explicit user "open" action).
+
 ## Pre-launch gates
 
 - OWASP MASVS L2 checklist + MASTG cases (`docs/masvs-l2-checklist.md`, created

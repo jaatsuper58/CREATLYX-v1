@@ -4,6 +4,56 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.5.0] — Phase 4: Groups (2026-10-05)
+
+### Added
+- Backend: `groups` + `group_members` tables (V6), `GroupRepository`,
+  `GroupService` with role rules (owner/admin/member; owner leaving promotes
+  the earliest member; empty group deletes), REST surface
+  (`POST/GET /v1/groups`, `GET|PATCH /v1/groups/{id}`,
+  `POST /v1/groups/{id}/members`, `DELETE /v1/groups/{id}/members/{accountId}`),
+  and live `GroupUpdateFrame` fan-out to member sockets on every mutation.
+  Integration tests cover membership reads, rename/add/remove authorisation,
+  owner succession and stranger 404s. OpenAPI bumped to `0.4.0-phase4`.
+- Android: Room v3 (`groups`, `group_members` + migration), group REST layer,
+  local cache with chat-list integration (`grp:<id>` conversation rows),
+  group text sends via pairwise fan-out (documented Sender Keys swap point),
+  `GroupUpdateFrame` resync in the realtime coordinator, create-group dialog
+  with contact member selection, and ViewModel tests.
+
+### Known limitations (tracked)
+- Group media/file sending is 1:1-only until attachment ACLs grow group scope
+  (Phase 6); group voice/video calls land in Phase 5.
+- Fan-out encrypts one envelope per member with the placeholder cipher; Sender
+  Keys arrive with libsignal (ADR-0002).
+
+## [0.4.0] — Phase 3: Media, files & voice notes (2026-10-05)
+
+### Added
+- Proto: `AttachmentContent` (kind, blob id, mime, size, ciphertext SHA-256,
+  dimensions/duration, file name, optional inline thumbnail, key + nonce) in
+  `SessionContent.attachment`.
+- Backend `modules:storage` (pluggable `BlobStore`, filesystem implementation;
+  S3-presigned swap point documented for Phase 7), V5 `attachments` schema,
+  attachment declare/upload/meta/download REST with sender/recipient-only
+  access (strangers get 404), integration tests, OpenAPI `0.3.0-phase3` with a
+  reusable RFC 9457 `Problem` response.
+- Android `AttachmentPipeline` (AES-256-GCM chunked encrypt -> declare ->
+  upload; digest-verified download -> decrypt into app-private storage),
+  `SendAttachmentUseCase`/`DownloadAttachmentUseCase`, Room v2 attachment
+  columns on messages, composer attach menu (Photo Picker / SAF / voice),
+  voice recording (MediaRecorder) + playback (Media3 ExoPlayer), image bubbles
+  via Coil with a fullscreen viewer, download affordances with retry, and
+  FileProvider-scoped external open. Unit + Robolectric tests for the
+  pipeline; ViewModel tests extended.
+
+### Security
+- Attachment ids act as capability tokens; see SECURITY.md Phase 3/4 notes.
+
+### Known limitations (tracked)
+- Upload progress is coarse (busy state) pending per-chunk progress plumbing.
+- Video playback opens the system viewer; an in-app player is a Phase 6 item.
+
 ## [0.3.0] — Phase 2: Core 1:1 messaging (2026-10-04)
 
 ### Added
