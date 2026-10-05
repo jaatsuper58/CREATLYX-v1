@@ -213,11 +213,13 @@ fun ConversationScreen(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = { attachMenuOpen = true }) {
-                        Icon(
-                            imageVector = ChattlyxIcons.Paperclip,
-                            contentDescription = stringResource(R.string.attachment_add),
-                        )
+                    if (!viewModel.isGroup) {
+                        IconButton(onClick = { attachMenuOpen = true }) {
+                            Icon(
+                                imageVector = ChattlyxIcons.Paperclip,
+                                contentDescription = stringResource(R.string.attachment_add),
+                            )
+                        }
                     }
                     ChattlyxTextField(
                         value = composer,
@@ -227,7 +229,7 @@ fun ConversationScreen(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(4.dp))
-                    if (composer.isBlank()) {
+                    if (composer.isBlank() && !viewModel.isGroup) {
                         IconButton(onClick = {
                             if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
                                 androidx.core.content.ContextCompat.checkSelfPermission(

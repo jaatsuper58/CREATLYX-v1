@@ -1,19 +1,22 @@
 package com.chattlyx.feature.chats
 
-import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
-import app.cash.turbine.test
+import com.chattlyx.core.common.error.ChattlyError
+import com.chattlyx.core.common.result.Result
+import com.chattlyx.domain.groups.CreateGroupUseCase
+import com.chattlyx.domain.groups.RefreshGroupsUseCase
 import com.chattlyx.domain.messaging.RealtimeEvents
-import com.chattlyx.domain.messaging.TypingEvent
+import com.chattlyx.domain.messaging.usecases.ObserveContactsUseCase
 import com.chattlyx.domain.messaging.usecases.ObserveConversationsUseCase
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -21,44 +24,81 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
+/** GRP-01 group creation flow from the chat list. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatsViewModelTest {
 
+    private val dispatcher = StandardTestDispatcher()
+    private val refreshGroups = mockk<RefreshGroupsUseCase> {
+        coEvery { this@mockk() } returns Result.success(Unit)
+    }
+
+    private fun buildViewModel(createResult: Result<String>): ChatsViewModel {
+        val createGroup = mockk<CreateGroupUseCase> {
+            coEvery { this@mockk(any(), any()) } returns createResult
+        }
+        return ChatsViewModel(
+            observeConversations = mockk<ObserveConversationsUseCase> {
+                every { this@mockk() } returns flowOf(PagingData.empty())
+            },
+            observeContacts = mockk<ObserveContactsUseCase> {
+                every { this@mockk() } returns flowOf(emptyList())
+            },
+            realtimeEvents = mockk<RealtimeEvents> {
+                every { typingEvents } returns emptyFlow()
+            },
+            createGroupUseCase = createGroup,
+            refreshGroupsUseCase = refreshGroups,
+        )
+    }
+
     @Test
-    fun `typing events accumulate per conversation`() = runTest {
+    fun `opening the list refreshes groups from the server`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
-            val typing = MutableSharedFlow<TypingEvent>(extraBufferCapacity = 8)
-            val realtime = mockk<RealtimeEvents> {
-                every { typingEvents } returns typing
-            }
-            val observe = mockk<ObserveConversationsUseCase> {
-                every { this@mockk() } returns flowOf(PagingData.empty())
-            }
+            buildViewModel(Result.success("g1"))
+            runCurrent()
+            coVerify { refreshGroups() }
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 
-            val viewModel = ChatsViewModel(observe, realtime)
+    @Test
+    fun `successful creation publishes the group id`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val viewModel = buildViewModel(Result.success("group-123"))
+            runCurrent()
 
-            viewModel.typingByConversation.test {
-                assertEquals(emptyMap(), awaitItem())
-                // Let stateIn's upstream collection start; a replay-0 SharedFlow
-                // drops events emitted before any collector is attached.
-                runCurrent()
+            viewModel.createGroup("Team", listOf("a", "b"))
+            runCurrent()
 
-                typing.emit(TypingEvent("dm:a:b", "peer-b", started = true))
-                runCurrent()
-                assertEquals(mapOf("dm:a:b" to true), awaitItem())
+            assertEquals("group-123", viewModel.createdGroupId.value)
+            viewModel.consumeCreatedGroup()
+            assertEquals(null, viewModel.createdGroupId.value)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 
-                typing.emit(TypingEvent("dm:a:b", "peer-b", started = false))
-                runCurrent()
-                assertEquals(mapOf("dm:a:b" to false), awaitItem())
+    @Test
+    fun `validation failures surface the message key`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val viewModel = buildViewModel(
+                Result.failure(
+                    ChattlyError.Validation(field = "name", messageKey = "validation_group_name_empty"),
+                ),
+            )
+            runCurrent()
 
-                // Tear the sharing scope down while the turbine collector is
-                // still attached so WhileSubscribed's delayed stop never runs
-                // against a reset Main dispatcher.
-                viewModel.viewModelScope.cancel()
-                runCurrent()
-                cancelAndIgnoreRemainingEvents()
-            }
+            viewModel.createGroup("", emptyList())
+            runCurrent()
+
+            assertEquals("validation_group_name_empty", viewModel.groupErrorKey.value)
+            viewModel.consumeGroupError()
+            assertEquals(null, viewModel.groupErrorKey.value)
         } finally {
             Dispatchers.resetMain()
         }

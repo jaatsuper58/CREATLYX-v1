@@ -5,6 +5,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -89,6 +90,35 @@ interface ChattlyxServiceApi {
     /** NOT-01: register the FCM data-only push token. */
     @PUT("v1/devices/push")
     suspend fun registerPushToken(@Body body: PushTokenDto): Response<Unit>
+
+    // --- Phase 4 (GRP-01..06) groups ---
+
+    /** GRP-01: create a group; creator becomes owner. */
+    @POST("v1/groups")
+    suspend fun createGroup(@Body body: CreateGroupDto): Response<GroupDto>
+
+    /** GRP-03: the caller's group list. */
+    @GET("v1/groups")
+    suspend fun listGroups(): Response<GroupListResponseDto>
+
+    /** GRP-03: one group with members (members only). */
+    @GET("v1/groups/{id}")
+    suspend fun group(@Path("id") groupId: String): Response<GroupDto>
+
+    /** GRP-05: rename (owner/admin). */
+    @PATCH("v1/groups/{id}")
+    suspend fun renameGroup(@Path("id") groupId: String, @Body body: RenameGroupDto): Response<GroupDto>
+
+    /** GRP-04: add members (owner/admin). */
+    @POST("v1/groups/{id}/members")
+    suspend fun addGroupMembers(@Path("id") groupId: String, @Body body: AddMembersDto): Response<GroupDto>
+
+    /** GRP-06: self-leave or admin removal. */
+    @DELETE("v1/groups/{id}/members/{accountId}")
+    suspend fun removeGroupMember(
+        @Path("id") groupId: String,
+        @Path("accountId") accountId: String,
+    ): Response<MembershipVersionDto>
 
     // --- Phase 3 (MED-01..04) attachments ---
 

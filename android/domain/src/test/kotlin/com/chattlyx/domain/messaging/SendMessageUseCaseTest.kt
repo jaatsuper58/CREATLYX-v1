@@ -22,6 +22,9 @@ private class FakeMessageRepository : MessageRepository {
         return Result.success("client-1")
     }
 
+    override suspend fun sendGroupMessage(groupId: String, body: String): Result<String> =
+        Result.success("client-group-1")
+
     override suspend fun acknowledge(serverIds: List<String>) = Unit
     override suspend fun markRead(conversationId: String) = Unit
     override suspend fun sync(): Result<Unit> = Result.success(Unit)

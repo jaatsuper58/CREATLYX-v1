@@ -5,14 +5,17 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.chattlyx.core.database.dao.ContactDao
 import com.chattlyx.core.database.dao.ConversationDao
+import com.chattlyx.core.database.dao.GroupDao
 import com.chattlyx.core.database.dao.MessageDao
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.ConversationEntity
+import com.chattlyx.core.database.entity.GroupEntity
+import com.chattlyx.core.database.entity.GroupMemberEntity
 import com.chattlyx.core.database.entity.MessageEntity
 import com.chattlyx.core.database.entity.MessageFtsEntity
 
 /**
- * SQLCipher-backed Room database (Section 7.1), version 2. Schema exports
+ * SQLCipher-backed Room database (Section 7.1), version 3. Schema exports
  * live in core/database/schemas for migration testing.
  */
 @Database(
@@ -21,8 +24,10 @@ import com.chattlyx.core.database.entity.MessageFtsEntity
         MessageEntity::class,
         ContactEntity::class,
         MessageFtsEntity::class,
+        GroupEntity::class,
+        GroupMemberEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class ChattlyxDatabase : RoomDatabase() {
@@ -30,9 +35,38 @@ abstract class ChattlyxDatabase : RoomDatabase() {
     abstract fun conversations(): ConversationDao
     abstract fun messages(): MessageDao
     abstract fun contacts(): ContactDao
+    abstract fun groups(): GroupDao
 
     companion object {
         const val NAME = "chattlyx.db"
+
+        /** Phase 4 (GRP-*): groups + membership cache tables. */
+        val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `groups` (
+                        `id` TEXT NOT NULL PRIMARY KEY,
+                        `name` TEXT NOT NULL,
+                        `created_by` TEXT NOT NULL,
+                        `membership_version` INTEGER NOT NULL,
+                        `created_at` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `group_members` (
+                        `group_id` TEXT NOT NULL,
+                        `account_id` TEXT NOT NULL,
+                        `role` TEXT NOT NULL,
+                        `joined_at` INTEGER NOT NULL,
+                        PRIMARY KEY (`group_id`, `account_id`)
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
 
         /** Phase 3 (MED-*): attachment descriptor columns on messages. */
         val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {

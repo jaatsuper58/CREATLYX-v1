@@ -32,6 +32,7 @@ class RealtimeCoordinator @Inject constructor(
     private val messageRepository: MessageRepositoryImpl,
     private val conversationRepository: ConversationRepositoryImpl,
     private val syncEngine: SyncEngine,
+    private val groupRepository: com.chattlyx.data.groups.GroupRepositoryImpl,
     @Dispatcher(ChattlyxDispatcher.IO) private val dispatcher: CoroutineDispatcher,
 ) : RealtimeEvents {
 
@@ -84,6 +85,13 @@ class RealtimeCoordinator @Inject constructor(
 
     private suspend fun handleFrame(frame: Frame) {
         when {
+            frame.hasGroupUpdate() -> {
+                // GRP-*: membership/name changed; refresh the affected group.
+                val groupId = frame.groupUpdate.groupId
+                if (groupId.isNotEmpty()) {
+                    groupRepository.refreshGroup(groupId)
+                }
+            }
             frame.hasDeliver() -> {
                 val envelope = frame.deliver.envelope
                 val incoming = messageRepository.onDeliver(envelope)

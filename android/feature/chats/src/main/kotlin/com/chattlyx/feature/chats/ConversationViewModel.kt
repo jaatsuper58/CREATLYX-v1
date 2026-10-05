@@ -79,6 +79,9 @@ class ConversationViewModel @Inject constructor(
 
     val composerText = MutableStateFlow("")
 
+    /** GRP-*: group conversations gate attachments (1:1 only in Phase 4). */
+    val isGroup: Boolean = conversationId.startsWith("grp:")
+
     /** MED-02: true while an attachment is encrypting/uploading. */
     private val _attachmentSending = MutableStateFlow(false)
     val attachmentSending: StateFlow<Boolean> = _attachmentSending.asStateFlow()
@@ -110,6 +113,11 @@ class ConversationViewModel @Inject constructor(
         if (body.isEmpty() || peer == null) return
 
         composerText.value = ""
+        if (isGroup) {
+            // GRP-02: fan-out group text (peerAccountId carries the groupId).
+            viewModelScope.launch { messageRepository.sendGroupMessage(peer, body) }
+            return
+        }
         emitTyping(started = false)
         viewModelScope.launch {
             // Outgoing row appears immediately via the store (PENDING status);

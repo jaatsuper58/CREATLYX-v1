@@ -1,15 +1,35 @@
 package com.chattlyx.feature.chats
 
 import android.content.res.Configuration
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
@@ -37,14 +57,48 @@ fun ChatsScreen(
 ) {
     val pagingItems = viewModel.conversations.collectAsLazyPagingItems()
     val typing by viewModel.typingByConversation.collectAsStateWithLifecycle()
+    val contacts by viewModel.contacts.collectAsStateWithLifecycle()
+    val createdGroupId by viewModel.createdGroupId.collectAsStateWithLifecycle()
+    val groupErrorKey by viewModel.groupErrorKey.collectAsStateWithLifecycle()
+    var createDialogOpen by remember { mutableStateOf(false) }
 
-    ChatsContent(
-        pagingItems = pagingItems,
-        typingByConversation = typing,
-        onOpenConversation = onOpenConversation,
-        onInvite = onInvite,
-        modifier = modifier,
-    )
+    LaunchedEffect(createdGroupId) {
+        val groupId = createdGroupId ?: return@LaunchedEffect
+        viewModel.consumeCreatedGroup()
+        onOpenConversation("grp:$groupId")
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        ChatsContent(
+            pagingItems = pagingItems,
+            typingByConversation = typing,
+            onOpenConversation = onOpenConversation,
+            onInvite = onInvite,
+        )
+        FloatingActionButton(
+            onClick = { createDialogOpen = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        ) {
+            Icon(
+                imageVector = ChattlyxIcons.Contacts,
+                contentDescription = stringResource(R.string.group_new),
+            )
+        }
+    }
+
+    if (createDialogOpen) {
+        CreateGroupDialog(
+            contacts = contacts,
+            errorKey = groupErrorKey,
+            onDismiss = {
+                createDialogOpen = false
+                viewModel.consumeGroupError()
+            },
+            onCreate = { name, memberIds -> viewModel.createGroup(name, memberIds) },
+        )
+    }
 }
 
 @Composable
@@ -105,6 +159,86 @@ private fun Conversation.toRowState(isTyping: Boolean) = ChatListItemState(
 
 private fun formatTime(millis: Long): String =
     if (millis <= 0) "" else DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis))
+
+/** GRP-01: name + member selection over discovered contacts. */
+@Composable
+private fun CreateGroupDialog(
+    contacts: List<com.chattlyx.domain.messaging.ContactInfo>,
+    errorKey: String?,
+    onDismiss: () -> Unit,
+    onCreate: (String, List<String>) -> Unit,
+) {
+    var name by remember { mutableStateOf("") }
+    val selected = remember { mutableStateListOf<String>() }
+    val errorText = when (errorKey) {
+        null -> null
+        "validation_group_name_empty" -> stringResource(R.string.group_name_empty)
+        "validation_group_name_too_long" -> stringResource(R.string.group_name_too_long)
+        else -> stringResource(R.string.group_create_failed)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onCreate(name, selected.toList()) }) {
+                Text(stringResource(R.string.group_create))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.group_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.group_new)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.chattlyx.core.designsystem.component.ChattlyxTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = stringResource(R.string.group_name_hint),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (errorText != null) {
+                    Text(
+                        text = errorText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                if (contacts.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.group_no_contacts),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                contacts.forEach { contact ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (selected.contains(contact.accountId)) {
+                                    selected.remove(contact.accountId)
+                                } else {
+                                    selected.add(contact.accountId)
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = selected.contains(contact.accountId),
+                            onCheckedChange = { checked ->
+                                if (checked) selected.add(contact.accountId) else selected.remove(contact.accountId)
+                            },
+                        )
+                        Text(text = contact.displayName, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+    )
+}
 
 @Preview(name = "Light", showBackground = true)
 @Preview(name = "Dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)

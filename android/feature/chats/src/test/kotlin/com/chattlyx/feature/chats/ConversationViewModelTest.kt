@@ -110,6 +110,52 @@ class ConversationViewModelTest {
         }
     }
 
+    @Test
+    fun `group conversations fan out through sendGroupMessage`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val group = Conversation(
+                id = "grp:g1",
+                peerAccountId = "g1",
+                peerName = "Team",
+                peerAvatarBlobId = null,
+                lastMessageText = "",
+                lastMessageAt = 0L,
+                unreadCount = 0,
+                pinned = false,
+            )
+            val viewModel = ConversationViewModel(
+                savedStateHandle = SavedStateHandle(mapOf("conversationId" to "grp:g1")),
+                observeMessages = mockk<ObserveMessagesUseCase> {
+                    every { this@mockk(any()) } returns flowOf(PagingData.empty())
+                },
+                observeConversation = mockk<ObserveConversationUseCase> {
+                    every { this@mockk(any()) } returns flowOf(group)
+                },
+                realtimeEvents = mockk<RealtimeEvents> { every { typingEvents } returns emptyFlow() },
+                context = context,
+                ioDispatcher = dispatcher,
+                messageRepository = messageRepository,
+                sendMessageUseCase = sendMessageUseCase,
+                sendAttachmentUseCase = sendAttachmentUseCase,
+                downloadAttachmentUseCase = downloadAttachmentUseCase,
+                markConversationReadUseCase = markReadUseCase,
+            )
+            val subscriber = launch { viewModel.conversation.collect {} }
+            runCurrent()
+
+            viewModel.onTextChanged("hello team")
+            viewModel.send()
+            runCurrent()
+
+            coVerify { messageRepository.sendGroupMessage("g1", "hello team") }
+            subscriber.cancel()
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun messageWith(attachment: com.chattlyx.domain.messaging.AttachmentInfo?) = Message(
         id = "m1",
         clientId = "m1",

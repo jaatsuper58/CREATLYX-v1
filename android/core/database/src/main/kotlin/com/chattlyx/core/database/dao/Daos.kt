@@ -6,6 +6,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.chattlyx.core.database.entity.ContactEntity
+import com.chattlyx.core.database.entity.GroupEntity
+import com.chattlyx.core.database.entity.GroupMemberEntity
 import com.chattlyx.core.database.entity.ConversationCursor
 import com.chattlyx.core.database.entity.ConversationEntity
 import com.chattlyx.core.database.entity.MessageEntity
@@ -37,6 +39,10 @@ interface ConversationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(conversation: ConversationEntity)
+
+    /** GRP-*: renames a group chat-list row without touching counters. */
+    @Query("UPDATE conversations SET peer_name = :name WHERE id = :id")
+    suspend fun renamePeer(id: String, name: String): Int
 
     @Query(
         """
@@ -110,6 +116,32 @@ interface MessageDao {
 
     @Query("SELECT body FROM messages_fts WHERE messages_fts MATCH :query LIMIT :limit")
     suspend fun search(query: String, limit: Int): List<String>
+}
+
+/** GRP-* group + membership cache. */
+@Dao
+interface GroupDao {
+
+    @Query("SELECT * FROM groups ORDER BY name COLLATE NOCASE")
+    fun observeGroups(): kotlinx.coroutines.flow.Flow<List<GroupEntity>>
+
+    @Query("SELECT * FROM groups WHERE id = :groupId")
+    fun observeGroup(groupId: String): kotlinx.coroutines.flow.Flow<GroupEntity?>
+
+    @Query("SELECT * FROM group_members WHERE group_id = :groupId ORDER BY joined_at")
+    suspend fun membersOf(groupId: String): List<GroupMemberEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertGroup(group: GroupEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertMembers(members: List<GroupMemberEntity>)
+
+    @Query("DELETE FROM group_members WHERE group_id = :groupId")
+    suspend fun deleteMembers(groupId: String)
+
+    @Query("DELETE FROM groups WHERE id = :groupId")
+    suspend fun deleteGroup(groupId: String)
 }
 
 @Dao

@@ -7,6 +7,7 @@ import com.chattlyx.core.common.id.UuidV7
 import com.chattlyx.core.common.result.Result
 import com.chattlyx.core.common.result.fold
 import com.chattlyx.core.common.result.getOrElse
+import com.chattlyx.core.database.dao.GroupDao
 import com.chattlyx.core.database.dao.MessageDao
 import com.chattlyx.core.database.entity.MessageEntity
 import com.chattlyx.core.database.entity.MessageStatus
@@ -58,6 +59,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val api: ChattlyxServiceApi,
     private val realtime: RealtimeClient,
     private val messageDao: MessageDao,
+    private val groupDao: GroupDao,
     private val identityKeyStore: IdentityKeyStore,
     private val tokenStore: SecureTokenStore,
     private val peerKeyResolver: PeerKeyResolver,
@@ -119,6 +121,77 @@ class MessageRepositoryImpl @Inject constructor(
             )
 
             if (!sent) {
+                messageDao.markAcked(clientId, "", MessageStatus.FAILED.wire)
+                return@withContext Result.failure(ChattlyError.Network())
+            }
+            Result.success(clientId)
+        }
+
+    override suspend fun sendGroupMessage(groupId: String, body: String): Result<String> =
+        withContext(ioDispatcher) {
+            val selfAccountId = tokenStore.accountId()
+                ?: return@withContext Result.failure(ChattlyError.Auth)
+            val conversationId = conversationIds.group(groupId)
+            val clientId = UuidV7.generate().toString()
+
+            val members = groupDao.membersOf(groupId)
+                .map { it.accountId }
+                .filter { it != selfAccountId }
+            if (members.isEmpty()) {
+                return@withContext Result.failure(
+                    ChattlyError.Validation("group", "error_group_no_members"),
+                )
+            }
+
+            val content = SessionContent.newBuilder()
+                .setText(TextContent.newBuilder().setBody(body))
+                .build()
+
+            val now = System.currentTimeMillis()
+            messageDao.insertOrIgnore(
+                MessageEntity(
+                    id = clientId,
+                    clientId = clientId,
+                    conversationId = conversationId,
+                    senderAccountId = selfAccountId,
+                    body = body,
+                    status = MessageStatus.PENDING.wire,
+                    sentAt = now,
+                ),
+            )
+
+            // Fan-out: one pairwise-encrypted envelope per member (placeholder
+            // cipher; Sender Keys land in Phase 7). Missing sessions skip that
+            // member rather than failing the whole send.
+            var anySent = false
+            members.forEach { member ->
+                val peerKey = peerKeyResolver.publicKeyFor(member) ?: return@forEach
+                val ciphertext = try {
+                    cipher.encrypt(peerKey, content.toByteArray())
+                } catch (e: Exception) {
+                    Timber.w(e, "Group fan-out encrypt failed for one member")
+                    return@forEach
+                }
+                val envelope = Envelope.newBuilder()
+                    .setType(EnvelopeType.ENVELOPE_TYPE_SIGNAL)
+                    .setSenderAccountId(selfAccountId)
+                    .setCiphertext(ByteString.copyFrom(ciphertext))
+                    .setClientMessageId(java.util.UUID.fromString(clientId).toProtoUuid())
+                    .setConversationId(conversationId)
+                    .build()
+                val sent = realtime.send(
+                    Frame.newBuilder()
+                        .setSend(
+                            com.chattlyx.proto.SendFrame.newBuilder()
+                                .setEnvelope(envelope)
+                                .setRecipientAccountId(member),
+                        )
+                        .build(),
+                )
+                if (sent) anySent = true
+            }
+
+            if (!anySent) {
                 messageDao.markAcked(clientId, "", MessageStatus.FAILED.wire)
                 return@withContext Result.failure(ChattlyError.Network())
             }
@@ -476,6 +549,11 @@ class ClientConversationIds @Inject constructor() {
         val (first, second) = if (a <= b) a to b else b to a
         return "dm:$first:$second"
     }
+
+    /** GRP-*: canonical group conversation id. */
+    fun group(groupId: String): String = "grp:$groupId"
+
+    fun isGroup(conversationId: String): Boolean = conversationId.startsWith("grp:")
 
     fun peerOf(conversationId: String, self: String): String? {
         val parts = conversationId.split(":")

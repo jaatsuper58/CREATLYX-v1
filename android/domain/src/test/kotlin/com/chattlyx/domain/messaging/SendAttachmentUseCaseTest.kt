@@ -25,6 +25,9 @@ class SendAttachmentUseCaseTest {
         override suspend fun sendMessage(peerAccountId: String, body: String): Result<String> =
             Result.success("client-1")
 
+        override suspend fun sendGroupMessage(groupId: String, body: String): Result<String> =
+            Result.success("client-group-1")
+
         override suspend fun acknowledge(serverIds: List<String>) = Unit
         override suspend fun markRead(conversationId: String) = Unit
         override suspend fun sync(): Result<Unit> = Result.success(Unit)
@@ -131,6 +134,7 @@ class SendAttachmentUseCaseTest {
     fun `download use case delegates to repository`() = runTest {
         val download = DownloadAttachmentUseCase(object : MessageRepository {
             override suspend fun sendMessage(peerAccountId: String, body: String) = Result.success("x")
+            override suspend fun sendGroupMessage(groupId: String, body: String) = Result.success("g")
             override suspend fun acknowledge(serverIds: List<String>) = Unit
             override suspend fun markRead(conversationId: String) = Unit
             override suspend fun sync() = Result.success(Unit)

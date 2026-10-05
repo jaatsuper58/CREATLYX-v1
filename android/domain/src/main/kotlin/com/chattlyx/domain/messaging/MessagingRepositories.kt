@@ -13,6 +13,13 @@ interface MessageRepository {
      */
     suspend fun sendMessage(peerAccountId: String, body: String): Result<String>
 
+    /**
+     * GRP-02: sends a text message to a group. With the placeholder cipher
+     * (pre-libsignal) the client fans out one pairwise-encrypted envelope per
+     * member; Sender Keys replace this in Phase 7. Returns client message id.
+     */
+    suspend fun sendGroupMessage(groupId: String, body: String): Result<String>
+
     /** MSG-04: acknowledges received envelopes (delete-on-ack server-side). */
     suspend fun acknowledge(serverIds: List<String>)
 

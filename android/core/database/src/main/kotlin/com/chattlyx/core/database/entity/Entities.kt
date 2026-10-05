@@ -76,6 +76,28 @@ data class MessageEntity(
     @ColumnInfo(name = "attachment_local_path") val attachmentLocalPath: String? = null,
 )
 
+/** GRP-*: server-known group metadata (membership is server truth). */
+@Entity(tableName = "groups")
+data class GroupEntity(
+    @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "name") val name: String,
+    @ColumnInfo(name = "created_by") val createdBy: String,
+    @ColumnInfo(name = "membership_version") val membershipVersion: Long,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+)
+
+/** GRP-*: group membership cache (rebuilt on GroupUpdateFrame). */
+@Entity(
+    tableName = "group_members",
+    primaryKeys = ["group_id", "account_id"],
+)
+data class GroupMemberEntity(
+    @ColumnInfo(name = "group_id") val groupId: String,
+    @ColumnInfo(name = "account_id") val accountId: String,
+    @ColumnInfo(name = "role") val role: String,
+    @ColumnInfo(name = "joined_at") val joinedAt: Long,
+)
+
 /** Registered peers discovered via CON-03 or first contact. */
 @Entity(
     tableName = "contacts",

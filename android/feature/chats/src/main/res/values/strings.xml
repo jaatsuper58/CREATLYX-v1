@@ -32,6 +32,16 @@
     <string name="voice_cancel">Discard recording</string>
     <string name="voice_send">Send voice note</string>
     <string name="voice_permission_needed">Microphone access is needed to record voice notes.</string>
+    <!-- GRP-* groups -->
+    <string name="group_new">New group</string>
+    <string name="group_create">Create</string>
+    <string name="group_cancel">Cancel</string>
+    <string name="group_name_hint">Group name</string>
+    <string name="group_name_empty">Give the group a name.</string>
+    <string name="group_name_too_long">Group names are limited to 64 characters.</string>
+    <string name="group_create_failed">Could not create the group. Please try again.</string>
+    <string name="group_no_contacts">No contacts yet — discover people first, then add them.</string>
+
     <string name="error_attachment_send">Could not send the attachment. Please try again.</string>
     <string name="error_attachment_download">Download failed. Check your connection and retry.</string>
 </resources>
