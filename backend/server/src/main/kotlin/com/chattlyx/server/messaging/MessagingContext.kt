@@ -3,6 +3,7 @@ package com.chattlyx.server.messaging
 import com.chattlyx.backend.db.AccountRepository
 import com.chattlyx.backend.db.DeviceRepository
 import com.chattlyx.backend.db.EnvelopeRepository
+import com.chattlyx.backend.messaging.BlockGate
 import com.chattlyx.backend.messaging.ContactsService
 import com.chattlyx.backend.messaging.FakePushGateway
 import com.chattlyx.backend.messaging.MessagingService
@@ -63,6 +64,7 @@ class MessagingContext(
     val contactsService: ContactsService,
     val registry: ConnectionRegistry,
     val queues: DeliveryQueues,
+    val blockGate: BlockGate = BlockGate.OPEN,
 ) {
     companion object {
 
@@ -71,6 +73,7 @@ class MessagingContext(
             redisConfig: RedisConfig,
             accountRepository: AccountRepository,
             deviceRepository: DeviceRepository,
+            blockGate: BlockGate = BlockGate.OPEN,
         ): MessagingContext {
             val registry = ConnectionRegistry()
             val queues = DeliveryQueues(RedisFactory.create(redisConfig))
@@ -88,10 +91,12 @@ class MessagingContext(
                     notifier = registry,
                     push = FakePushGateway(), // production: FCM HTTP v1 sender
                     tokenLookup = tokenLookup,
+                    blockGate = blockGate,
                 ),
                 contactsService = ContactsService(accountRepository),
                 registry = registry,
                 queues = queues,
+                blockGate = blockGate,
             )
         }
     }

@@ -41,11 +41,21 @@ fun Application.module() {
     val authConfig = AuthServiceConfig.fromEnv()
     val authServices = AuthServices.create(authConfig, dataSource)
 
+    val blocks = BlockRepository(dataSource)
+
+    // SAF-02: the same gate enforces blocks across message delivery, typing,
+    // receipts and call signalling.
+    val blockGate = object : com.chattlyx.backend.messaging.BlockGate {
+        override fun blocksEitherWay(a: java.util.UUID, b: java.util.UUID): Boolean =
+            blocks.isBlocked(a, b) || blocks.isBlocked(b, a)
+    }
+
     val messaging = MessagingContext.create(
         dataSource = dataSource,
         redisConfig = RedisConfig.fromEnv(),
         accountRepository = authServices.accountRepository,
         deviceRepository = authServices.deviceRepository,
+        blockGate = blockGate,
     )
 
     val attachments = AttachmentContext.create(dataSource)
@@ -55,8 +65,6 @@ fun Application.module() {
         accountRepository = authServices.accountRepository,
         registry = messaging.registry,
     )
-
-    val blocks = BlockRepository(dataSource)
 
     moduleWithContext(authServices, messaging, attachments, groups, blocks)
 }

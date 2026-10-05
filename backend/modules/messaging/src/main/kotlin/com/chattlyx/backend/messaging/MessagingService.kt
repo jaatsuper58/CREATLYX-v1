@@ -20,6 +20,7 @@ class MessagingService(
     private val notifier: PeerNotifier,
     private val push: PushGateway,
     private val tokenLookup: PushTokenLookup,
+    private val blockGate: BlockGate = BlockGate.OPEN,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
@@ -54,6 +55,18 @@ class MessagingService(
         val conversationId = ConversationIds.direct(senderAccountId, recipientId)
         if (envelope.conversationId.isNotEmpty() && envelope.conversationId != conversationId) {
             throw ChattlyxServerException.Validation("conversation_id does not match participants")
+        }
+
+        // SAF-02: messages between blocked peers are silently dropped. The
+        // sender still receives a normal ack; nothing is persisted, queued or
+        // pushed for the recipient, and the block state is never leaked.
+        if (blockGate.blocksEitherWay(senderAccountId, recipientId)) {
+            val dropNow = clock()
+            return SendResult(
+                serverMessageId = UuidV7.generate(dropNow).toString(),
+                seq = queues.nextSeq(conversationId),
+                serverTimestampMs = dropNow,
+            )
         }
 
         val now = clock()
@@ -101,6 +114,9 @@ class MessagingService(
         if (ids.isEmpty()) return emptyList()
 
         val rows = envelopes.findByIds(ids)
+            // SAF-02 defence in depth: envelopes queued before a block was
+            // placed are filtered out at drain time and never delivered.
+            .filterNot { row -> blockGate.blocksEitherWay(row.senderAccountId, recipientId) }
         val now = clock()
         return rows.map { it.toProtoEnvelope() }
     }

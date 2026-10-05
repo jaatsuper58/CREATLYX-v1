@@ -6,6 +6,7 @@ import com.chattlyx.backend.db.BlockRepository
 import com.chattlyx.backend.db.DbConfig
 import com.chattlyx.backend.db.DbFactory
 import com.chattlyx.backend.db.SchemaMigrator
+import com.chattlyx.backend.protocol.toProtoUuid
 import com.chattlyx.backend.redis.RedisConfig
 import com.chattlyx.server.messaging.MessagingContext
 import io.ktor.client.request.bearerAuth
@@ -138,6 +139,73 @@ class BlockPresenceIntegrationTest {
                     val afterBody = json.parseToJsonElement(after.bodyAsText()).jsonObject
                     assertEquals(true, afterBody["online"]!!.jsonPrimitive.content.toBoolean())
                 }
+            }
+        } finally {
+            dataSource.close()
+        }
+    }
+
+    @Test
+    fun `delivery is suppressed in both directions while blocked`() {
+        val dataSource = DbFactory.create(
+            DbConfig(postgres.jdbcUrl, postgres.username, postgres.password),
+        )
+        try {
+            SchemaMigrator(dataSource).migrate()
+            val auth = AuthServices.create(
+                AuthServiceConfig(
+                    jwtSecret = "block-secret-0123456789-abcdef",
+                    e164Pepper = "block-pepper",
+                    e164KeyBase64 = Base64.getEncoder().encodeToString(ByteArray(32) { 4 }),
+                    devMode = true,
+                ),
+                dataSource,
+            )
+            val blocks = BlockRepository(dataSource)
+            val gate = object : com.chattlyx.backend.messaging.BlockGate {
+                override fun blocksEitherWay(a: java.util.UUID, b: java.util.UUID) =
+                    blocks.isBlocked(a, b) || blocks.isBlocked(b, a)
+            }
+            val messaging = MessagingContext.create(
+                dataSource = dataSource,
+                redisConfig = RedisConfig(host = redis.host, port = redis.getMappedPort(6379)),
+                accountRepository = auth.accountRepository,
+                deviceRepository = auth.deviceRepository,
+                blockGate = gate,
+            )
+
+            testApplication {
+                application { moduleWithContext(auth, messaging, blocks = blocks) }
+
+                val alice = register(client, "+15550000503")
+                val bob = register(client, "+15550000504")
+                val aliceId = java.util.UUID.fromString(alice.accountId)
+                val bobId = java.util.UUID.fromString(bob.accountId)
+
+                fun signal(): com.chattlyx.proto.Envelope {
+                    val cmid = java.util.UUID.randomUUID()
+                    return com.chattlyx.proto.Envelope.newBuilder()
+                        .setType(com.chattlyx.proto.EnvelopeType.ENVELOPE_TYPE_SIGNAL)
+                        .setCiphertext(com.google.protobuf.ByteString.copyFromUtf8("opaque"))
+                        .setClientMessageId(cmid.toProtoUuid())
+                        .build()
+                }
+
+                // Pre-block delivery works normally.
+                messaging.messagingService.send(aliceId, 1, bobId, signal())
+                assertEquals(1, messaging.messagingService.drainForDelivery(bobId).size)
+
+                // Bob blocks Alice: traffic both ways is silently dropped.
+                blocks.block(bobId, aliceId)
+                messaging.messagingService.send(aliceId, 1, bobId, signal())
+                messaging.messagingService.send(bobId, 1, aliceId, signal())
+                assertEquals(0, messaging.messagingService.drainForDelivery(bobId).size)
+                assertEquals(0, messaging.messagingService.drainForDelivery(aliceId).size)
+
+                // Unblock: delivery resumes.
+                blocks.unblock(bobId, aliceId)
+                messaging.messagingService.send(aliceId, 1, bobId, signal())
+                assertEquals(1, messaging.messagingService.drainForDelivery(bobId).size)
             }
         } finally {
             dataSource.close()

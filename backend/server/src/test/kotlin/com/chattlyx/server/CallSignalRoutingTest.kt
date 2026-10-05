@@ -53,6 +53,16 @@ class CallSignalRoutingTest {
     }
 
     @Test
+    fun `blocked pairs are suppressed silently`() {
+        val gate = object : com.chattlyx.backend.messaging.BlockGate {
+            override fun blocksEitherWay(a: UUID, b: UUID) = a == sender && b == peer
+        }
+        assertIs<CallSignalOutcome.Suppressed>(
+            routeCallSignal(registry, sender, signal(peer.toString()), gate),
+        )
+    }
+
+    @Test
     fun `registry liveness gates forwarding`() {
         // No sessions registered: nobody is live.
         assertTrue(!registry.isLive(peer))

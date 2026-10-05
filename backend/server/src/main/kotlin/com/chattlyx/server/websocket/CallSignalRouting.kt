@@ -16,6 +16,9 @@ sealed interface CallSignalOutcome {
 
     /** Malformed/self-targeted signal; caller gets an ErrorFrame. */
     data class Invalid(val reason: String) : CallSignalOutcome
+
+    /** SAF-02: dropped because the pair is blocked; deliberately silent. */
+    data object Suppressed : CallSignalOutcome
 }
 
 /**
@@ -28,6 +31,8 @@ fun routeCallSignal(
     registry: ConnectionRegistry,
     sender: UUID,
     signal: CallSignalFrame,
+    blockGate: com.chattlyx.backend.messaging.BlockGate =
+        com.chattlyx.backend.messaging.BlockGate.OPEN,
 ): CallSignalOutcome {
     val peer = try {
         UUID.fromString(signal.peerAccountId)
@@ -39,6 +44,11 @@ fun routeCallSignal(
     }
     if (signal.ciphertext.isEmpty) {
         return CallSignalOutcome.Invalid("empty signalling payload")
+    }
+    // SAF-02: blocked pairs cannot signal each other. Suppression is silent
+    // (no error frame) so the block state is not disclosed.
+    if (blockGate.blocksEitherWay(sender, peer)) {
+        return CallSignalOutcome.Suppressed
     }
     if (!registry.isLive(peer)) {
         return CallSignalOutcome.PeerOffline

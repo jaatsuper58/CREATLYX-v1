@@ -80,9 +80,15 @@ fun Application.installWsGateway(auth: TokenService, messaging: MessagingContext
                             proto.hasReceipt() -> routeReceipt(messaging, accountId, proto.receipt)
                             proto.hasTyping() -> routeTyping(messaging, accountId, proto.typing)
                             proto.hasCallSignal() -> when (
-                                val outcome = routeCallSignal(messaging.registry, accountId, proto.callSignal)
+                                val outcome = routeCallSignal(
+                                    messaging.registry,
+                                    accountId,
+                                    proto.callSignal,
+                                    messaging.blockGate,
+                                )
                             ) {
                                 is CallSignalOutcome.Forwarded -> Unit
+                                CallSignalOutcome.Suppressed -> Unit // SAF-02 silent drop
                                 CallSignalOutcome.PeerOffline ->
                                     sendError("call/peer-offline", "Peer is not connected")
                                 is CallSignalOutcome.Invalid ->
@@ -217,6 +223,7 @@ private suspend fun DefaultWebSocketServerSession.routeReceipt(
     receipt: ReceiptFrame,
 ) {
     val peer = peerOf(accountId, receipt.conversationId) ?: return
+    if (messaging.blockGate.blocksEitherWay(accountId, peer)) return // SAF-02
     if (!messaging.registry.isLive(peer)) return
 
     val envelope = Envelope.newBuilder()
@@ -233,6 +240,7 @@ private suspend fun DefaultWebSocketServerSession.routeTyping(
     typing: TypingFrame,
 ) {
     val peer = peerOf(accountId, typing.conversationId) ?: return
+    if (messaging.blockGate.blocksEitherWay(accountId, peer)) return // SAF-02
     if (!messaging.registry.isLive(peer)) return
 
     val envelope = Envelope.newBuilder()
