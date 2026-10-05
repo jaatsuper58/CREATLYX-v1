@@ -100,7 +100,9 @@ fun InCallScreen(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = peer.take(13).ifBlank { stringResource(R.string.call_in_call) },
+                text = viewModel.displayNameFor(peer).ifBlank {
+                    stringResource(R.string.call_in_call)
+                },
                 style = MaterialTheme.typography.headlineSmall,
             )
 
