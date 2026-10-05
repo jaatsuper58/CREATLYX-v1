@@ -236,7 +236,7 @@ class WebRtcCallEngine(
             override fun onRenegotiationNeeded() = Unit
             override fun onAddTrack(receiver: RtpReceiver?, streams: Array<out MediaStream>?) = Unit
             override fun onTrack(transceiver: RtpTransceiver?) {
-                val track = transceiver?.receiver?.track as? VideoTrack ?: return
+                val track = transceiver?.receiver?.track() as? VideoTrack ?: return
                 if (track.kind() != "video") return
                 remoteVideoTrack = track
                 // Late-attach any renderer the UI already put up for the feed.
