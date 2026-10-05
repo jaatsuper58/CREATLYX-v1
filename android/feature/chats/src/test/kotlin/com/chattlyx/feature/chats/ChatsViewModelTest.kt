@@ -14,11 +14,14 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -62,9 +65,10 @@ class ChatsViewModelTest {
     fun `opening the list refreshes groups from the server`() = runTest(dispatcher.scheduler) {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
-            buildViewModel(Result.success("g1"))
+            val viewModel = buildViewModel(Result.success("g1"))
             runCurrent()
             coVerify { refreshGroups() }
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -83,6 +87,53 @@ class ChatsViewModelTest {
             assertEquals("group-123", viewModel.createdGroupId.value)
             viewModel.consumeCreatedGroup()
             assertEquals(null, viewModel.createdGroupId.value)
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `search query collects local hits after the debounce`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val hit = com.chattlyx.domain.messaging.MessageSearchHit(
+                conversationId = "dm:x",
+                snippet = "hello world",
+                sentAt = 5L,
+            )
+            val viewModel = ChatsViewModel(
+                observeConversations = mockk<ObserveConversationsUseCase> {
+                    every { this@mockk() } returns flowOf(PagingData.empty())
+                },
+                observeContacts = mockk<ObserveContactsUseCase> {
+                    every { this@mockk() } returns flowOf(emptyList())
+                },
+                realtimeEvents = mockk<RealtimeEvents> {
+                    every { typingEvents } returns emptyFlow()
+                },
+                createGroupUseCase = mockk(relaxed = true),
+                refreshGroupsUseCase = refreshGroups,
+                searchConversationsUseCase = mockk {
+                    coEvery { this@mockk(any()) } returns Result.success(emptyList())
+                },
+                searchMessagesUseCase = mockk {
+                    coEvery { this@mockk(any()) } returns Result.success(listOf(hit))
+                },
+            )
+            runCurrent()
+
+            viewModel.onSearchQueryChanged("hello")
+            assertEquals(0, viewModel.searchResults.value.messages.size)
+            advanceTimeBy(300)
+            runCurrent()
+
+            assertEquals(1, viewModel.searchResults.value.messages.size)
+            assertEquals("hello world", viewModel.searchResults.value.messages.first().snippet)
+
+            viewModel.clearSearch()
+            assertEquals(0, viewModel.searchResults.value.messages.size)
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -105,6 +156,7 @@ class ChatsViewModelTest {
             assertEquals("validation_group_name_empty", viewModel.groupErrorKey.value)
             viewModel.consumeGroupError()
             assertEquals(null, viewModel.groupErrorKey.value)
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }

@@ -24,10 +24,21 @@ class CallsViewModel @Inject constructor(
     observeCallLog: ObserveCallLogUseCase,
     private val callSession: CallSession,
     private val startCallUseCase: StartCallUseCase,
+    observeContacts: com.chattlyx.domain.messaging.usecases.ObserveContactsUseCase,
 ) : ViewModel() {
 
     val callLog: StateFlow<List<CallLogEntry>> = observeCallLog()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Registered contacts, used to name the caller on the ring overlay. */
+    private val contacts: StateFlow<List<com.chattlyx.domain.messaging.ContactInfo>> =
+        observeContacts()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Human-readable name for a peer account id (falls back to a short id). */
+    fun displayNameFor(accountId: String): String =
+        contacts.value.firstOrNull { it.accountId == accountId }?.displayName
+            ?: accountId.take(8)
 
     val sessionState: StateFlow<CallSessionState> = callSession.state
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CallSessionState.Idle)

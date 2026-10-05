@@ -114,13 +114,24 @@ class ConversationViewModel @Inject constructor(
         // Entering a conversation marks it read and receipts the peer.
         viewModelScope.launch { markConversationReadUseCase(conversationId) }
         if (!isGroup) {
+            // Fetch once the peer is known, then keep the header fresh.
+            viewModelScope.launch {
+                var lastPeer: String? = null
+                conversation.collect { current ->
+                    val peer = current?.peerAccountId
+                    if (peer != null && peer != lastPeer) {
+                        lastPeer = peer
+                        _presence.value = getPresenceUseCase(peer).getOrNull()
+                    }
+                }
+            }
             viewModelScope.launch {
                 while (true) {
+                    kotlinx.coroutines.delay(PRESENCE_REFRESH_MS)
                     val peer = conversation.value?.peerAccountId
                     if (peer != null) {
                         _presence.value = getPresenceUseCase(peer).getOrNull()
                     }
-                    kotlinx.coroutines.delay(PRESENCE_REFRESH_MS)
                 }
             }
         }

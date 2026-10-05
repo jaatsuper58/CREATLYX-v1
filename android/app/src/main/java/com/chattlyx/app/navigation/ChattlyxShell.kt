@@ -80,7 +80,7 @@ private fun IncomingCallOverlay(navController: androidx.navigation.NavHostContro
     androidx.compose.material3.AlertDialog(
         onDismissRequest = { viewModel.decline() },
         title = { Text(stringResource(com.chattlyx.feature.calls.R.string.call_incoming)) },
-        text = { Text(incoming.peerAccountId.take(13)) },
+        text = { Text(viewModel.displayNameFor(incoming.peerAccountId)) },
         confirmButton = {
             androidx.compose.material3.TextButton(onClick = {
                 viewModel.accept()

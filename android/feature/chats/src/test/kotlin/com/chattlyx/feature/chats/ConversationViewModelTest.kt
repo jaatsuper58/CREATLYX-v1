@@ -246,4 +246,64 @@ class ConversationViewModelTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun `presence for the peer is fetched on entry`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val conversation = Conversation(
+                id = "dm:a:b",
+                peerAccountId = "peer-b",
+                peerName = "Bob",
+                peerAvatarBlobId = null,
+                lastMessageText = "",
+                lastMessageAt = 0L,
+                unreadCount = 0,
+                pinned = false,
+            )
+            coEvery { getPresenceUseCase("peer-b") } returns Result.success(
+                com.chattlyx.domain.social.PresenceInfo("peer-b", online = true, lastSeenMs = null),
+            )
+            val viewModel = buildViewModel(conversationValue = conversation)
+            val subscriber = launch { viewModel.conversation.collect {} }
+            runCurrent()
+
+            assertEquals(true, viewModel.presence.value?.online)
+            subscriber.cancel()
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `blockPeer raises blocked flag on success`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val conversation = Conversation(
+                id = "dm:a:b",
+                peerAccountId = "peer-b",
+                peerName = "Bob",
+                peerAvatarBlobId = null,
+                lastMessageText = "",
+                lastMessageAt = 0L,
+                unreadCount = 0,
+                pinned = false,
+            )
+            coEvery { blockPeerUseCase("peer-b") } returns Result.success(Unit)
+            val viewModel = buildViewModel(conversationValue = conversation)
+            val subscriber = launch { viewModel.conversation.collect {} }
+            runCurrent()
+
+            viewModel.blockPeer()
+            runCurrent()
+
+            assertEquals(true, viewModel.blocked.value)
+            coVerify { blockPeerUseCase("peer-b") }
+            subscriber.cancel()
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
 }
