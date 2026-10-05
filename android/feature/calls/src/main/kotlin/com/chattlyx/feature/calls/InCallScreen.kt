@@ -44,6 +44,14 @@ fun InCallScreen(
     val muted by viewModel.muted.collectAsStateWithLifecycle()
     val videoEnabled by viewModel.videoEnabled.collectAsStateWithLifecycle()
 
+    // CALL-01 video: show the shared video surface for any video-call state.
+    val isVideoCall = when (val s = session) {
+        is CallSessionState.Active -> s.media == com.chattlyx.domain.calls.CallMedia.VIDEO
+        is CallSessionState.Outgoing -> s.media == com.chattlyx.domain.calls.CallMedia.VIDEO
+        is CallSessionState.Incoming -> s.media == com.chattlyx.domain.calls.CallMedia.VIDEO
+        CallSessionState.Idle -> false
+    }
+
     // The session returning to Idle after being live means the call ended —
     // leave the route (never exit on first composition while state settles).
     val sawLiveCall = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -56,12 +64,19 @@ fun InCallScreen(
     }
 
     Surface(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (isVideoCall) {
+                CallVideoSurface(
+                    engine = viewModel.engine,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
             Spacer(Modifier.height(48.dp))
 
             val peer = when (val s = session) {
@@ -121,8 +136,34 @@ fun InCallScreen(
                     onEnd = viewModel::hangUp,
                 )
             }
+            }
         }
     }
+}
+
+/**
+ * CALL-01 video (Phase 7): a WebRTC [org.webrtc.SurfaceViewRenderer] fed by
+ * the call engine. Attached on composition, released on disposal.
+ */
+@Composable
+private fun CallVideoSurface(
+    engine: com.chattlyx.core.rtc.CallEngine,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.ui.viewinterop.AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            org.webrtc.SurfaceViewRenderer(ctx).apply {
+                init(engine.eglContext, null)
+                setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                engine.attachVideoRenderer(this, remote = true)
+            }
+        },
+        onRelease = { view ->
+            engine.detachVideoRenderer(view)
+            view.release()
+        },
+    )
 }
 
 @Composable

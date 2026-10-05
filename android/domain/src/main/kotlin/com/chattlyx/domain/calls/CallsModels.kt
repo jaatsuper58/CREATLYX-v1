@@ -39,6 +39,8 @@ data class CallSignal(
     val iceCandidate: String?,
     val media: CallMedia,
     val sentAtMs: Long,
+    val sdpMid: String? = null,
+    val sdpMLineIndex: Int = 0,
 )
 
 /** Live-call surface observed by the UI. */

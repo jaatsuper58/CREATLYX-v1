@@ -107,6 +107,9 @@ message CallSignalContent {
   string sdp = 4;
   // Trickle ICE candidate line (KIND_ICE_CANDIDATE).
   string ice_candidate = 5;
+  // Candidate media routing (Phase 7: preserves WebRTC sdpMid/mLineIndex).
+  string sdp_mid = 8;
+  int32 sdp_mline_index = 9;
   // 0 = audio, 1 = video.
   int32 media_type = 6;
   int64 sent_at_ms = 7;

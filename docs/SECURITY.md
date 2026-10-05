@@ -91,13 +91,20 @@ Please report suspected vulnerabilities privately:
    party blocks the other, so presence cannot be used to probe a blocked
    account. Block rows themselves are per-user; the block *list* of other
    users is never exposed.
-3. **Known gap — blocked senders still reach the transport (until Phase 7).**
-   The server does not yet suppress delivery from a blocked sender; the client
-   hides their messages/presence locally. Enforced suppression is tracked as
-   Phase 7 hardening; see `docs/runbooks/incident-response.md`.
+3. **Blocked pairs are cut off server-side (SAF-02, Phase 7).** Messages are
+   silently dropped before persistence when either party blocks the other
+   (sender keeps normal acks; the block state is never disclosed), queued
+   envelopes from before the block are filtered at drain time, and typing,
+   receipts and call signalling between the pair are suppressed too. Presence
+   stays hidden both ways. Unblocking restores normal delivery immediately.
 4. **Call media is not yet SFU-routed.** Peer-to-peer WebRTC exposes both
    parties' IP addresses to each other (standard WebRTC trade-off); TURN/SFU
    relay for IP concealment is designed for the LiveKit SFU milestone.
+5. **ICE candidates round-trip with full routing metadata (Phase 7).**
+   `sdpMid`/`sdpMLineIndex` now travel inside the E2EE `CallSignalContent`
+   (fields 8/9), so trickle candidates apply to the correct transceiver.
+6. **OTP entry is screen-capture protected (Phase 7).** The OTP route sets
+   `FLAG_SECURE`, keeping codes out of screenshots, recents and recordings.
 
 ## Pre-launch gates
 

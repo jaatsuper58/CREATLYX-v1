@@ -32,6 +32,9 @@ data class IceCandidate(val candidate: String, val sdpMid: String?, val sdpMLine
 interface CallEngine {
     val state: Flow<CallState>
 
+    /** EGL context the UI must pass to `SurfaceViewRenderer.init`. */
+    val eglContext: org.webrtc.EglBase.Context
+
     /** Outgoing SDP/ICE the app must carry to the peer over the E2EE channel. */
     val localSdpEvents: Flow<LocalSdp>
 
@@ -61,6 +64,16 @@ interface CallEngine {
 
     /** ICE restart on Wi-Fi <-> mobile switch must not drop the call (CALL-06). */
     suspend fun restartIce()
+
+    /**
+     * CALL-01 video (Phase 7): pipe the local or remote video track into a
+     * [org.webrtc.SurfaceViewRenderer] the UI owns. Safe to call before the
+     * remote track arrives; the sink attaches as soon as it does.
+     */
+    fun attachVideoRenderer(renderer: org.webrtc.SurfaceViewRenderer, remote: Boolean)
+
+    /** Stops piping frames into [renderer] (both directions). */
+    fun detachVideoRenderer(renderer: org.webrtc.SurfaceViewRenderer)
 }
 
 /** A session description plus its type (offer/answer). */

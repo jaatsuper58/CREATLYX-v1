@@ -25,7 +25,11 @@ class CallsViewModel @Inject constructor(
     private val callSession: CallSession,
     private val startCallUseCase: StartCallUseCase,
     observeContacts: com.chattlyx.domain.messaging.usecases.ObserveContactsUseCase,
+    private val callEngine: com.chattlyx.core.rtc.WebRtcCallEngine,
 ) : ViewModel() {
+
+    /** CALL-01 video: renderer attach point for the in-call screen. */
+    val engine: com.chattlyx.core.rtc.WebRtcCallEngine get() = callEngine
 
     val callLog: StateFlow<List<CallLogEntry>> = observeCallLog()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

@@ -57,6 +57,7 @@ import timber.log.Timber
 @Singleton
 class CallManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val rtcEngine: WebRtcCallEngine,
     private val realtime: RealtimeClient,
     private val identityKeyStore: IdentityKeyStore,
     private val peerKeyResolver: PeerKeyResolver,
@@ -77,7 +78,7 @@ class CallManager @Inject constructor(
     private val _videoEnabled = MutableStateFlow(false)
     override val videoEnabled: Flow<Boolean> = _videoEnabled.asStateFlow()
 
-    private var engine: WebRtcCallEngine? = null
+    private var engine: WebRtcCallEngine? = rtcEngine
     private var iceForwardJob: Job? = null
     private var ringTimeoutJob: Job? = null
     private var connectedAt: Long = 0L
@@ -91,7 +92,7 @@ class CallManager @Inject constructor(
             return Result.failure(ChattlyError.Validation("call", "error_call_already_active"))
         }
         val callId = UuidV7.generate().toString()
-        val engine = WebRtcCallEngine(context).also { engine = it }
+        val engine = this.engine ?: rtcEngine.also { this.engine = it }
         watchEngine(engine, callId)
 
         val offer = try {
@@ -143,7 +144,7 @@ class CallManager @Inject constructor(
             ?: return Result.failure(ChattlyError.Validation("call", "error_call_not_ringing"))
         val pending = pendingOffer ?: return Result.failure(ChattlyError.Validation("call", "error_call_not_ringing"))
 
-        val activeEngine = engine ?: WebRtcCallEngine(context).also { engine = it }
+        val activeEngine = engine ?: rtcEngine.also { engine = it }
         watchEngine(activeEngine, incoming.callId)
         val answer = try {
             activeEngine.acceptIncomingCall(
@@ -290,6 +291,8 @@ class CallManager @Inject constructor(
                 iceCandidate = content.iceCandidate.takeIf { it.isNotEmpty() },
                 media = if (content.mediaType == 1) CallMedia.VIDEO else CallMedia.AUDIO,
                 sentAtMs = content.sentAtMs,
+                sdpMid = content.sdpMid.takeIf { it.isNotEmpty() },
+                sdpMLineIndex = content.sdpMlineIndex,
             ),
         )
     }
@@ -330,7 +333,9 @@ class CallManager @Inject constructor(
                 }
             CallSignalKind.ICE_CANDIDATE -> {
                 val candidate = signal.iceCandidate ?: return
-                engine?.addRemoteCandidate(IceCandidate(candidate, null, 0))
+                engine?.addRemoteCandidate(
+                    IceCandidate(candidate, signal.sdpMid, signal.sdpMLineIndex),
+                )
             }
         }
     }
@@ -399,6 +404,8 @@ class CallManager @Inject constructor(
                         iceCandidate = candidate.candidate,
                         media = callMediaOf(_state.value),
                         sentAtMs = System.currentTimeMillis(),
+                        sdpMid = candidate.sdpMid,
+                        sdpMLineIndex = candidate.sdpMLineIndex,
                     ),
                 )
             }
@@ -508,6 +515,8 @@ class CallManager @Inject constructor(
             .apply { signal.sdpType?.let(::setSdpType) }
             .apply { signal.sdp?.let(::setSdp) }
             .apply { signal.iceCandidate?.let(::setIceCandidate) }
+            .apply { signal.sdpMid?.let(::setSdpMid) }
+            .setSdpMlineIndex(signal.sdpMLineIndex)
             .setMediaType(if (signal.media == CallMedia.VIDEO) 1 else 0)
             .setSentAtMs(signal.sentAtMs)
             .build()

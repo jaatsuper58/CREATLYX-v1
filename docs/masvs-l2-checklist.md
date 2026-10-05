@@ -10,8 +10,8 @@ beta build ships to Play internal testing.
 - ✅ Decrypted attachments live in app-private `filesDir/attachments`; shared
   only via FileProvider grants for explicit user opens.
 - ✅ DataStore credentials encrypted by Keystore-backed key.
-- 🟧 Screenshot blocking on sensitive screens (OTP entry) — flag added, policy
-  review pending QA.
+- ✅ Screenshot blocking on sensitive screens: `FLAG_SECURE` while the OTP
+  entry screen is active.
 
 ## MASVS-CRYPTO
 - ✅ No custom primitives: JCA AES-256-GCM (attachments, avatar), X25519+HKDF
@@ -50,6 +50,8 @@ beta build ships to Play internal testing.
   replacement (Play Integrity) integration task filed.
 - 🟧 Anti-replay on REST mutations (idempotency keys) — messaging already
   idempotent via UNIQUE sender+clientMessageId.
+- ✅ Block enforcement is server-side (SAF-02): delivery, typing, receipts and
+  call signals are all suppressed between blocked peers.
 
 ## MASVS-PRIVACY
 - ✅ PRIVACY.md data inventory; server stores ciphertext + membership metadata

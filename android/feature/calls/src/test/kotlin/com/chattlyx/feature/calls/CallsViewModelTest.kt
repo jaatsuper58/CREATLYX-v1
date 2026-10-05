@@ -55,6 +55,7 @@ class CallsViewModelTest {
             observeContacts = mockk<ObserveContactsUseCase> {
                 every { this@mockk() } returns flowOf(contacts)
             },
+            callEngine = mockk(relaxed = true),
         )
     }
 

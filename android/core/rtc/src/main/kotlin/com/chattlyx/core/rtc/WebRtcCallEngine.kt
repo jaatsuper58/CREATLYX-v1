@@ -43,6 +43,9 @@ class WebRtcCallEngine(
     private val _state = MutableStateFlow(CallState.IDLE)
     override val state: Flow<CallState> = _state.asStateFlow()
 
+    override val eglContext: org.webrtc.EglBase.Context
+        get() = rootEglBase.eglBaseContext
+
     private val _localSdpEvents = MutableSharedFlow<LocalSdp>(extraBufferCapacity = 8)
     override val localSdpEvents: Flow<LocalSdp> = _localSdpEvents.asSharedFlow()
 
@@ -55,6 +58,10 @@ class WebRtcCallEngine(
     private var audioTrack: AudioTrack? = null
     private var videoSource: VideoSource? = null
     private var videoTrack: VideoTrack? = null
+    private var remoteVideoTrack: VideoTrack? = null
+
+    /** Attached renderers and whether each shows the remote feed. */
+    private val renderers = LinkedHashMap<org.webrtc.SurfaceViewRenderer, Boolean>()
     private var videoCapturer: VideoCapturer? = null
     private var surfaceTextureHelper: SurfaceTextureHelper? = null
     private var videoEnabled = false
@@ -110,6 +117,12 @@ class WebRtcCallEngine(
     }
 
     override suspend fun endCall(callId: String) {
+        renderers.forEach { (renderer, wasRemote) ->
+            val track = if (wasRemote) remoteVideoTrack else videoTrack
+            track?.removeSink(renderer)
+        }
+        renderers.clear()
+        remoteVideoTrack = null
         runCatching { videoCapturer?.stopCapture() }
         videoCapturer?.dispose()
         videoCapturer = null
@@ -126,6 +139,18 @@ class WebRtcCallEngine(
         videoTrack = null
         rootEglBase.release()
         _state.value = CallState.ENDED
+    }
+
+    override fun attachVideoRenderer(renderer: org.webrtc.SurfaceViewRenderer, remote: Boolean) {
+        renderers[renderer] = remote
+        val track = if (remote) remoteVideoTrack else videoTrack
+        track?.addSink(renderer)
+    }
+
+    override fun detachVideoRenderer(renderer: org.webrtc.SurfaceViewRenderer) {
+        val wasRemote = renderers.remove(renderer) ?: return
+        val track = if (wasRemote) remoteVideoTrack else videoTrack
+        track?.removeSink(renderer)
     }
 
     override suspend fun setMuted(muted: Boolean) {
@@ -210,7 +235,13 @@ class WebRtcCallEngine(
             override fun onDataChannel(dataChannel: DataChannel?) = Unit
             override fun onRenegotiationNeeded() = Unit
             override fun onAddTrack(receiver: RtpReceiver?, streams: Array<out MediaStream>?) = Unit
-            override fun onTrack(transceiver: RtpTransceiver?) = Unit
+            override fun onTrack(transceiver: RtpTransceiver?) {
+                val track = transceiver?.receiver?.track as? VideoTrack ?: return
+                if (track.kind() != "video") return
+                remoteVideoTrack = track
+                // Late-attach any renderer the UI already put up for the feed.
+                renderers.filterValues { remote -> remote }.keys.forEach { track.addSink(it) }
+            }
         }) ?: error("PeerConnection creation failed")
 
         audioTrack?.let { connection.addTrack(it) }

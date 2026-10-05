@@ -4,6 +4,28 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.9.0-beta] — Phase 7: hardening (2026-10-05)
+
+### Added
+- SAF-02 server-side block enforcement: messages between blocked peers are
+  silently dropped before persistence (sender keeps normal acks), envelopes
+  queued pre-block are filtered at drain time, and typing/receipt/call-signal
+  relay is suppressed too — with routing unit tests and a postgres+redis
+  integration test covering block→drop→unblock→deliver.
+- CALL ICE fidelity: `CallSignalContent` gains `sdp_mid`/`sdp_mline_index`
+  (fields 8/9); trickle candidates now round-trip with full routing metadata
+  inside the E2EE payload.
+- CALL-01 video rendering: in-call screen attaches a `SurfaceViewRenderer`
+  for video calls via the engine contract (`attachVideoRenderer`), remote
+  tracks late-attach when they arrive; the call engine is now DI-scoped.
+- MASVS-STORAGE: OTP entry screen sets `FLAG_SECURE` (no screenshots/recents).
+
+### Known limitations (tracked)
+- Full-screen incoming-call notification + Core-Telecom `ConnectionService`
+  integration still land in Phase 8 launch prep.
+- Local chat history predating a block remains on-device (matches store-and-
+  forward semantics); only new traffic is suppressed.
+
 ## [0.8.0-beta] — Phases 7–8: hardening prep & launch readiness (2026-10-05)
 
 ### Added

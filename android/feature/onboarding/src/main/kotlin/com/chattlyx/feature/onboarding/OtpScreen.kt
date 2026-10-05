@@ -46,6 +46,19 @@ fun OtpScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // MASVS-STORAGE (Phase 7): keep the one-time code out of screenshots,
+    // recents snapshots and screen recordings while it is on screen.
+    DisposableEffect(Unit) {
+        val window = (context as? android.app.Activity)?.window
+        window?.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+        )
+        onDispose {
+            window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.requestOtp(e164)
     }
