@@ -4,8 +4,6 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
-<<<<<<< HEAD
-=======
 ## [0.10.0-beta] — Phase 8: telecom integration (2026-10-05)
 
 ### Added
@@ -24,7 +22,6 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 - Call audio routing still uses the WebRTC audio manager; system-side
   per-call volume UI comes with car/BT QA.
 
->>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
 ## [0.9.0-beta] — Phase 7: hardening (2026-10-05)
 
 ### Added
@@ -48,11 +45,6 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
   permission launcher (granting used to start a recording).
 
 ### Known limitations (tracked)
-<<<<<<< HEAD
-- Core-Telecom `ConnectionService` integration (system call UI/bluetooth
-  routing) lands in Phase 8 launch prep.
-=======
->>>>>>> 21caadb (feat(CALL-06): Phase 8 — self-managed ConnectionService telecom integration (PhoneAccount, system answer/reject/hang-up delegation, CallTelecomNotifier port), 0.10.0-beta)
 - Local chat history predating a block remains on-device (matches store-and-
   forward semantics); only new traffic is suppressed.
 
