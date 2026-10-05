@@ -7,6 +7,7 @@ import com.chattlyx.backend.db.DbFactory
 import com.chattlyx.backend.db.SchemaMigrator
 import com.chattlyx.backend.redis.RedisConfig
 import com.chattlyx.server.attachments.AttachmentContext
+import com.chattlyx.server.groups.GroupContext
 import com.chattlyx.server.messaging.MessagingContext
 import com.chattlyx.server.plugins.chattlyxBearer
 import com.chattlyx.server.plugins.configureErrorHandling
@@ -15,6 +16,7 @@ import com.chattlyx.server.plugins.configureSerialization
 import com.chattlyx.server.routes.configureRouting
 import com.chattlyx.server.routes.installAccountRoutes
 import com.chattlyx.server.routes.installAttachmentRoutes
+import com.chattlyx.server.routes.installGroupRoutes
 import com.chattlyx.server.routes.installAuthRoutes
 import com.chattlyx.server.routes.installKeyRoutes
 import com.chattlyx.server.routes.installMessagingRoutes
@@ -45,7 +47,13 @@ fun Application.module() {
 
     val attachments = AttachmentContext.create(dataSource)
 
-    moduleWithContext(authServices, messaging, attachments)
+    val groups = GroupContext.create(
+        dataSource = dataSource,
+        accountRepository = authServices.accountRepository,
+        registry = messaging.registry,
+    )
+
+    moduleWithContext(authServices, messaging, attachments, groups)
 }
 
 /** Test-friendly wiring: injects pre-built services (messaging/attachments optional). */
@@ -53,6 +61,7 @@ fun Application.moduleWithContext(
     auth: AuthServices,
     messaging: MessagingContext? = null,
     attachments: AttachmentContext? = null,
+    groups: GroupContext? = null,
 ) {
     configureSerialization()
     configureLogging()
@@ -75,5 +84,9 @@ fun Application.moduleWithContext(
 
     if (attachments != null) {
         installAttachmentRoutes(attachments)
+    }
+
+    if (groups != null) {
+        installGroupRoutes(groups)
     }
 }

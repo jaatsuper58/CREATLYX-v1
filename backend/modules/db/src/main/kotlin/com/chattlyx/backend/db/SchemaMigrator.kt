@@ -93,6 +93,7 @@ class SchemaMigrator(
                 "migrations/V3__avatar_blobs.sql",
                 "migrations/V4__messaging.sql",
                 "migrations/V5__attachments.sql",
+                "migrations/V6__groups.sql",
             )
     }
 }

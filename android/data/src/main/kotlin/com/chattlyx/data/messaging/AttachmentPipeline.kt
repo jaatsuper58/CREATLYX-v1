@@ -168,7 +168,7 @@ class AttachmentPipeline @Inject constructor(
     ): Result<File> = withContext(ioDispatcher) {
         val meta = safeCall { api.attachmentMeta(attachmentId) }
             .getOrElse { return@withContext Result.failure(it) }
-        if (meta.status != "uploaded") {
+        if (meta.status != STATUS_READY) {
             return@withContext Result.failure(ChattlyError.Server("attachments/not_uploaded", 404))
         }
 
@@ -215,6 +215,11 @@ class AttachmentPipeline @Inject constructor(
         } finally {
             if (!tmp.delete()) tmp.deleteOnExit()
         }
+    }
+
+    private companion object {
+        /** Mirrors backend AttachmentRow.STATUS_READY. */
+        const val STATUS_READY = "ready"
     }
 
     private fun ByteArray.toHex(): String =

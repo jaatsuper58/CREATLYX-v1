@@ -148,7 +148,7 @@ class AttachmentPipelineTest {
                 mimeType = "audio/mp4",
                 sizeBytes = ciphertext.size.toLong(),
                 sha256 = sha.joinToString("") { "%02x".format(java.util.Locale.ROOT, it) },
-                status = "uploaded",
+                status = "ready",
             ),
         )
         coEvery { api.downloadAttachmentData("att-9") } returns
@@ -182,7 +182,7 @@ class AttachmentPipelineTest {
                 mimeType = "application/pdf",
                 sizeBytes = ciphertext.size.toLong(),
                 sha256 = expectedSha.joinToString("") { "%02x".format(java.util.Locale.ROOT, it) },
-                status = "uploaded",
+                status = "ready",
             ),
         )
         coEvery { api.downloadAttachmentData("att-8") } returns

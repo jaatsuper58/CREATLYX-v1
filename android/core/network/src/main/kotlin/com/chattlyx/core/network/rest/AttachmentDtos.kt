@@ -40,7 +40,7 @@ data class AttachmentMetaDto(
     val height: Int? = null,
     val durationMs: Int? = null,
     val fileName: String? = null,
-    /** "pending" | "uploaded". */
+    /** "pending" | "ready". */
     val status: String,
     val downloadUrl: String? = null,
 )

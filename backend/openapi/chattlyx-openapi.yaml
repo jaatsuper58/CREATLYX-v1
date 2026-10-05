@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ChattlyX API
-  version: 0.3.0-phase3
+  version: 0.4.0-phase4
   summary: |
     Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
     stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
@@ -460,6 +460,143 @@ paths:
         "401": { $ref: "#/components/responses/Problem" }
         "404": { $ref: "#/components/responses/Problem" }
 
+  /groups:
+    post:
+      tags: [groups]
+      operationId: createGroup
+      summary: GRP-01 create a group (creator becomes owner)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateGroup" }
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    get:
+      tags: [groups]
+      operationId: listGroups
+      summary: GRP-03 the caller's groups
+      responses:
+        "200":
+          description: Group list (membership metadata only; content stays E2EE)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupList" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}:
+    get:
+      tags: [groups]
+      operationId: getGroup
+      summary: GRP-03 group + members (members only; strangers get 404)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    patch:
+      tags: [groups]
+      operationId: renameGroup
+      summary: GRP-05 rename (owner/admin only); bumps membershipVersion
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+      responses:
+        "200":
+          description: Updated group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}/members:
+    post:
+      tags: [groups]
+      operationId: addGroupMembers
+      summary: GRP-04 add members (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountIds]
+              properties:
+                accountIds:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Updated group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}/members/{accountId}:
+    delete:
+      tags: [groups]
+      operationId: removeGroupMember
+      summary: GRP-06 self-leave or admin removal; owner leaving promotes earliest member
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: New membershipVersion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membershipVersion: { type: integer, format: int64 }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -735,3 +872,35 @@ components:
         fileName: { type: string }
         status: { type: string, enum: [pending, ready] }
         downloadUrl: { type: string, nullable: true }
+
+    CreateGroup:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        memberAccountIds:
+          type: array
+          items: { type: string, format: uuid }
+    GroupMember:
+      type: object
+      properties:
+        accountId: { type: string, format: uuid }
+        role: { type: string, enum: [owner, admin, member] }
+        joinedAt: { type: integer, format: int64 }
+    Group:
+      type: object
+      properties:
+        groupId: { type: string, format: uuid }
+        name: { type: string }
+        createdBy: { type: string, format: uuid }
+        createdAt: { type: integer, format: int64 }
+        membershipVersion: { type: integer, format: int64 }
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/GroupMember" }
+    GroupList:
+      type: object
+      properties:
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/Group" }
