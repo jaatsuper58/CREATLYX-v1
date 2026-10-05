@@ -171,6 +171,114 @@ class WsGatewayIntegrationTest {
         }
     }
 
+    @Test
+    fun `call signals relay to live peers and error when offline`() {
+        val dataSource = DbFactory.create(
+            DbConfig(postgres.jdbcUrl, postgres.username, postgres.password),
+        )
+        try {
+            SchemaMigrator(dataSource).migrate()
+            val auth = AuthServices.create(
+                AuthServiceConfig(
+                    jwtSecret = "ws-call-secret-0123456789-abcd",
+                    e164Pepper = "ws-call-pepper",
+                    e164KeyBase64 = Base64.getEncoder().encodeToString(ByteArray(32) { 9 }),
+                    devMode = true,
+                ),
+                dataSource,
+            )
+            val messaging = MessagingContext.create(
+                dataSource = dataSource,
+                redisConfig = RedisConfig(host = redis.host, port = redis.getMappedPort(6379)),
+                accountRepository = auth.accountRepository,
+                deviceRepository = auth.deviceRepository,
+            )
+
+            val now = System.currentTimeMillis()
+            val carol = auth.accountRepository.createOrTouch(
+                auth.vault.hash("+919833333333", "ws-call-pepper"),
+                auth.vault.encrypt("+919833333333"),
+                auth.vault.discoveryHash("+919833333333"),
+                now,
+            )
+            val dave = auth.accountRepository.createOrTouch(
+                auth.vault.hash("+919844444444", "ws-call-pepper"),
+                auth.vault.encrypt("+919844444444"),
+                auth.vault.discoveryHash("+919844444444"),
+                now,
+            )
+            val carolDevice = auth.deviceRepository.register(carol, "Carol phone", now)
+            val daveDevice = auth.deviceRepository.register(dave, "Dave phone", now)
+            val carolToken = auth.tokenService.issue(carol, carolDevice).accessToken
+            val daveToken = auth.tokenService.issue(dave, daveDevice).accessToken
+
+            testApplication {
+                application { moduleWithContext(auth, messaging) }
+                val wsClient = createClient { install(WebSockets) }
+
+                wsClient.webSocket("/v1/ws") {
+                    // Dave idles connected; Carol rings him.
+                    send(Frame.Binary(true, authFrame(daveToken, daveDevice)))
+
+                    val incomingSignal = launch {
+                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
+                        assertTrue(frame.hasCallSignal())
+                        // peer_account_id is flipped: Dave sees Carol's id.
+                        assertEquals(carol.toString(), frame.callSignal.peerAccountId)
+                        assertEquals("call-1", frame.callSignal.callId)
+                        assertEquals("ring-ciphertext", frame.callSignal.ciphertext.toStringUtf8())
+                    }
+
+                    val carolClient = createClient { install(WebSockets) }
+                    carolClient.webSocket("/v1/ws") {
+                        send(Frame.Binary(true, authFrame(carolToken, carolDevice)))
+
+                        send(
+                            Frame.Binary(
+                                true,
+                                ProtoFrame.newBuilder()
+                                    .setCallSignal(
+                                        com.chattlyx.proto.CallSignalFrame.newBuilder()
+                                            .setPeerAccountId(dave.toString())
+                                            .setCallId("call-1")
+                                            .setCiphertext(ByteString.copyFromUtf8("ring-ciphertext")),
+                                    )
+                                    .build()
+                                    .toByteArray(),
+                            ),
+                        )
+
+                        // Signalling an offline account errors back to the caller.
+                        val offlineTarget = UUID.randomUUID()
+                        send(
+                            Frame.Binary(
+                                true,
+                                ProtoFrame.newBuilder()
+                                    .setCallSignal(
+                                        com.chattlyx.proto.CallSignalFrame.newBuilder()
+                                            .setPeerAccountId(offlineTarget.toString())
+                                            .setCallId("call-2")
+                                            .setCiphertext(ByteString.copyFromUtf8("ring")),
+                                    )
+                                    .build()
+                                    .toByteArray(),
+                            ),
+                        )
+                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
+                        assertTrue(frame.hasError())
+                        assertEquals("call/peer-offline", frame.error.code)
+                    }
+
+                    withTimeout(5_000) { incomingSignal.join() }
+                }
+            }
+        } finally {
+            dataSource.close()
+        }
+    }
+
     private fun authFrame(token: String, deviceId: Long): ByteArray =
         ProtoFrame.newBuilder()
             .setAuth(AuthFrame.newBuilder().setAccessToken(token).setDeviceId(deviceId.toInt()))

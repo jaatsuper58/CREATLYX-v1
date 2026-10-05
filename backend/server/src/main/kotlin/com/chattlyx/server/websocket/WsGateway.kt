@@ -79,6 +79,15 @@ fun Application.installWsGateway(auth: TokenService, messaging: MessagingContext
 
                             proto.hasReceipt() -> routeReceipt(messaging, accountId, proto.receipt)
                             proto.hasTyping() -> routeTyping(messaging, accountId, proto.typing)
+                            proto.hasCallSignal() -> when (
+                                val outcome = routeCallSignal(messaging.registry, accountId, proto.callSignal)
+                            ) {
+                                is CallSignalOutcome.Forwarded -> Unit
+                                CallSignalOutcome.PeerOffline ->
+                                    sendError("call/peer-offline", "Peer is not connected")
+                                is CallSignalOutcome.Invalid ->
+                                    sendError("call/invalid-signal", outcome.reason)
+                            }
                             else -> sendError("protocol/unsupported-frame", "Frame not handled in Phase 2")
                         }
                     } catch (e: ChattlyxServerException) {

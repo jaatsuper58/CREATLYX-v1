@@ -87,6 +87,31 @@ message CallSignalFrame {
   bytes ciphertext = 3;
 }
 
+// CALL-*: E2EE call signalling payload. Rides inside CallSignalFrame.ciphertext;
+// the server never sees SDP, ICE candidates or ring state.
+message CallSignalContent {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_RING = 1; // caller -> callee: incoming call (+ offer)
+    KIND_ACCEPT = 2; // callee -> caller: accepted (+ answer)
+    KIND_DECLINE = 3; // callee -> caller: rejected
+    KIND_BUSY = 4; // callee -> caller: already in a call
+    KIND_CANCEL = 5; // caller -> callee: hung up while ringing
+    KIND_HANGUP = 6; // either direction: ended an established call
+    KIND_ICE_CANDIDATE = 7; // trickle ICE in either direction
+  }
+  Kind kind = 1;
+  string call_id = 2;
+  // WebRTC session description for RING (offer) and ACCEPT (answer).
+  string sdp_type = 3;
+  string sdp = 4;
+  // Trickle ICE candidate line (KIND_ICE_CANDIDATE).
+  string ice_candidate = 5;
+  // 0 = audio, 1 = video.
+  int32 media_type = 6;
+  int64 sent_at_ms = 7;
+}
+
 message GroupUpdateFrame {
   string group_id = 1;
   int64 membership_version = 2;
