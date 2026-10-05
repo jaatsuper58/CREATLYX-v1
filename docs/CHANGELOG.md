@@ -4,6 +4,63 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.8.0-beta] — Phases 7–8: hardening prep & launch readiness (2026-10-05)
+
+### Added
+- Release signing config driven purely by CI secrets / local gradle.properties
+  (env `CHATTLYX_KEYSTORE_*`); unsigned release builds remain possible for
+  local perf testing.
+- `docs/masvs-l2-checklist.md` (OWASP MASVS L2 gate for beta), ops runbooks
+  (deploy/rollback, incident response, key rotation) and the Play Store
+  listing draft (`docs/play-store-listing.md`).
+- Version bumped to `0.8.0-beta` (versionCode 8).
+
+### Known limitations (tracked)
+- ktlint/detekt gates stay deferred until the plugins support AGP 9
+  (documented in root `build.gradle.kts` + CONTRIBUTING).
+- Play Integrity attestation, biometric re-auth and OTP screenshot policy
+  close out the MASVS checklist before public beta.
+
+## [0.7.0] — Phase 6: presence, blocks & search (2026-10-05)
+
+### Added
+- Backend: Redis-TTL presence with `GET /v1/presence/{accountId}` hidden in
+  both directions when a block exists (STS), `blocked_peers` table (V7) with
+  `GET|POST /v1/blocks`, `DELETE /v1/blocks/{accountId}` (SAF), and
+  postgres+redis integration tests covering block→hide→unblock→visible.
+- Android: presence line in the conversation header with 30 s refresh;
+  overflow-menu Block action that pops back to the chat list (SAF-01);
+  debounced (250 ms) local search across conversation names (SQL `LIKE`) and
+  message bodies (FTS5 join with quoted-token escaping) behind the chat-list
+  search bar (SRCH-01); `BlockRepository` in-memory cache with lazy hydrate.
+
+### Known limitations (tracked)
+- Server does not yet suppress delivery from blocked senders (client-side
+  hiding only) — Phase 7 hardening.
+- Block cache is memory-only; a Room-backed cache is a Phase 7 candidate.
+
+## [0.6.0] — Phase 5: encrypted calling (2026-10-05)
+
+### Added
+- Backend: zero-knowledge call-signal relay over the websocket
+  (`call_signal` frame flips sender/recipient ids; no plaintext ever parsed),
+  `CallSignalContent` proto carried inside `SessionContent`, routing unit +
+  integration tests (CALL-*).
+- Android: `core:rtc` module wrapping stream-webrtc-android 1.3.10 (Apache-2.0,
+  org.webrtc API) with camera capture, trickle ICE and mute/video toggles;
+  `CallManager` E2EE signalling state machine (RING carries offer, ACCEPT
+  carries answer, BUSY when non-idle, 45 s timeout); Room v4 `call_log`
+  history; Calls screen + in-call screen; global incoming-call ring overlay
+  in the app shell; conversation call buttons gated on RECORD_AUDIO.
+
+### Known limitations (tracked, deliberately deferred from Phase 5)
+- Video track is enabled but no `SurfaceViewRenderer` UI yet (engine exposes
+  `rootEglBase` for the upcoming attach).
+- Trickle candidates lose `sdpMid`/`sdpMLineIndex` on decode (flat string);
+  acceptable on the current relay-only ICE config, tighten before SFU.
+- No ConnectionService/Core-Telecom integration and no full-screen incoming
+  call notification yet; both land with Phase 7 hardening.
+
 ## [0.5.0] — Phase 4: Groups (2026-10-05)
 
 ### Added

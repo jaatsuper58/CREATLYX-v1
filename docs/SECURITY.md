@@ -77,9 +77,30 @@ Please report suspected vulnerabilities privately:
    storage** (`filesDir/attachments`, never shared except through the
    FileProvider grant for an explicit user "open" action).
 
+## Phase 5/6 notes and accepted trade-offs
+
+1. **Call signalling is relayed, never parsed (CALL-*).** `call_signal`
+   frames are re-addressed by swapping sender/recipient ids; the payload is an
+   opaque `CallSignalContent` blob encrypted under the same E2EE session
+   cipher as messages (placeholder cipher note in Phase 2 applies). The server
+   cannot read SDP offers/answers or ICE candidates. It can observe call
+   metadata (who called whom, when, call duration from signal timing) — the
+   same exposure class as envelope headers, and documented as such.
+2. **Presence is hidden both ways across blocks (STS/SAF).** `GET
+   /v1/presence/{accountId}` returns a generic offline/hidden view when either
+   party blocks the other, so presence cannot be used to probe a blocked
+   account. Block rows themselves are per-user; the block *list* of other
+   users is never exposed.
+3. **Known gap — blocked senders still reach the transport (until Phase 7).**
+   The server does not yet suppress delivery from a blocked sender; the client
+   hides their messages/presence locally. Enforced suppression is tracked as
+   Phase 7 hardening; see `docs/runbooks/incident-response.md`.
+4. **Call media is not yet SFU-routed.** Peer-to-peer WebRTC exposes both
+   parties' IP addresses to each other (standard WebRTC trade-off); TURN/SFU
+   relay for IP concealment is designed for the LiveKit SFU milestone.
+
 ## Pre-launch gates
 
-- OWASP MASVS L2 checklist + MASTG cases (`docs/masvs-l2-checklist.md`, created
-  in Phase 7).
+- OWASP MASVS L2 checklist + MASTG cases (`docs/masvs-l2-checklist.md`).
 - Penetration test commissioned before beta.
 - Dependency scanning (CI advisory today; hard gate from Phase 1).
