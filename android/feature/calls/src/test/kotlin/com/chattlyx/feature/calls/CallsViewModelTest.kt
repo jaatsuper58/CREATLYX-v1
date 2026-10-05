@@ -13,11 +13,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import androidx.lifecycle.viewModelScope
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -70,6 +72,7 @@ class CallsViewModelTest {
             assertTrue(viewModel.callPlaced.value)
             viewModel.consumeCallPlaced()
             assertFalse(viewModel.callPlaced.value)
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -90,6 +93,7 @@ class CallsViewModelTest {
             runCurrent()
 
             assertFalse(viewModel.callPlaced.value)
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -113,6 +117,7 @@ class CallsViewModelTest {
 
             coVerify { session.accept() }
             coVerify { session.hangUp() }
+            viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
         }
@@ -127,6 +132,7 @@ class CallsViewModelTest {
                 runCurrent()
 
                 assertEquals("abcdef12", viewModel.displayNameFor("abcdef12-3456"))
+                viewModel.viewModelScope.cancel()
             } finally {
                 Dispatchers.resetMain()
             }
