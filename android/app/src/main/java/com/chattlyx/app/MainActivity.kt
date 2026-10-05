@@ -35,7 +35,10 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermissionIfNeeded()
 
         setContent {
-            ChattlyxAppRoot()
+            // AUTH-* (Phase 8): biometric/credential gate wraps the whole app.
+            com.chattlyx.app.ui.AppLockGate {
+                ChattlyxAppRoot()
+            }
         }
     }
 

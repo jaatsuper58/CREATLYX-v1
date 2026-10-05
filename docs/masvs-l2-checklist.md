@@ -26,7 +26,9 @@ beta build ships to Play internal testing.
 ## MASVS-AUTH
 - ✅ OTP: 5-attempt cap, 15-min lockout, resend back-off, 5-min TTL.
 - ✅ Device-bound JWTs (15 min), rotating refresh tokens with reuse detection.
-- ⬜ Biometric re-auth for app foreground (Phase 7 polish, behind Keystore).
+- ✅ Biometric/credential app lock (Phase 8): Settings → Privacy → App lock;
+  the gate re-arms on every process backgrounding and unlocks via
+  BiometricPrompt (BIOMETRIC_STRONG or DEVICE_CREDENTIAL).
 
 ## MASVS-NETWORK
 - ✅ TLS-only (`usesCleartextTraffic=false`), network security config with a

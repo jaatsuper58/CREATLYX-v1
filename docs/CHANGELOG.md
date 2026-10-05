@@ -4,6 +4,21 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+## [0.11.0-beta] — Phase 8 polish: biometric app lock (2026-10-05)
+
+### Added
+- AUTH-* app lock: Settings → Privacy → "App lock" toggle (enabling requires
+  a BiometricPrompt owner confirmation; hidden when the device has no strong
+  biometric/credential authenticator). Once armed, the gate re-arms on every
+  process backgrounding and overlays the app until BiometricPrompt succeeds —
+  content stays composed underneath so navigation state survives.
+- `SettingsRepository.appLockEnabled` DataStore preference, Lock icon in the
+  design system, ViewModel tests for the settings toggle and gate semantics.
+
+### Known limitations (tracked)
+- Preference reads are async: the first frames after a cold start render
+  unlocked before DataStore answers (documented in code).
+
 ## [0.10.0-beta] — Phase 8: telecom integration (2026-10-05)
 
 ### Added

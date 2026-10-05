@@ -112,6 +112,26 @@ object ChattlyxIcons {
         }
     }
 
+    val Lock: ImageVector by lazy {
+        outlineIcon("ChattlyxLock") {
+            // Shackle.
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = STROKE, strokeLineCap = StrokeCap.Round) {
+                moveTo(8f, 10f)
+                lineTo(8f, 7f)
+                arcTo(4f, 4f, 0f, false, false, 16f, 7f)
+                lineTo(16f, 10f)
+            }
+            // Body.
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = STROKE, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(6f, 10f)
+                lineTo(18f, 10f)
+                lineTo(18f, 20f)
+                lineTo(6f, 20f)
+                close()
+            }
+        }
+    }
+
     val PushPin: ImageVector by lazy {
         outlineIcon("ChattlyxPushPin") {
             path(

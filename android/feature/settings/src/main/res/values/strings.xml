@@ -4,6 +4,10 @@
     <string name="settings_account">Account</string>
     <string name="settings_account_summary">Phone number, profile, username</string>
     <string name="settings_privacy">Privacy</string>
+    <string name="settings_app_lock">App lock</string>
+    <string name="settings_app_lock_summary">Require biometric or device credential when returning to the app</string>
+    <string name="settings_app_lock_prompt_title">Turn on app lock</string>
+    <string name="settings_app_lock_prompt_subtitle">Confirm it\u2019s you to enable the lock</string>
     <string name="settings_privacy_summary">Last seen, profile photo, read receipts</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_summary">Tones, previews, channels</string>

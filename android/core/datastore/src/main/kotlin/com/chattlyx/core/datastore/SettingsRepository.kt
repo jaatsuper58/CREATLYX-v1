@@ -43,9 +43,19 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { prefs -> prefs[KEY_REDUCE_MOTION] = enabled }
     }
 
+    /** AUTH-* (Phase 8): biometric/credential app-lock preference. */
+    val appLockEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[KEY_APP_LOCK] ?: false
+    }
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[KEY_APP_LOCK] = enabled }
+    }
+
     private companion object {
         val KEY_THEME_MODE = stringPreferencesKey("appearance.theme_mode")
         val KEY_DYNAMIC_COLOR = booleanPreferencesKey("appearance.dynamic_color")
         val KEY_REDUCE_MOTION = booleanPreferencesKey("appearance.reduce_motion")
+        val KEY_APP_LOCK = booleanPreferencesKey("security.app_lock")
     }
 }

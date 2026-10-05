@@ -19,4 +19,10 @@
     <!-- Accessibility -->
     <string name="cd_avatar_of">Profile photo of %1$s</string>
     <string name="cd_unread_count">%1$d unread messages</string>
+    <!-- AUTH-* (Phase 8): biometric app lock. -->
+    <string name="app_lock_title">ChattlyX is locked</string>
+    <string name="app_lock_subtitle">Confirm it’s you to continue where you left off.</string>
+    <string name="app_lock_unlock">Unlock</string>
+    <string name="app_lock_prompt_title">Unlock ChattlyX</string>
+    <string name="app_lock_prompt_subtitle">Confirm it’s you to continue</string>
 </resources>
