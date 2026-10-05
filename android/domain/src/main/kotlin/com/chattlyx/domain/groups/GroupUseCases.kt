@@ -2,6 +2,7 @@ package com.chattlyx.domain.groups
 
 import com.chattlyx.core.common.error.ChattlyError
 import com.chattlyx.core.common.result.Result
+import com.chattlyx.core.common.result.map
 import javax.inject.Inject
 
 /** GRP-01: validates + creates a group; returns the new group id. */
