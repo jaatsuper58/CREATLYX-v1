@@ -91,6 +91,24 @@ interface ChattlyxServiceApi {
     @PUT("v1/devices/push")
     suspend fun registerPushToken(@Body body: PushTokenDto): Response<Unit>
 
+    // --- Phase 6 (STS/SAF) presence + blocks ---
+
+    /** STS: presence for one account (hidden when blocked either way). */
+    @GET("v1/presence/{accountId}")
+    suspend fun presence(@Path("accountId") accountId: String): Response<PresenceDto>
+
+    /** SAF: the caller's block list. */
+    @GET("v1/blocks")
+    suspend fun blockList(): Response<BlockListDto>
+
+    /** SAF: block an account. */
+    @POST("v1/blocks/{accountId}")
+    suspend fun blockPeer(@Path("accountId") accountId: String): Response<Unit>
+
+    /** SAF: unblock an account. */
+    @DELETE("v1/blocks/{accountId}")
+    suspend fun unblockPeer(@Path("accountId") accountId: String): Response<Unit>
+
     // --- Phase 4 (GRP-01..06) groups ---
 
     /** GRP-01: create a group; creator becomes owner. */

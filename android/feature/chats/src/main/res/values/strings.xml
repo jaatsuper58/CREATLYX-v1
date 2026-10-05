@@ -3,6 +3,9 @@
     <string name="chats_empty_message">Find people you know on ChattlyX and start a private conversation.</string>
     <string name="chats_empty_action">Find people</string>
     <string name="chats_typing">typing…</string>
+    <string name="chats_search_hint">Search chats and messages</string>
+    <string name="chats_search_clear">Clear search</string>
+    <string name="chats_search_empty">No matches found on this device.</string>
 
     <string name="conversation_loading">Loading…</string>
     <string name="conversation_typing">typing…</string>
@@ -10,6 +13,9 @@
     <string name="conversation_composer_hint">Message</string>
     <string name="conversation_send">Send</string>
     <string name="conversation_call">Start a call</string>
+    <string name="conversation_online">online</string>
+    <string name="conversation_more">More options</string>
+    <string name="conversation_block">Block</string>
 
     <!-- MED-* attachments -->
     <string name="attachment_add">Add attachment</string>

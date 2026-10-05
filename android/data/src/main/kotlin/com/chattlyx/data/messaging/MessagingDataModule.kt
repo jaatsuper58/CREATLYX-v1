@@ -31,4 +31,7 @@ interface MessagingBindings {
 
     @Binds
     fun bindRealtimeEvents(impl: RealtimeCoordinator): RealtimeEvents
+
+    @Binds
+    fun bindSearchRepository(impl: SearchRepositoryImpl): com.chattlyx.domain.messaging.SearchRepository
 }

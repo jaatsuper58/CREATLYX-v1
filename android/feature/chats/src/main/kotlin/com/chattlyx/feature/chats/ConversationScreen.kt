@@ -78,6 +78,8 @@ fun ConversationScreen(
 ) {
     val conversation by viewModel.conversation.collectAsStateWithLifecycle()
     val peerTyping by viewModel.peerTyping.collectAsStateWithLifecycle()
+    val presence by viewModel.presence.collectAsStateWithLifecycle()
+    val blocked by viewModel.blocked.collectAsStateWithLifecycle()
     val composer by viewModel.composerText.collectAsStateWithLifecycle()
     val attachmentSending by viewModel.attachmentSending.collectAsStateWithLifecycle()
     val recordingStartedAt by viewModel.recordingStartedAt.collectAsStateWithLifecycle()
@@ -122,6 +124,11 @@ fun ConversationScreen(
         }
     }
 
+    // SAF: after a successful block, return to the chat list.
+    LaunchedEffect(blocked) {
+        if (blocked) onBack()
+    }
+
     DisposableEffect(Unit) {
         onDispose { viewModel.markRead() }
     }
@@ -138,9 +145,14 @@ fun ConversationScreen(
                                 ?: stringResource(R.string.conversation_loading),
                             style = MaterialTheme.typography.titleMedium,
                         )
-                        if (peerTyping) {
-                            Text(
+                        when {
+                            peerTyping -> Text(
                                 text = stringResource(R.string.conversation_typing),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            presence?.online == true -> Text(
+                                text = stringResource(R.string.conversation_online),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -157,6 +169,25 @@ fun ConversationScreen(
                 },
                 actions = {
                     if (!viewModel.isGroup) {
+                        var menuOpen by remember { mutableStateOf(false) }
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(
+                                imageVector = ChattlyxIcons.PushPin,
+                                contentDescription = stringResource(R.string.conversation_more),
+                            )
+                        }
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                        ) {
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(stringResource(R.string.conversation_block)) },
+                                onClick = {
+                                    menuOpen = false
+                                    viewModel.blockPeer()
+                                },
+                            )
+                        }
                         IconButton(onClick = {
                             if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
                                 androidx.core.content.ContextCompat.checkSelfPermission(

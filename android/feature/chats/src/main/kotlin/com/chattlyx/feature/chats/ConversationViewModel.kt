@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.chattlyx.core.common.result.Result
+import com.chattlyx.core.common.result.getOrNull
 import com.chattlyx.domain.messaging.AttachmentKind
 import com.chattlyx.domain.messaging.Conversation
 import com.chattlyx.domain.messaging.Message
@@ -57,6 +58,8 @@ class ConversationViewModel @Inject constructor(
     private val downloadAttachmentUseCase: DownloadAttachmentUseCase,
     private val markConversationReadUseCase: MarkConversationReadUseCase,
     private val callSession: com.chattlyx.domain.calls.CallSession,
+    private val getPresenceUseCase: com.chattlyx.domain.social.GetPresenceUseCase,
+    private val blockPeerUseCase: com.chattlyx.domain.social.BlockPeerUseCase,
 ) : ViewModel() {
 
     // Type-safe navigation stores route arguments under their declared name;
@@ -99,9 +102,43 @@ class ConversationViewModel @Inject constructor(
     private var typingStopJob: Job? = null
     private val voiceRecorder = VoiceRecorder(context)
 
+    /** STS: peer presence for the header (1:1 only). */
+    private val _presence = MutableStateFlow<com.chattlyx.domain.social.PresenceInfo?>(null)
+    val presence: StateFlow<com.chattlyx.domain.social.PresenceInfo?> = _presence.asStateFlow()
+
+    /** SAF: one-shot flag raised after blocking the peer. */
+    private val _blocked = MutableStateFlow(false)
+    val blocked: StateFlow<Boolean> = _blocked.asStateFlow()
+
     init {
         // Entering a conversation marks it read and receipts the peer.
         viewModelScope.launch { markConversationReadUseCase(conversationId) }
+        if (!isGroup) {
+            viewModelScope.launch {
+                while (true) {
+                    val peer = conversation.value?.peerAccountId
+                    if (peer != null) {
+                        _presence.value = getPresenceUseCase(peer).getOrNull()
+                    }
+                    kotlinx.coroutines.delay(PRESENCE_REFRESH_MS)
+                }
+            }
+        }
+    }
+
+    /** SAF-01: blocks the peer; the UI pops back to the chat list. */
+    fun blockPeer() {
+        if (isGroup) return
+        val peer = conversation.value?.peerAccountId ?: return
+        viewModelScope.launch {
+            val result = blockPeerUseCase(peer)
+            if (result is Result.Success) _blocked.value = true
+        }
+    }
+
+    private companion object {
+        const val TYPING_STOP_AFTER_MS = 3_000L
+        const val PRESENCE_REFRESH_MS = 30_000L
     }
 
     fun onTextChanged(value: String) {
@@ -381,7 +418,4 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    private companion object {
-        const val TYPING_STOP_AFTER_MS = 3_000L
-    }
 }

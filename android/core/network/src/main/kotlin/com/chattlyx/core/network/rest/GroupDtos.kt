@@ -38,3 +38,15 @@ data class AddMembersDto(val accountIds: List<String>)
 
 @Serializable
 data class MembershipVersionDto(val membershipVersion: Long)
+
+/** STS presence response. */
+@Serializable
+data class PresenceDto(
+    val accountId: String,
+    val online: Boolean,
+    val lastSeenMs: Long? = null,
+)
+
+/** SAF block list response. */
+@Serializable
+data class BlockListDto(val blockedAccountIds: List<String>)

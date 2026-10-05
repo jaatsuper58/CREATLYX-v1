@@ -57,6 +57,8 @@ fun ChatsScreen(
 ) {
     val pagingItems = viewModel.conversations.collectAsLazyPagingItems()
     val typing by viewModel.typingByConversation.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val searchResults by viewModel.searchResults.collectAsStateWithLifecycle()
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val createdGroupId by viewModel.createdGroupId.collectAsStateWithLifecycle()
     val groupErrorKey by viewModel.groupErrorKey.collectAsStateWithLifecycle()
@@ -68,24 +70,61 @@ fun ChatsScreen(
         onOpenConversation("grp:$groupId")
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        ChatsContent(
-            pagingItems = pagingItems,
-            typingByConversation = typing,
-            onOpenConversation = onOpenConversation,
-            onInvite = onInvite,
-        )
-        FloatingActionButton(
-            onClick = { createDialogOpen = true },
+    Column(modifier = modifier.fillMaxSize()) {
+        Row(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(
-                imageVector = ChattlyxIcons.Contacts,
-                contentDescription = stringResource(R.string.group_new),
+            com.chattlyx.core.designsystem.component.ChattlyxTextField(
+                value = searchQuery,
+                onValueChange = viewModel::onSearchQueryChanged,
+                placeholder = stringResource(R.string.chats_search_hint),
+                singleLine = true,
+                modifier = Modifier.weight(1f),
             )
+            if (searchQuery.isNotBlank()) {
+                androidx.compose.material3.IconButton(onClick = viewModel::clearSearch) {
+                    Icon(
+                        imageVector = ChattlyxIcons.Stop,
+                        contentDescription = stringResource(R.string.chats_search_clear),
+                    )
+                }
+            }
         }
+
+        if (searchQuery.isNotBlank()) {
+            SearchResults(
+                results = searchResults,
+                onOpenConversation = onOpenConversation,
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxSize()) {
+                ChatsContent(
+                    pagingItems = pagingItems,
+                    typingByConversation = typing,
+                    onOpenConversation = onOpenConversation,
+                    onInvite = onInvite,
+                )
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Spacer(Modifier.fillMaxSize())
+            FloatingActionButton(
+                onClick = { createDialogOpen = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+            ) {
+                Icon(
+                    imageVector = ChattlyxIcons.Contacts,
+                    contentDescription = stringResource(R.string.group_new),
+                )
+            }
     }
 
     if (createDialogOpen) {
@@ -159,6 +198,57 @@ private fun Conversation.toRowState(isTyping: Boolean) = ChatListItemState(
 
 private fun formatTime(millis: Long): String =
     if (millis <= 0) "" else DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis))
+
+/** SRCH-01: combined name + message search results. */
+@Composable
+private fun SearchResults(
+    results: com.chattlyx.feature.chats.ChatsViewModel.SearchResults,
+    onOpenConversation: (String) -> Unit,
+) {
+    if (results.conversations.isEmpty() && results.messages.isEmpty()) {
+        Text(
+            text = stringResource(R.string.chats_search_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(24.dp),
+        )
+        return
+    }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(results.conversations.size) { index ->
+            val conversation = results.conversations[index]
+            com.chattlyx.core.designsystem.component.ChatListItem(
+                state = conversation.toRowState(false),
+                onClick = { onOpenConversation(conversation.id) },
+            )
+        }
+        items(results.messages.size) { index ->
+            val hit = results.messages[index]
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenConversation(hit.conversationId) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(imageVector = ChattlyxIcons.Chat, contentDescription = null)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = hit.snippet,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 2,
+                    )
+                    Text(
+                        text = formatTime(hit.sentAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /** GRP-01: name + member selection over discovered contacts. */
 @Composable

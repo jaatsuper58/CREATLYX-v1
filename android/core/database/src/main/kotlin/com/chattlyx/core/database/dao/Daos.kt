@@ -5,6 +5,13 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+
+/** SRCH-01 projection for FTS joins. */
+data class MessageSearchRow(
+    @androidx.room.ColumnInfo(name = "conversation_id") val conversationId: String,
+    @androidx.room.ColumnInfo(name = "body") val body: String,
+    @androidx.room.ColumnInfo(name = "sent_at") val sentAt: Long,
+)
 import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.GroupEntity
@@ -40,6 +47,16 @@ interface ConversationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(conversation: ConversationEntity)
+
+    /** SRCH-01: conversations whose peer name matches. */
+    @Query(
+        """
+        SELECT * FROM conversations
+        WHERE peer_name LIKE '%' || :query || '%'
+        ORDER BY last_message_at DESC LIMIT :limit
+        """
+    )
+    suspend fun searchByName(query: String, limit: Int): List<ConversationEntity>
 
     /** GRP-*: renames a group chat-list row without touching counters. */
     @Query("UPDATE conversations SET peer_name = :name WHERE id = :id")
@@ -117,6 +134,18 @@ interface MessageDao {
 
     @Query("SELECT body FROM messages_fts WHERE messages_fts MATCH :query LIMIT :limit")
     suspend fun search(query: String, limit: Int): List<String>
+
+    /** SRCH-01: message hits with conversation context. */
+    @Query(
+        """
+        SELECT m.conversation_id AS conversation_id, m.body AS body, m.sent_at AS sent_at
+        FROM messages_fts f
+        JOIN messages m ON m.rowid = f.rowid
+        WHERE messages_fts MATCH :query
+        ORDER BY m.sent_at DESC LIMIT :limit
+        """
+    )
+    suspend fun searchHits(query: String, limit: Int): List<MessageSearchRow>
 }
 
 /** GRP-* group + membership cache. */

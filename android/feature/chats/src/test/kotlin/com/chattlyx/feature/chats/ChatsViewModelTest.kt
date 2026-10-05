@@ -49,6 +49,12 @@ class ChatsViewModelTest {
             },
             createGroupUseCase = createGroup,
             refreshGroupsUseCase = refreshGroups,
+            searchConversationsUseCase = mockk {
+                coEvery { this@mockk(any()) } returns Result.success(emptyList())
+            },
+            searchMessagesUseCase = mockk {
+                coEvery { this@mockk(any()) } returns Result.success(emptyList())
+            },
         )
     }
 
