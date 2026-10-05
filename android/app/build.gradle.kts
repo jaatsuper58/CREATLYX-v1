@@ -18,11 +18,35 @@ android {
         manifestPlaceholders["chattlyxDeepLinkHost"] = "chattlyx.com"
     }
 
+    // Phase 8 release signing: credentials come from CI secrets / local
+    // gradle.properties (never committed). Unsigned release builds stay
+    // possible for local perf testing.
+    val keystorePath = providers.environmentVariable("CHATTLYX_KEYSTORE_PATH")
+        .orElse(providers.gradleProperty("chattlyxKeystorePath"))
+    if (keystorePath.isPresent) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath.get())
+                storePassword = providers.environmentVariable("CHATTLYX_KEYSTORE_PASSWORD")
+                    .orElse(providers.gradleProperty("chattlyxKeystorePassword")).orNull
+                keyAlias = providers.environmentVariable("CHATTLYX_KEY_ALIAS")
+                    .orElse(providers.gradleProperty("chattlyxKeyAlias")).orNull
+                keyPassword = providers.environmentVariable("CHATTLYX_KEY_PASSWORD")
+                    .orElse(providers.gradleProperty("chattlyxKeyPassword")).orNull
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Debug builds are identifiable in crash logs without leaking release ids.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+        }
+        release {
+            if (keystorePath.isPresent) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

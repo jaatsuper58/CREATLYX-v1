@@ -16,7 +16,8 @@ canonical wrapper jar, run `gradle wrapper` once and commit the generated files.
 ```bash
 cd android
 ./gradlew build                          # assemble + lint + unit + screenshot tests
-./gradlew ktlintFormat                   # fix style before pushing
+# ktlint/detekt gates are pending AGP-9 plugin compatibility (root build.gradle.kts note);
+# style is enforced by review against the official Kotlin style until then
 ./gradlew :core:designsystem:testDebugUnitTest   # design-system suite incl. Roborazzi
 
 cd ../backend
