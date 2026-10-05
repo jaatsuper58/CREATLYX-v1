@@ -8,7 +8,7 @@ voice/video calls, large-file sharing and group chats that stay usable on weak
 2G/3G networks. This repository is a monorepo: Android client, Kotlin/Ktor
 backend, infrastructure and documentation.
 
-Status: **Phase 8 — Launch prep** — foundations, auth/keys, 1:1 messaging, media & voice notes, groups, encrypted calling, presence/blocks and local search are in and CI-green (see `docs/CHANGELOG.md` and the ADRs in
+Status: **Phase 8 — Launch prep (code complete)** — foundations, auth/keys, 1:1 messaging, media & voice notes, groups, encrypted calling (incl. system telecom integration), presence/blocks, local search and hardening are in and CI-green; remaining gates are ops/store-side (see `docs/CHANGELOG.md` and the ADRs in
 `docs/decisions/`). Feature catalogue and acceptance criteria are tracked in the
 master build specification; every artefact references feature IDs (e.g. `AUTH-03`).
 

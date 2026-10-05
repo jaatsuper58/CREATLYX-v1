@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ChattlyX API
-  version: 0.4.0-phase4
+  version: 0.5.0-phase6
   summary: |
     Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
     stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
@@ -33,6 +33,10 @@ tags:
     description: Contact discovery (CON-03)
   - name: messaging
     description: Encrypted message history sync (MSG-06)
+  - name: presence
+    description: Online/last-seen state with block-aware hiding (STS)
+  - name: blocks
+    description: Per-account block list (SAF-01/02)
 
 paths:
   /config:
@@ -596,6 +600,81 @@ paths:
         "401": { $ref: "#/components/responses/Problem" }
         "403": { $ref: "#/components/responses/Problem" }
         "404": { $ref: "#/components/responses/Problem" }
+
+  /presence/{accountId}:
+    get:
+      tags: [presence]
+      operationId: getPresence
+      summary: STS presence; hidden both ways when a block exists between the pair
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Presence snapshot (offline view when hidden)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accountId, online]
+                properties:
+                  accountId: { type: string, format: uuid }
+                  online: { type: boolean }
+                  lastSeenMs:
+                    type: integer
+                    format: int64
+                    description: Omitted when hidden or unknown
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /blocks:
+    get:
+      tags: [blocks]
+      operationId: listBlocks
+      summary: SAF-01 the caller's block list (ids only)
+      responses:
+        "200":
+          description: Blocked account ids, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blockedAccountIds]
+                properties:
+                  blockedAccountIds:
+                    type: array
+                    items: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /blocks/{accountId}:
+    post:
+      tags: [blocks]
+      operationId: blockAccount
+      summary: SAF-01 block an account; idempotent
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Block recorded
+        "400": { $ref: "#/components/responses/Validation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [blocks]
+      operationId: unblockAccount
+      summary: SAF-01 remove a block; idempotent
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Block removed (or already absent)
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
 components:
   securitySchemes:
