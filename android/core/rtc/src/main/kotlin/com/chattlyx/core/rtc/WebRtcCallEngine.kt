@@ -14,7 +14,6 @@ import org.webrtc.Camera1Enumerator
 import org.webrtc.CameraVideoCapturer
 import org.webrtc.DataChannel
 import org.webrtc.EglBase
-import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.PeerConnection
@@ -102,7 +101,11 @@ class WebRtcCallEngine(
 
     override suspend fun addRemoteCandidate(candidate: IceCandidate) {
         peerConnection?.addIceCandidate(
-            IceCandidate(candidate.sdpMid ?: "0", candidate.sdpMLineIndex, candidate.candidate),
+            org.webrtc.IceCandidate(
+                candidate.sdpMid ?: "0",
+                candidate.sdpMLineIndex,
+                candidate.candidate,
+            ),
         )
     }
 
@@ -195,13 +198,13 @@ class WebRtcCallEngine(
             override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
             override fun onIceGatheringChange(newState: PeerConnection.IceGatheringState?) = Unit
 
-            override fun onIceCandidate(candidate: IceCandidate) {
+            override fun onIceCandidate(candidate: org.webrtc.IceCandidate) {
                 _iceCandidates.tryEmit(
                     IceCandidate(candidate.sdp, candidate.sdpMid, candidate.sdpMLineIndex),
                 )
             }
 
-            override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) = Unit
+            override fun onIceCandidatesRemoved(candidates: Array<out org.webrtc.IceCandidate>?) = Unit
             override fun onAddStream(stream: MediaStream?) = Unit
             override fun onRemoveStream(stream: MediaStream?) = Unit
             override fun onDataChannel(dataChannel: DataChannel?) = Unit
