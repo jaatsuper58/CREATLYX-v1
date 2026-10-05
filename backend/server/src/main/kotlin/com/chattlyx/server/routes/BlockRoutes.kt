@@ -26,7 +26,7 @@ fun Application.installBlockRoutes(blocks: BlockRepository) {
 
             post("/v1/blocks/{accountId}") {
                 val principal = call.requireAccount()
-                val target = uuidParam()
+                val target = call.uuidParam()
                 if (target == principal.accountId) {
                     throw ChattlyxServerException.Validation("cannot block yourself")
                 }
@@ -36,7 +36,7 @@ fun Application.installBlockRoutes(blocks: BlockRepository) {
 
             delete("/v1/blocks/{accountId}") {
                 val principal = call.requireAccount()
-                val target = uuidParam()
+                val target = call.uuidParam()
                 blocks.unblock(principal.accountId, target)
                 call.respond(HttpStatusCode.NoContent)
             }
