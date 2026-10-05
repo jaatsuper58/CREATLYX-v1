@@ -1,7 +1,6 @@
 package com.chattlyx.feature.settings
 
 import android.content.res.Configuration
-import androidx.activity.ComponentActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.clickable
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chattlyx.feature.settings.privacy.AppLockViewModel
@@ -114,7 +114,7 @@ private fun AppLockRow() {
     val viewModel: AppLockViewModel = hiltViewModel()
     val enabled by viewModel.appLockEnabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val activity = context as? ComponentActivity ?: return
+    val activity = context as? FragmentActivity ?: return
     val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
     if (BiometricManager.from(context).canAuthenticate(authenticators)
@@ -159,7 +159,7 @@ private fun AppLockRow() {
 }
 
 /** Owner confirmation before arming the lock. */
-private fun authenticateForAppLock(activity: ComponentActivity, onSuccess: () -> Unit) {
+private fun authenticateForAppLock(activity: FragmentActivity, onSuccess: () -> Unit) {
     val prompt = BiometricPrompt(
         activity,
         ContextCompat.getMainExecutor(activity),

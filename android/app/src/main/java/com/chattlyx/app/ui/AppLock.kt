@@ -1,6 +1,5 @@
 package com.chattlyx.app.ui
 
-import androidx.activity.ComponentActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -84,7 +84,7 @@ fun AppLockGate(
     val viewModel: AppLockGateViewModel = hiltViewModel()
     val enabled by viewModel.appLockEnabled.collectAsStateWithLifecycle()
     val locked by viewModel.locked.collectAsStateWithLifecycle()
-    val activity = LocalContext.current as? ComponentActivity
+    val activity = LocalContext.current as? FragmentActivity
 
     // Re-arm whenever the whole process leaves the foreground.
     DisposableEffect(Unit) {
@@ -156,7 +156,7 @@ private fun LockSurface(onUnlock: () -> Unit) {
     }
 }
 
-private fun authenticateToUnlock(activity: ComponentActivity, onSuccess: () -> Unit) {
+private fun authenticateToUnlock(activity: FragmentActivity, onSuccess: () -> Unit) {
     val prompt = BiometricPrompt(
         activity,
         ContextCompat.getMainExecutor(activity),
