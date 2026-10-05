@@ -12,6 +12,8 @@
     <!-- NOT-02: message notifications on Android 13+. Contacts sync is
          requested in-flow by feature:contacts (CON-02), never declared here. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- MED-03 voice notes; requested in-flow only when the mic is used. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:name=".ChattlyxApplication"
@@ -26,6 +28,18 @@
         android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.Chattlyx">
+
+        <!-- MED-03: hands decrypted attachments to external viewers without
+             exposing the app's files directory. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <activity
             android:name=".MainActivity"

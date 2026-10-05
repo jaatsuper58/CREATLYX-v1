@@ -9,4 +9,29 @@
     <string name="conversation_back">Back</string>
     <string name="conversation_composer_hint">Message</string>
     <string name="conversation_send">Send</string>
+
+    <!-- MED-* attachments -->
+    <string name="attachment_add">Add attachment</string>
+    <string name="attachment_photo">Photo</string>
+    <string name="attachment_video">Video</string>
+    <string name="attachment_file">Document</string>
+    <string name="attachment_voice">Voice note</string>
+    <string name="attachment_uploading">Encrypting &amp; uploading…</string>
+    <string name="attachment_download">Download</string>
+    <string name="attachment_downloading">Downloading…</string>
+    <string name="attachment_download_failed">Download failed — tap to retry</string>
+    <string name="attachment_image_label">Photo message</string>
+    <string name="attachment_video_label">Video message</string>
+    <string name="attachment_voice_label">Voice message</string>
+    <string name="attachment_file_label">Document message</string>
+    <string name="attachment_open">Open</string>
+    <string name="attachment_play">Play voice note</string>
+    <string name="attachment_stop">Stop playback</string>
+    <string name="attachment_no_app">No app available to open this file</string>
+    <string name="voice_recording">Recording… %1$s</string>
+    <string name="voice_cancel">Discard recording</string>
+    <string name="voice_send">Send voice note</string>
+    <string name="voice_permission_needed">Microphone access is needed to record voice notes.</string>
+    <string name="error_attachment_send">Could not send the attachment. Please try again.</string>
+    <string name="error_attachment_download">Download failed. Check your connection and retry.</string>
 </resources>

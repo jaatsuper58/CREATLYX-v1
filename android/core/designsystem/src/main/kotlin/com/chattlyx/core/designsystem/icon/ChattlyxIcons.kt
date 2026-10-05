@@ -166,6 +166,159 @@ object ChattlyxIcons {
         }
     }
 
+    /** MED-* composer attach affordance. */
+    val Paperclip: ImageVector by lazy {
+        outlineIcon("ChattlyxPaperclip") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(20f, 11f)
+                lineTo(12.5f, 18.5f)
+                arcTo(4f, 4f, 0f, isMoreThanHalf = false, isPositiveArc = true, 6.9f, 12.9f)
+                lineTo(13.5f, 6.3f)
+                arcTo(2.4f, 2.4f, 0f, isMoreThanHalf = false, isPositiveArc = true, 16.9f, 9.7f)
+                lineTo(10.5f, 16f)
+            }
+        }
+    }
+
+    /** MED-03 voice note recording. */
+    val Mic: ImageVector by lazy {
+        outlineIcon("ChattlyxMic") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(12f, 3f)
+                arcTo(2.5f, 2.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 14.5f, 5.5f)
+                lineTo(14.5f, 11f)
+                arcTo(2.5f, 2.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 9.5f, 11f)
+                lineTo(9.5f, 5.5f)
+                arcTo(2.5f, 2.5f, 0f, isMoreThanHalf = false, isPositiveArc = true, 12f, 3f)
+                close()
+                moveTo(6.5f, 11f)
+                arcTo(5.5f, 5.5f, 0f, isMoreThanHalf = false, isPositiveArc = false, 17.5f, 11f)
+                moveTo(12f, 16.5f)
+                lineTo(12f, 20f)
+            }
+        }
+    }
+
+    /** MED-01 image bubble placeholder. */
+    val Image: ImageVector by lazy {
+        outlineIcon("ChattlyxImage") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(4f, 5f)
+                lineTo(20f, 5f)
+                lineTo(20f, 19f)
+                lineTo(4f, 19f)
+                close()
+                moveTo(4f, 15f)
+                lineTo(9f, 10f)
+                lineTo(13f, 14f)
+                lineTo(16f, 11f)
+                lineTo(20f, 15f)
+            }
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+            ) {
+                moveTo(8.5f, 8.5f)
+                arcTo(0.8f, 0.8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 9.3f, 9.3f)
+                arcTo(0.8f, 0.8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 8.5f, 10.1f)
+                arcTo(0.8f, 0.8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 7.7f, 9.3f)
+                arcTo(0.8f, 0.8f, 0f, isMoreThanHalf = false, isPositiveArc = true, 8.5f, 8.5f)
+                close()
+            }
+        }
+    }
+
+    /** MED-03 generic document bubble. */
+    val FileDoc: ImageVector by lazy {
+        outlineIcon("ChattlyxFileDoc") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(6f, 3f)
+                lineTo(14f, 3f)
+                lineTo(18f, 7f)
+                lineTo(18f, 21f)
+                lineTo(6f, 21f)
+                close()
+                moveTo(14f, 3f)
+                lineTo(14f, 7f)
+                lineTo(18f, 7f)
+            }
+        }
+    }
+
+    /** MED-04 tap-to-download affordance. */
+    val Download: ImageVector by lazy {
+        outlineIcon("ChattlyxDownload") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(12f, 4f)
+                lineTo(12f, 15f)
+                moveTo(8f, 11f)
+                lineTo(12f, 15f)
+                lineTo(16f, 11f)
+                moveTo(5f, 19f)
+                lineTo(19f, 19f)
+            }
+        }
+    }
+
+    /** MED-03 voice playback. */
+    val Play: ImageVector by lazy {
+        outlineIcon("ChattlyxPlay") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(8f, 5.5f)
+                lineTo(19f, 12f)
+                lineTo(8f, 18.5f)
+                close()
+            }
+        }
+    }
+
+    /** MED-03 voice recording stop / playback pause. */
+    val Stop: ImageVector by lazy {
+        outlineIcon("ChattlyxStop") {
+            path(
+                stroke = SolidColor(Color.Black),
+                strokeLineWidth = STROKE,
+                strokeLineJoin = StrokeJoin.Round,
+            ) {
+                moveTo(7f, 7f)
+                lineTo(17f, 7f)
+                lineTo(17f, 17f)
+                lineTo(7f, 17f)
+                close()
+            }
+        }
+    }
+
     private fun outlineIcon(
         name: String,
         builder: ImageVector.Builder.() -> Unit,

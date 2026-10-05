@@ -3,13 +3,18 @@ package com.chattlyx.feature.chats
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
+import android.content.Context
+import com.chattlyx.core.common.error.ChattlyError
 import com.chattlyx.core.common.result.Result
 import com.chattlyx.domain.messaging.Conversation
+import com.chattlyx.domain.messaging.Message
 import com.chattlyx.domain.messaging.MessageRepository
 import com.chattlyx.domain.messaging.RealtimeEvents
+import com.chattlyx.domain.messaging.usecases.DownloadAttachmentUseCase
 import com.chattlyx.domain.messaging.usecases.MarkConversationReadUseCase
 import com.chattlyx.domain.messaging.usecases.ObserveConversationUseCase
 import com.chattlyx.domain.messaging.usecases.ObserveMessagesUseCase
+import com.chattlyx.domain.messaging.usecases.SendAttachmentUseCase
 import com.chattlyx.domain.messaging.usecases.SendMessageUseCase
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -43,6 +48,9 @@ class ConversationViewModelTest {
     private val markReadUseCase = mockk<MarkConversationReadUseCase> {
         coEvery { this@mockk(any()) } just Runs
     }
+    private val sendAttachmentUseCase = mockk<SendAttachmentUseCase>()
+    private val downloadAttachmentUseCase = mockk<DownloadAttachmentUseCase>()
+    private val context = mockk<Context>(relaxed = true)
 
     private fun buildViewModel(conversationValue: Conversation?): ConversationViewModel {
         val observeMessages = mockk<ObserveMessagesUseCase> {
@@ -59,8 +67,12 @@ class ConversationViewModelTest {
             observeMessages = observeMessages,
             observeConversation = observeConversation,
             realtimeEvents = realtime,
+            context = context,
+            ioDispatcher = dispatcher,
             messageRepository = messageRepository,
             sendMessageUseCase = sendMessageUseCase,
+            sendAttachmentUseCase = sendAttachmentUseCase,
+            downloadAttachmentUseCase = downloadAttachmentUseCase,
             markConversationReadUseCase = markReadUseCase,
         )
     }
@@ -92,6 +104,55 @@ class ConversationViewModelTest {
             advanceTimeBy(3_001)
             runCurrent()
             coVerify { messageRepository.sendTyping("dm:a:b", false) }
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private fun messageWith(attachment: com.chattlyx.domain.messaging.AttachmentInfo?) = Message(
+        id = "m1",
+        clientId = "m1",
+        serverId = "s1",
+        conversationId = "dm:a:b",
+        senderAccountId = "peer-b",
+        body = "",
+        status = com.chattlyx.domain.messaging.DeliveryStatus.DELIVERED,
+        seq = 1,
+        sentAt = 0,
+        receivedAt = 0,
+        isMine = false,
+        attachment = attachment,
+    )
+
+    @Test
+    fun `download failure surfaces a snack message key`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            coEvery { downloadAttachmentUseCase(any()) } returns
+                Result.failure(ChattlyError.Network())
+            val viewModel = buildViewModel(conversationValue = null)
+            runCurrent()
+
+            viewModel.download(messageWith(null))
+            runCurrent()
+
+            assertEquals("error_attachment_download", viewModel.snackMessageKey.value)
+            viewModel.consumeSnack()
+            assertEquals(null, viewModel.snackMessageKey.value)
+            viewModel.viewModelScope.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `localFile is null when the attachment is not ready`() = runTest(dispatcher.scheduler) {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val viewModel = buildViewModel(conversationValue = null)
+            runCurrent()
+            assertEquals(null, viewModel.localFile(messageWith(null)))
             viewModel.viewModelScope.cancel()
         } finally {
             Dispatchers.resetMain()
