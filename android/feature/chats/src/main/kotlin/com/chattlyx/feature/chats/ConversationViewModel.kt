@@ -55,6 +55,7 @@ class ConversationViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
     private val sendAttachmentUseCase: SendAttachmentUseCase,
     private val downloadAttachmentUseCase: DownloadAttachmentUseCase,
+    private val markConversationReadUseCase: MarkConversationReadUseCase,
 ) : ViewModel() {
 
     // Type-safe navigation stores route arguments under their declared name;

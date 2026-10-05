@@ -62,9 +62,16 @@ class AttachmentPipelineTest {
         coEvery { api.declareAttachment(capture(declareBody)) } returns
             Response.success(DeclaredAttachmentDto("att-1", "/v1/attachments/att-1/data"))
 
-        val uploadBody = slot<RequestBody>()
-        coEvery { api.uploadAttachmentData("att-1", capture(uploadBody)) } returns
+        // Capture the uploaded bytes DURING the call: the pipeline deletes
+        // its temp ciphertext file as soon as upload() returns.
+        var uploadedDuringCall = ByteArray(0)
+        coEvery { api.uploadAttachmentData("att-1", any()) } answers {
+            val body = secondArg<RequestBody>()
+            val buffer = okio.Buffer()
+            body.writeTo(buffer)
+            uploadedDuringCall = buffer.readByteArray()
             Response.success(Unit)
+        }
 
         val result = pipeline.upload(
             plaintext = file,
@@ -89,9 +96,7 @@ class AttachmentPipelineTest {
 
         // The uploaded bytes are ciphertext: digest matches the declaration,
         // size is plaintext + GCM overhead, and they differ from plaintext.
-        val buffer = okio.Buffer()
-        uploadBody.captured.writeTo(buffer)
-        val uploadedBytes = buffer.readByteArray()
+        val uploadedBytes = uploadedDuringCall
         assertEquals(declareBody.captured.sizeBytes, uploadedBytes.size.toLong())
         assertTrue(uploadedBytes.size > plaintext.size)
         val declaredSha = declareBody.captured.sha256
