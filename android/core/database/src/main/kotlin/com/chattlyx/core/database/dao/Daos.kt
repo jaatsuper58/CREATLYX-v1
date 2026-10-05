@@ -5,13 +5,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-
-/** SRCH-01 projection for FTS joins. */
-data class MessageSearchRow(
-    @androidx.room.ColumnInfo(name = "conversation_id") val conversationId: String,
-    @androidx.room.ColumnInfo(name = "body") val body: String,
-    @androidx.room.ColumnInfo(name = "sent_at") val sentAt: Long,
-)
 import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.GroupEntity
@@ -20,6 +13,13 @@ import com.chattlyx.core.database.entity.ConversationCursor
 import com.chattlyx.core.database.entity.ConversationEntity
 import com.chattlyx.core.database.entity.MessageEntity
 import kotlinx.coroutines.flow.Flow
+
+/** SRCH-01 projection for FTS joins. */
+data class MessageSearchRow(
+    @androidx.room.ColumnInfo(name = "conversation_id") val conversationId: String,
+    @androidx.room.ColumnInfo(name = "body") val body: String,
+    @androidx.room.ColumnInfo(name = "sent_at") val sentAt: Long,
+)
 
 @Dao
 interface ConversationDao {

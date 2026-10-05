@@ -246,7 +246,7 @@ class WebRtcCallEngine(
         return LocalSdp(
             type = if (isOffer) SdpType.OFFER else SdpType.ANSWER,
             sdp = sdp.description,
-        ).also { local ->
+        ).also {
             suspendCancellableCoroutine<Unit> { continuation ->
                 connection.setLocalDescription(
                     object : SdpObserver {
@@ -256,7 +256,7 @@ class WebRtcCallEngine(
                         override fun onSetFailure(error: String) =
                             continuation.resumeWithException(IllegalStateException(error))
                     },
-                    sdp.toWebrtc(),
+                    sdp,
                 )
             }
         }
