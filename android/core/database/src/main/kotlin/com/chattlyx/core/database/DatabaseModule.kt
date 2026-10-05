@@ -35,7 +35,11 @@ object DatabaseModule {
     ): ChattlyxDatabase = Room.databaseBuilder(context, ChattlyxDatabase::class.java, ChattlyxDatabase.NAME)
         .openHelperFactory(factory)
         .addCallback(ChattlyxDatabase.FTS_SYNC_CALLBACK)
-        .addMigrations(ChattlyxDatabase.MIGRATION_1_2, ChattlyxDatabase.MIGRATION_2_3)
+        .addMigrations(
+            ChattlyxDatabase.MIGRATION_1_2,
+            ChattlyxDatabase.MIGRATION_2_3,
+            ChattlyxDatabase.MIGRATION_3_4,
+        )
         .build()
 
     @Provides
@@ -46,6 +50,9 @@ object DatabaseModule {
 
     @Provides
     fun provideGroupDao(db: ChattlyxDatabase) = db.groups()
+
+    @Provides
+    fun provideCallLogDao(db: ChattlyxDatabase) = db.callLog()
 
     @Provides
     fun provideContactDao(db: ChattlyxDatabase) = db.contacts()

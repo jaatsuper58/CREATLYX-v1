@@ -3,10 +3,12 @@ package com.chattlyx.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.chattlyx.core.database.dao.CallLogDao
 import com.chattlyx.core.database.dao.ContactDao
 import com.chattlyx.core.database.dao.ConversationDao
 import com.chattlyx.core.database.dao.GroupDao
 import com.chattlyx.core.database.dao.MessageDao
+import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.ConversationEntity
 import com.chattlyx.core.database.entity.GroupEntity
@@ -15,7 +17,7 @@ import com.chattlyx.core.database.entity.MessageEntity
 import com.chattlyx.core.database.entity.MessageFtsEntity
 
 /**
- * SQLCipher-backed Room database (Section 7.1), version 3. Schema exports
+ * SQLCipher-backed Room database (Section 7.1), version 4. Schema exports
  * live in core/database/schemas for migration testing.
  */
 @Database(
@@ -26,8 +28,9 @@ import com.chattlyx.core.database.entity.MessageFtsEntity
         MessageFtsEntity::class,
         GroupEntity::class,
         GroupMemberEntity::class,
+        CallLogEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class ChattlyxDatabase : RoomDatabase() {
@@ -36,9 +39,29 @@ abstract class ChattlyxDatabase : RoomDatabase() {
     abstract fun messages(): MessageDao
     abstract fun contacts(): ContactDao
     abstract fun groups(): GroupDao
+    abstract fun callLog(): CallLogDao
 
     companion object {
         const val NAME = "chattlyx.db"
+
+        /** Phase 5 (CALL-05): local call history. */
+        val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `call_log` (
+                        `id` TEXT NOT NULL PRIMARY KEY,
+                        `peer_account_id` TEXT NOT NULL,
+                        `direction` TEXT NOT NULL,
+                        `media` TEXT NOT NULL,
+                        `started_at` INTEGER NOT NULL,
+                        `duration_ms` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_call_log_started_at` ON `call_log` (`started_at`)")
+            }
+        }
 
         /** Phase 4 (GRP-*): groups + membership cache tables. */
         val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {

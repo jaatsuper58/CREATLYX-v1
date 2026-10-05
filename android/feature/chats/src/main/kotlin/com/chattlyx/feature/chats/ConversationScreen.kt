@@ -72,6 +72,7 @@ import java.util.Date
 @Composable
 fun ConversationScreen(
     onBack: () -> Unit,
+    onOpenCall: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ConversationViewModel = hiltViewModel(),
 ) {
@@ -113,6 +114,14 @@ fun ConversationScreen(
         viewModel.consumeSnack()
     }
 
+    val callStarted by viewModel.callStarted.collectAsStateWithLifecycle()
+    LaunchedEffect(callStarted) {
+        if (callStarted) {
+            viewModel.consumeCallStarted()
+            onOpenCall()
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose { viewModel.markRead() }
     }
@@ -144,6 +153,27 @@ fun ConversationScreen(
                             imageVector = ChattlyxIcons.Settings,
                             contentDescription = stringResource(R.string.conversation_back),
                         )
+                    }
+                },
+                actions = {
+                    if (!viewModel.isGroup) {
+                        IconButton(onClick = {
+                            if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
+                                androidx.core.content.ContextCompat.checkSelfPermission(
+                                    context,
+                                    android.Manifest.permission.RECORD_AUDIO,
+                                )
+                            ) {
+                                viewModel.startAudioCall()
+                            } else {
+                                requestAudioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                            }
+                        }) {
+                            Icon(
+                                imageVector = ChattlyxIcons.Call,
+                                contentDescription = stringResource(R.string.conversation_call),
+                            )
+                        }
                     }
                 },
             )

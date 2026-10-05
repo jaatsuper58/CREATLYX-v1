@@ -56,6 +56,7 @@ class ConversationViewModel @Inject constructor(
     private val sendAttachmentUseCase: SendAttachmentUseCase,
     private val downloadAttachmentUseCase: DownloadAttachmentUseCase,
     private val markConversationReadUseCase: MarkConversationReadUseCase,
+    private val callSession: com.chattlyx.domain.calls.CallSession,
 ) : ViewModel() {
 
     // Type-safe navigation stores route arguments under their declared name;
@@ -190,6 +191,29 @@ class ConversationViewModel @Inject constructor(
 
     fun consumeSnack() {
         _snackMessageKey.value = null
+    }
+
+    /** CALL-01: one-shot flag raised when an outgoing call is placed. */
+    private val _callStarted = MutableStateFlow(false)
+    val callStarted: StateFlow<Boolean> = _callStarted.asStateFlow()
+
+    fun startAudioCall() = startCall(com.chattlyx.domain.calls.CallMedia.AUDIO)
+
+    fun startVideoCall() = startCall(com.chattlyx.domain.calls.CallMedia.VIDEO)
+
+    private fun startCall(media: com.chattlyx.domain.calls.CallMedia) {
+        if (isGroup) return
+        val peer = conversation.value?.peerAccountId ?: return
+        viewModelScope.launch {
+            val result = callSession.startCall(peer, media)
+            if (result is com.chattlyx.core.common.result.Result.Success) {
+                _callStarted.value = true
+            }
+        }
+    }
+
+    fun consumeCallStarted() {
+        _callStarted.value = false
     }
 
     fun markRead() {

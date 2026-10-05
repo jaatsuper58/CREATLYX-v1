@@ -98,6 +98,20 @@ data class GroupMemberEntity(
     @ColumnInfo(name = "joined_at") val joinedAt: Long,
 )
 
+/** CALL-05: local call history (never leaves the device). */
+@Entity(
+    tableName = "call_log",
+    indices = [Index(value = ["started_at"])],
+)
+data class CallLogEntity(
+    @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "peer_account_id") val peerAccountId: String,
+    @ColumnInfo(name = "direction") val direction: String,
+    @ColumnInfo(name = "media") val media: String,
+    @ColumnInfo(name = "started_at") val startedAt: Long,
+    @ColumnInfo(name = "duration_ms") val durationMs: Long,
+)
+
 /** Registered peers discovered via CON-03 or first contact. */
 @Entity(
     tableName = "contacts",

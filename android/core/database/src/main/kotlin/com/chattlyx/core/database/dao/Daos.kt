@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.GroupEntity
 import com.chattlyx.core.database.entity.GroupMemberEntity
@@ -142,6 +143,17 @@ interface GroupDao {
 
     @Query("DELETE FROM groups WHERE id = :groupId")
     suspend fun deleteGroup(groupId: String)
+}
+
+/** CALL-05 call history. */
+@Dao
+interface CallLogDao {
+
+    @Query("SELECT * FROM call_log ORDER BY started_at DESC LIMIT 200")
+    fun observeRecent(): kotlinx.coroutines.flow.Flow<List<CallLogEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: CallLogEntity)
 }
 
 @Dao

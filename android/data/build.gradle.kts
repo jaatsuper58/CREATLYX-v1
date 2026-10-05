@@ -17,6 +17,7 @@ dependencies {
     implementation(projects.core.crypto)
     implementation(projects.core.push)
     implementation(projects.core.protocol)
+    implementation(projects.core.rtc)
     implementation(projects.domain)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.okhttp)

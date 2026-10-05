@@ -33,6 +33,7 @@ class RealtimeCoordinator @Inject constructor(
     private val conversationRepository: ConversationRepositoryImpl,
     private val syncEngine: SyncEngine,
     private val groupRepository: com.chattlyx.data.groups.GroupRepositoryImpl,
+    private val callManager: com.chattlyx.data.calls.CallManager,
     @Dispatcher(ChattlyxDispatcher.IO) private val dispatcher: CoroutineDispatcher,
 ) : RealtimeEvents {
 
@@ -85,6 +86,12 @@ class RealtimeCoordinator @Inject constructor(
 
     private suspend fun handleFrame(frame: Frame) {
         when {
+            frame.hasCallSignal() -> {
+                // CALL-*: the relayed frame's peer_account_id carries the
+                // remote party (server flips it); the manager decrypts + routes.
+                val signal = frame.callSignal
+                callManager.onEncryptedSignal(signal.peerAccountId, signal.ciphertext.toByteArray())
+            }
             frame.hasGroupUpdate() -> {
                 // GRP-*: membership/name changed; refresh the affected group.
                 val groupId = frame.groupUpdate.groupId

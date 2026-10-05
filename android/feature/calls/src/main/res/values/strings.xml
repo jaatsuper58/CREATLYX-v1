@@ -2,4 +2,22 @@
 <resources>
     <string name="calls_empty_title">No calls yet</string>
     <string name="calls_empty_message">Free HD voice and video calls will appear here.</string>
+
+    <string name="calls_direction_incoming">Incoming</string>
+    <string name="calls_direction_outgoing">Outgoing</string>
+    <string name="calls_direction_missed">Missed</string>
+    <string name="calls_call_back">Call</string>
+
+    <string name="call_incoming">Incoming call</string>
+    <string name="call_ringing">Ringing…</string>
+    <string name="call_connecting">Connecting…</string>
+    <string name="call_in_call">In call</string>
+    <string name="call_answer">Answer</string>
+    <string name="call_decline">Decline</string>
+    <string name="call_end">End call</string>
+    <string name="call_mute">Mute</string>
+    <string name="call_unmute">Unmute</string>
+    <string name="call_speaker">Speaker</string>
+    <string name="call_video_on">Camera on</string>
+    <string name="call_video_off">Camera off</string>
 </resources>

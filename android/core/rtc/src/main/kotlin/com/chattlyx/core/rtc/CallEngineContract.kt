@@ -26,11 +26,33 @@ data class CallInfo(
     val isOutgoing: Boolean,
 )
 
+/** One trickle-ICE candidate produced by the local engine. */
+data class IceCandidate(val candidate: String, val sdpMid: String?, val sdpMLineIndex: Int)
+
 interface CallEngine {
     val state: Flow<CallState>
 
-    suspend fun startOutgoingCall(info: CallInfo, offer: ByteArray)
-    suspend fun acceptIncomingCall(info: CallInfo, offer: ByteArray): ByteArray
+    /** Outgoing SDP/ICE the app must carry to the peer over the E2EE channel. */
+    val localSdpEvents: Flow<LocalSdp>
+
+    /** Trickle candidates to relay to the peer. */
+    val iceCandidates: Flow<IceCandidate>
+
+    /**
+     * Creates the peer connection and returns the SDP offer. The app sends it
+     * inside the encrypted RING signal.
+     */
+    suspend fun startOutgoingCall(info: CallInfo): LocalSdp
+
+    /** Sets the remote offer and returns the SDP answer for ACCEPT. */
+    suspend fun acceptIncomingCall(info: CallInfo, offer: LocalSdp): LocalSdp
+
+    /** Applies the remote answer (caller side) once ACCEPT arrives. */
+    suspend fun applyRemoteSdp(sdp: LocalSdp)
+
+    /** Applies a remote trickle candidate. */
+    suspend fun addRemoteCandidate(candidate: IceCandidate)
+
     suspend fun endCall(callId: String)
 
     suspend fun setMuted(muted: Boolean)
@@ -40,3 +62,8 @@ interface CallEngine {
     /** ICE restart on Wi-Fi <-> mobile switch must not drop the call (CALL-06). */
     suspend fun restartIce()
 }
+
+/** A session description plus its type (offer/answer). */
+data class LocalSdp(val type: SdpType, val sdp: String)
+
+enum class SdpType { OFFER, ANSWER }

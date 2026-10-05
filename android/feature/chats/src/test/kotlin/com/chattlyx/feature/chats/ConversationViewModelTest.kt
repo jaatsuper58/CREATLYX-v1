@@ -51,6 +51,7 @@ class ConversationViewModelTest {
     private val sendAttachmentUseCase = mockk<SendAttachmentUseCase>()
     private val downloadAttachmentUseCase = mockk<DownloadAttachmentUseCase>()
     private val context = mockk<Context>(relaxed = true)
+    private val callSession = mockk<com.chattlyx.domain.calls.CallSession>(relaxed = true)
 
     private fun buildViewModel(conversationValue: Conversation?): ConversationViewModel {
         val observeMessages = mockk<ObserveMessagesUseCase> {
@@ -74,6 +75,7 @@ class ConversationViewModelTest {
             sendAttachmentUseCase = sendAttachmentUseCase,
             downloadAttachmentUseCase = downloadAttachmentUseCase,
             markConversationReadUseCase = markReadUseCase,
+            callSession = callSession,
         )
     }
 
@@ -140,6 +142,7 @@ class ConversationViewModelTest {
                 sendAttachmentUseCase = sendAttachmentUseCase,
                 downloadAttachmentUseCase = downloadAttachmentUseCase,
                 markConversationReadUseCase = markReadUseCase,
+                callSession = callSession,
             )
             val subscriber = launch { viewModel.conversation.collect {} }
             runCurrent()

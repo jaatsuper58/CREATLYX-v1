@@ -9,6 +9,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.chattlyx.feature.calls.CallsRoute
 import com.chattlyx.feature.calls.CallsScreen
+import com.chattlyx.feature.calls.InCallRoute
+import com.chattlyx.feature.calls.InCallScreen
 import com.chattlyx.feature.chats.ChatsRoute
 import com.chattlyx.feature.chats.ChatsScreen
 import com.chattlyx.feature.chats.ConversationRoute
@@ -49,7 +51,12 @@ fun ChattlyxNavHost(
                 },
             )
         }
-        composable<CallsRoute> { CallsScreen() }
+        composable<CallsRoute> {
+            CallsScreen(onOpenCall = { navController.navigate(InCallRoute) })
+        }
+        composable<InCallRoute> {
+            InCallScreen(onExit = { navController.popBackStack() })
+        }
         composable<ContactsRoute> {
             ContactsScreen(
                 onOpenChat = { conversationId ->
@@ -58,7 +65,10 @@ fun ChattlyxNavHost(
             )
         }
         composable<ConversationRoute> {
-            ConversationScreen(onBack = { navController.popBackStack() })
+            ConversationScreen(
+                onBack = { navController.popBackStack() },
+                onOpenCall = { navController.navigate(InCallRoute) },
+            )
         }
         composable<SettingsRoute> {
             val settingsNavController = rememberNavController()
