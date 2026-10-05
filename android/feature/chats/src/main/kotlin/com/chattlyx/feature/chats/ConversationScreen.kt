@@ -105,6 +105,17 @@ fun ConversationScreen(
     ) { granted ->
         if (granted) viewModel.startRecording()
     }
+    // CALL-01: dedicated launchers so granting never starts the wrong flow.
+    val requestCallPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) viewModel.startAudioCall()
+    }
+    val requestVideoCallPermissions = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants ->
+        if (grants.values.all { it }) viewModel.startVideoCall()
+    }
 
     LaunchedEffect(snackKey) {
         val key = snackKey ?: return@LaunchedEffect
@@ -197,12 +208,33 @@ fun ConversationScreen(
                             ) {
                                 viewModel.startAudioCall()
                             } else {
-                                requestAudioPermission.launch(android.Manifest.permission.RECORD_AUDIO)
+                                requestCallPermission.launch(android.Manifest.permission.RECORD_AUDIO)
                             }
                         }) {
                             Icon(
                                 imageVector = ChattlyxIcons.Call,
                                 contentDescription = stringResource(R.string.conversation_call),
+                            )
+                        }
+                        IconButton(onClick = {
+                            val needed = listOf(
+                                android.Manifest.permission.CAMERA,
+                                android.Manifest.permission.RECORD_AUDIO,
+                            ).filter {
+                                androidx.core.content.ContextCompat.checkSelfPermission(
+                                    context,
+                                    it,
+                                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                            }
+                            if (needed.isEmpty()) {
+                                viewModel.startVideoCall()
+                            } else {
+                                requestVideoCallPermissions.launch(needed.toTypedArray())
+                            }
+                        }) {
+                            Icon(
+                                imageVector = ChattlyxIcons.Image,
+                                contentDescription = stringResource(R.string.conversation_video_call),
                             )
                         }
                     }

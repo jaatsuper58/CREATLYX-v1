@@ -63,6 +63,7 @@ class CallManager @Inject constructor(
     private val peerKeyResolver: PeerKeyResolver,
     private val tokenStore: SecureTokenStore,
     private val callLogDao: CallLogDao,
+    private val callNotifications: CallNotifications,
     @Dispatcher(ChattlyxDispatcher.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : CallSession, CallHistoryRepository {
 
@@ -352,6 +353,7 @@ class CallManager @Inject constructor(
         currentPeer = sender
         wasOutgoing = false
         _state.value = CallSessionState.Incoming(signal.callId, sender, signal.media)
+        callNotifications.showIncomingCall(sender)
         ringTimeoutJob = scope.launch {
             kotlinx.coroutines.delay(RING_TIMEOUT_MS)
             if (_state.value is CallSessionState.Incoming) {
@@ -468,6 +470,7 @@ class CallManager @Inject constructor(
         direction: CallDirection,
         media: CallMedia,
     ) {
+        callNotifications.dismiss()
         ringTimeoutJob?.cancel()
         ringTimeoutJob = null
         iceForwardJob?.cancel()

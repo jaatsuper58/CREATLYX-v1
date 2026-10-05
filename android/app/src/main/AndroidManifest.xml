@@ -14,6 +14,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- MED-03 voice notes; requested in-flow only when the mic is used. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- CALL-01 video calls; the camera is only opened for video calls. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- CALL-02 (Phase 7): full-screen incoming-call surface. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:name=".ChattlyxApplication"

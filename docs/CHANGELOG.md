@@ -19,10 +19,16 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
   for video calls via the engine contract (`attachVideoRenderer`), remote
   tracks late-attach when they arrive; the call engine is now DI-scoped.
 - MASVS-STORAGE: OTP entry screen sets `FLAG_SECURE` (no screenshots/recents).
+- CALL-02 full-screen incoming-call notification (high-priority channel,
+  `USE_FULL_SCREEN_INTENT`), raised on RING and dismissed on any terminal
+  state; conversation screen gains a video-call button gated on
+  CAMERA+RECORD_AUDIO.
+- Fixed: the in-conversation call button no longer reuses the voice-note
+  permission launcher (granting used to start a recording).
 
 ### Known limitations (tracked)
-- Full-screen incoming-call notification + Core-Telecom `ConnectionService`
-  integration still land in Phase 8 launch prep.
+- Core-Telecom `ConnectionService` integration (system call UI/bluetooth
+  routing) lands in Phase 8 launch prep.
 - Local chat history predating a block remains on-device (matches store-and-
   forward semantics); only new traffic is suppressed.
 
