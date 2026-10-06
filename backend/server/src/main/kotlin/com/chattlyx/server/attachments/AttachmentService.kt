@@ -19,6 +19,11 @@ class AttachmentService(
     private val repository: AttachmentRepository,
     private val blobStore: BlobStore,
     private val maxAttachmentBytes: Long,
+    /**
+     * Group membership probe for blobs declared against a `grp:` conversation.
+     * Returns null wiring when group media is disabled (back-compat default).
+     */
+    private val groupMembership: ((conversationId: String, accountId: UUID) -> Boolean)? = null,
 ) {
 
     /** Registers intent and returns the new attachment id. */
@@ -58,6 +63,12 @@ class AttachmentService(
         }
         if (durationMs != null && (durationMs < 0 || durationMs > MAX_DURATION_MS)) {
             throw ChattlyxServerException.Validation("durationMs out of range")
+        }
+        if (conversationId != null && conversationId.startsWith("grp:")) {
+            val probe = groupMembership
+            if (probe == null || !probe(conversationId, sender)) {
+                throw ChattlyxServerException.Forbidden("not a member of the group conversation")
+            }
         }
 
         val id = UuidV7.generate()
@@ -102,15 +113,27 @@ class AttachmentService(
         }
     }
 
-    /** Metadata for sender or recipient. */
+    /** Metadata for sender, direct recipient, or group member. */
     fun meta(requester: UUID, id: UUID): AttachmentRow {
         val row = repository.findById(id)
             ?: throw ChattlyxServerException.NotFound("attachment")
-        if (!repository.canAccess(row, requester)) {
+        if (!repository.canAccess(row, requester) && !isGroupMember(row, requester)) {
             // Do not leak existence to strangers.
             throw ChattlyxServerException.NotFound("attachment")
         }
         return row
+    }
+
+    /**
+     * GRP/MED: a blob tied to a group conversation is readable by every
+     * current group member. Membership is authoritative (groups table), not
+     * the attachment row itself, so left members lose access immediately.
+     */
+    private fun isGroupMember(row: AttachmentRow, requester: UUID): Boolean {
+        val conversationId = row.conversationId ?: return false
+        if (!conversationId.startsWith("grp:")) return false
+        val probe = groupMembership ?: return false
+        return probe(conversationId, requester)
     }
 
     /** Ciphertext bytes for sender or recipient; 404 until uploaded. */

@@ -39,7 +39,9 @@ class SendMessageUseCase @Inject constructor(
 }
 
 /**
- * MED-01/02/03: validates and sends one attachment message. Returns the
+ * MED-01/02/03 (+ GRP media): validates and sends one attachment message.
+ * Pass [groupId] for group conversations — the blob uploads once against the
+ * group conversation and the descriptor fans out per member. Returns the
  * client message id; upload progress is surfaced by the repository layer.
  */
 class SendAttachmentUseCase @Inject constructor(
@@ -57,6 +59,7 @@ class SendAttachmentUseCase @Inject constructor(
         height: Int? = null,
         durationMs: Int? = null,
         caption: String = "",
+        groupId: String? = null,
     ): Result<String> {
         if (!file.isFile) {
             return Result.failure(
@@ -76,6 +79,21 @@ class SendAttachmentUseCase @Inject constructor(
         if (mimeType.isBlank()) {
             return Result.failure(
                 ChattlyError.Validation(field = "mimeType", messageKey = "error_attachment_mime"),
+            )
+        }
+        if (groupId != null) {
+            // GRP conversation: the conversation row already exists (group
+            // list owns it), so skip openConversationWith and fan out media.
+            return messageRepository.sendGroupAttachment(
+                groupId = groupId,
+                plaintextFile = file,
+                kind = kind,
+                mimeType = mimeType,
+                fileName = fileName,
+                width = width,
+                height = height,
+                durationMs = durationMs,
+                caption = caption.trim(),
             )
         }
         conversationRepository.openConversationWith(peerAccountId)

@@ -346,6 +346,8 @@ class ConversationViewModel @Inject constructor(
             height = height,
             durationMs = durationMs,
             caption = composerText.value.trim(),
+            // GRP + MED: for groups [peer] carries the groupId (see send()).
+            groupId = if (isGroup) peer else null,
         )
         _attachmentSending.value = false
         if (result is Result.Failure) {

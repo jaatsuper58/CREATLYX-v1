@@ -306,13 +306,12 @@ fun ConversationScreen(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (!viewModel.isGroup) {
-                        IconButton(onClick = { attachMenuOpen = true }) {
-                            Icon(
-                                imageVector = ChattlyxIcons.Paperclip,
-                                contentDescription = stringResource(R.string.attachment_add),
-                            )
-                        }
+                    // MED + GRP: attachment menu available for 1:1 and groups.
+                    IconButton(onClick = { attachMenuOpen = true }) {
+                        Icon(
+                            imageVector = ChattlyxIcons.Paperclip,
+                            contentDescription = stringResource(R.string.attachment_add),
+                        )
                     }
                     ChattlyxTextField(
                         value = composer,
@@ -322,7 +321,7 @@ fun ConversationScreen(
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(4.dp))
-                    if (composer.isBlank() && !viewModel.isGroup) {
+                    if (composer.isBlank()) {
                         IconButton(onClick = {
                             if (android.content.pm.PackageManager.PERMISSION_GRANTED ==
                                 androidx.core.content.ContextCompat.checkSelfPermission(

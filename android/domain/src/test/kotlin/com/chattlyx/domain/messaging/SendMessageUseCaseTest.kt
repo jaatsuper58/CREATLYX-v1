@@ -42,6 +42,18 @@ private class FakeMessageRepository : MessageRepository {
         caption: String,
     ): Result<String> = Result.success("client-attachment-1")
 
+    override suspend fun sendGroupAttachment(
+        groupId: String,
+        plaintextFile: java.io.File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String?,
+        width: Int?,
+        height: Int?,
+        durationMs: Int?,
+        caption: String,
+    ): Result<String> = Result.success("client-group-attachment-1")
+
     override suspend fun downloadAttachment(message: Message): Result<java.io.File> =
         Result.failure(ChattlyError.Network())
 }

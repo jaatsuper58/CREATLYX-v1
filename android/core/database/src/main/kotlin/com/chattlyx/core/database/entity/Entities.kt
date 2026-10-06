@@ -133,6 +133,16 @@ data class MessageFtsEntity(
     @ColumnInfo(name = "body") val body: String,
 )
 
+/**
+ * SAF-01: durable cache of the block list. Survives process death so block
+ * enforcement (call/message gating) works before the first server sync.
+ */
+@Entity(tableName = "blocked_peers")
+data class BlockedPeerEntity(
+    @PrimaryKey @ColumnInfo(name = "account_id") val accountId: String,
+    @ColumnInfo(name = "blocked_at") val blockedAt: Long,
+)
+
 
 /** Projection used by the sync engine (MSG-06) to request missed history. */
 data class ConversationCursor(

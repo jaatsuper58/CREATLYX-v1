@@ -48,6 +48,24 @@ interface MessageRepository {
         caption: String = "",
     ): Result<String>
 
+    /**
+     * MED + GRP: group media send. The ciphertext blob is uploaded ONCE,
+     * declared against the group conversation (server ACL = live membership),
+     * then the attachment descriptor rides one fan-out envelope per member.
+     * Returns the client message id.
+     */
+    suspend fun sendGroupAttachment(
+        groupId: String,
+        plaintextFile: java.io.File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String? = null,
+        width: Int? = null,
+        height: Int? = null,
+        durationMs: Int? = null,
+        caption: String = "",
+    ): Result<String>
+
     /** MED-04: fetches + decrypts the blob for [message]; updates local state. */
     suspend fun downloadAttachment(message: Message): Result<java.io.File>
 }

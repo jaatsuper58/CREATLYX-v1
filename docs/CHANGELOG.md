@@ -4,6 +4,27 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 
 ## [Unreleased]
 
+### Added
+- MED + GRP: **group media/file sending**. Group attachments upload the
+  ciphertext blob ONCE, declared against the group conversation; the server
+  ACL now grants meta/download to every *current* group member (membership
+  is authoritative — members who left lose access immediately) and rejects
+  declares from non-members. The client fans out the attachment descriptor
+  per member, mirrors the 1:1 send pipeline (local row, staged plaintext,
+  ready-state), and the composer attach/voice controls are enabled in
+  groups. Integration test covers member read, stranger 404 and declare
+  rejection.
+- MSG-08: **chat-list attachment previews** — the last-message preview shows
+  a localized kind summary ("Photo", "Video", "Voice message", "File") when
+  the latest message is media without a caption; captions still win.
+
+### Changed
+- SAF-01: the block-list cache is now **Room-backed** (`blocked_peers` table,
+  Room schema v4 → v5 with `MIGRATION_4_5`) with the in-memory mirror kept
+  as the synchronous read path. Block enforcement now survives process
+  restarts and offline windows; the server remains the source of truth and
+  `refresh()` reconciles.
+
 ## [0.11.0-beta] — Phase 8 polish: biometric app lock (2026-10-05)
 
 ### Added

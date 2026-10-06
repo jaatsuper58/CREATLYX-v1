@@ -45,6 +45,8 @@ data class IncomingMessage(
     val seq: Long,
     val timestamp: Long,
     val body: String,
+    /** Wire name of the attached media ("image"/"video"/"file"/"voice") or null. */
+    val attachmentKind: String? = null,
 )
 
 /**
@@ -197,6 +199,147 @@ class MessageRepositoryImpl @Inject constructor(
             }
             Result.success(clientId)
         }
+
+    /**
+     * MED + GRP: group media send. Uploads the ciphertext blob once against
+     * the group conversation (server enforces live-membership ACL), then
+     * fans out the attachment descriptor per member like [sendGroupMessage].
+     */
+    override suspend fun sendGroupAttachment(
+        groupId: String,
+        plaintextFile: File,
+        kind: AttachmentKind,
+        mimeType: String,
+        fileName: String?,
+        width: Int?,
+        height: Int?,
+        durationMs: Int?,
+        caption: String,
+    ): Result<String> = withContext(ioDispatcher) {
+        val selfAccountId = tokenStore.accountId()
+            ?: return@withContext Result.failure(ChattlyError.Auth)
+        val conversationId = conversationIds.group(groupId)
+        val clientId = UuidV7.generate().toString()
+
+        val members = groupDao.membersOf(groupId)
+            .map { it.accountId }
+            .filter { it != selfAccountId }
+        if (members.isEmpty()) {
+            return@withContext Result.failure(
+                ChattlyError.Validation("group", "error_group_no_members"),
+            )
+        }
+
+        // Stage a durable copy: the caller's file may be a picker temp file.
+        val stagedDir = File(context.filesDir, "attachments").apply { mkdirs() }
+        val staged = File(stagedDir, "att-local-$clientId")
+        try {
+            plaintextFile.inputStream().use { input ->
+                staged.outputStream().use { input.copyTo(it) }
+            }
+        } catch (e: java.io.IOException) {
+            Timber.w(e, "Group attachment staging failed")
+            return@withContext Result.failure(ChattlyError.Storage.Io(e))
+        }
+
+        // One blob for the whole group; declare targets the conversation so
+        // every member resolves access server-side (no per-recipient grant).
+        val uploaded = attachmentPipeline.upload(
+            plaintext = staged,
+            kind = kind,
+            mimeType = mimeType,
+            recipientAccountId = null,
+            conversationId = conversationId,
+            width = width,
+            height = height,
+            durationMs = durationMs,
+            fileName = fileName,
+        ).getOrElse {
+            if (!staged.delete()) staged.deleteOnExit()
+            return@withContext Result.failure(it)
+        }
+
+        val content = SessionContent.newBuilder()
+            .setAttachment(
+                AttachmentContent.newBuilder()
+                    .setKind(kind.toProtoKind())
+                    .setAttachmentId(uploaded.attachmentId)
+                    .setMimeType(mimeType)
+                    .setSizeBytes(uploaded.plaintextSizeBytes)
+                    .setSha256(ByteString.copyFrom(uploaded.ciphertextSha256))
+                    .apply { width?.takeIf { it > 0 }?.let(::setWidth) }
+                    .apply { height?.takeIf { it > 0 }?.let(::setHeight) }
+                    .apply { durationMs?.takeIf { it > 0 }?.let(::setDurationMs) }
+                    .apply { fileName?.takeIf { it.isNotEmpty() }?.let(::setFileName) }
+                    .setKey(ByteString.copyFrom(uploaded.key))
+                    .setNonce(ByteString.copyFrom(uploaded.nonce))
+                    .build(),
+            )
+            .build()
+
+        val now = System.currentTimeMillis()
+        messageDao.insertOrIgnore(
+            MessageEntity(
+                id = clientId,
+                clientId = clientId,
+                conversationId = conversationId,
+                senderAccountId = selfAccountId,
+                body = caption,
+                status = MessageStatus.PENDING.wire,
+                sentAt = now,
+                attachmentKind = kind.toWireName(),
+                attachmentId = uploaded.attachmentId,
+                attachmentMime = mimeType,
+                attachmentSize = uploaded.plaintextSizeBytes,
+                attachmentSha256 = uploaded.ciphertextSha256.toHex(),
+                attachmentWidth = width,
+                attachmentHeight = height,
+                attachmentDurationMs = durationMs,
+                attachmentFileName = fileName,
+                attachmentKey = Base64.getEncoder().encodeToString(uploaded.key),
+                attachmentNonce = Base64.getEncoder().encodeToString(uploaded.nonce),
+                attachmentState = STATE_READY,
+                attachmentLocalPath = staged.absolutePath,
+            ),
+        )
+
+        // Fan-out: one pairwise-encrypted envelope per member (placeholder
+        // cipher; Sender Keys land in Phase 7). Missing sessions skip that
+        // member rather than failing the whole send.
+        var anySent = false
+        members.forEach { member ->
+            val peerKey = peerKeyResolver.publicKeyFor(member) ?: return@forEach
+            val ciphertext = try {
+                cipher.encrypt(peerKey, content.toByteArray())
+            } catch (e: Exception) {
+                Timber.w(e, "Group attachment encrypt failed for one member")
+                return@forEach
+            }
+            val envelope = Envelope.newBuilder()
+                .setType(EnvelopeType.ENVELOPE_TYPE_SIGNAL)
+                .setSenderAccountId(selfAccountId)
+                .setCiphertext(ByteString.copyFrom(ciphertext))
+                .setClientMessageId(java.util.UUID.fromString(clientId).toProtoUuid())
+                .setConversationId(conversationId)
+                .build()
+            val sent = realtime.send(
+                Frame.newBuilder()
+                    .setSend(
+                        com.chattlyx.proto.SendFrame.newBuilder()
+                            .setEnvelope(envelope)
+                            .setRecipientAccountId(member),
+                    )
+                    .build(),
+            )
+            if (sent) anySent = true
+        }
+
+        if (!anySent) {
+            messageDao.markAcked(clientId, "", MessageStatus.FAILED.wire)
+            return@withContext Result.failure(ChattlyError.Network())
+        }
+        Result.success(clientId)
+    }
 
     override suspend fun sendAttachment(
         peerAccountId: String,
@@ -426,6 +569,7 @@ class MessageRepositoryImpl @Inject constructor(
             seq = envelope.serverSeq,
             timestamp = envelope.serverTimestampMs,
             body = if (content.hasText()) content.text.body else "",
+            attachmentKind = attachment?.kind?.let(::attachmentKindWireName),
         )
     }
 

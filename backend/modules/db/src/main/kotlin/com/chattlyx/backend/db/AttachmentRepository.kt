@@ -93,7 +93,9 @@ class AttachmentRepository(private val db: DataSource) {
     /**
      * Access check (MED-*): the sender always, the declared recipient once
      * set. Attachment ids are capability tokens distributed only inside E2EE
-     * payloads, so authenticated possession is sufficient.
+     * payloads, so authenticated possession is sufficient. Blobs bound to a
+     * group conversation carry no recipient; AttachmentService layers the
+     * live-membership check on top of this.
      */
     fun canAccess(row: AttachmentRow, accountId: UUID): Boolean =
         row.senderAccountId == accountId || row.recipientAccountId == accountId

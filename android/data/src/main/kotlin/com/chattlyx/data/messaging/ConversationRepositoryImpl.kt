@@ -1,5 +1,6 @@
 package com.chattlyx.data.messaging
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -11,6 +12,7 @@ import com.chattlyx.core.database.dao.ConversationDao
 import com.chattlyx.core.database.dao.MessageDao
 import com.chattlyx.core.database.entity.ConversationEntity
 import com.chattlyx.core.database.entity.MessageEntity
+import com.chattlyx.data.R
 import com.chattlyx.data.auth.SecureTokenStore
 import com.chattlyx.domain.messaging.Conversation
 import com.chattlyx.domain.messaging.ConversationRepository
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.map
 /** Room-backed chat list and conversation streams (MSG-03/08). */
 @Singleton
 class ConversationRepositoryImpl @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: Context,
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
     private val contactDao: ContactDao,
@@ -73,6 +76,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     /** Applies an incoming message to list state (preview, seq, unread). */
     suspend fun onIncomingMessage(message: IncomingMessage, incrementUnread: Boolean) {
+        val preview = previewFor(message)
         val conversation = conversationDao.byIdOnce(message.conversationId)
         if (conversation == null) {
             val self = tokenStore.accountId()
@@ -84,7 +88,7 @@ class ConversationRepositoryImpl @Inject constructor(
                     peerAccountId = peer,
                     peerName = contact?.displayName ?: peer.take(8),
                     peerAvatarBlobId = contact?.avatarBlobId,
-                    lastMessageText = message.body,
+                    lastMessageText = preview,
                     lastMessageAt = message.timestamp,
                     lastSeq = message.seq,
                     unreadCount = if (incrementUnread) 1 else 0,
@@ -94,13 +98,28 @@ class ConversationRepositoryImpl @Inject constructor(
         } else {
             conversationDao.touch(
                 id = message.conversationId,
-                preview = message.body,
+                preview = preview,
                 at = message.timestamp,
                 seq = message.seq,
             )
             if (incrementUnread) {
                 conversationDao.incrementUnread(message.conversationId)
             }
+        }
+    }
+
+    /**
+     * MSG-08: the chat list shows the text body, or — when the last message
+     * carries media — a localized kind summary ("Photo", "Voice message", …).
+     * Captions ride in the body and win when present.
+     */
+    private fun previewFor(message: IncomingMessage): String = message.body.ifBlank {
+        when (message.attachmentKind) {
+            "image" -> appContext.getString(R.string.attachment_preview_image)
+            "video" -> appContext.getString(R.string.attachment_preview_video)
+            "voice" -> appContext.getString(R.string.attachment_preview_voice)
+            "file" -> appContext.getString(R.string.attachment_preview_file)
+            else -> ""
         }
     }
 

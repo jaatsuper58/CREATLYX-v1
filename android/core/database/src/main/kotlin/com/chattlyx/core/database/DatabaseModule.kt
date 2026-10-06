@@ -39,6 +39,7 @@ object DatabaseModule {
             ChattlyxDatabase.MIGRATION_1_2,
             ChattlyxDatabase.MIGRATION_2_3,
             ChattlyxDatabase.MIGRATION_3_4,
+            ChattlyxDatabase.MIGRATION_4_5,
         )
         .build()
 
@@ -56,4 +57,7 @@ object DatabaseModule {
 
     @Provides
     fun provideContactDao(db: ChattlyxDatabase) = db.contacts()
+
+    @Provides
+    fun provideBlockedPeerDao(db: ChattlyxDatabase) = db.blockedPeers()
 }

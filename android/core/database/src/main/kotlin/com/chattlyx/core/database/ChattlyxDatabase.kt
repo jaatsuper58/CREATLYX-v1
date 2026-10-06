@@ -3,11 +3,13 @@ package com.chattlyx.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.chattlyx.core.database.dao.BlockedPeerDao
 import com.chattlyx.core.database.dao.CallLogDao
 import com.chattlyx.core.database.dao.ContactDao
 import com.chattlyx.core.database.dao.ConversationDao
 import com.chattlyx.core.database.dao.GroupDao
 import com.chattlyx.core.database.dao.MessageDao
+import com.chattlyx.core.database.entity.BlockedPeerEntity
 import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.ConversationEntity
@@ -17,7 +19,7 @@ import com.chattlyx.core.database.entity.MessageEntity
 import com.chattlyx.core.database.entity.MessageFtsEntity
 
 /**
- * SQLCipher-backed Room database (Section 7.1), version 4. Schema exports
+ * SQLCipher-backed Room database (Section 7.1), version 5. Schema exports
  * live in core/database/schemas for migration testing.
  */
 @Database(
@@ -29,8 +31,9 @@ import com.chattlyx.core.database.entity.MessageFtsEntity
         GroupEntity::class,
         GroupMemberEntity::class,
         CallLogEntity::class,
+        BlockedPeerEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class ChattlyxDatabase : RoomDatabase() {
@@ -40,9 +43,24 @@ abstract class ChattlyxDatabase : RoomDatabase() {
     abstract fun contacts(): ContactDao
     abstract fun groups(): GroupDao
     abstract fun callLog(): CallLogDao
+    abstract fun blockedPeers(): BlockedPeerDao
 
     companion object {
         const val NAME = "chattlyx.db"
+
+        /** SAF-01 hardening: durable block-list cache table. */
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `blocked_peers` (
+                        `account_id` TEXT NOT NULL PRIMARY KEY,
+                        `blocked_at` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
 
         /** Phase 5 (CALL-05): local call history. */
         val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {

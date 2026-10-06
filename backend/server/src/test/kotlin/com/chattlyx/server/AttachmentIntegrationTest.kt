@@ -51,7 +51,10 @@ class AttachmentIntegrationTest {
     private val json = Json { ignoreUnknownKeys = true }
     private val hex = java.util.HexFormat.of()
 
-    private fun startApp(block: suspend (io.ktor.client.HttpClient) -> Unit) {
+    private fun startApp(
+        wireGroups: Boolean = false,
+        block: suspend (io.ktor.client.HttpClient, com.chattlyx.backend.db.GroupRepository?) -> Unit,
+    ) {
         val dataSource = DbFactory.create(
             DbConfig(postgres.jdbcUrl, postgres.username, postgres.password),
         )
@@ -67,6 +70,11 @@ class AttachmentIntegrationTest {
                 ),
                 dataSource,
             )
+            val groupRepository = if (wireGroups) {
+                com.chattlyx.backend.db.GroupRepository(dataSource)
+            } else {
+                null
+            }
             val attachments = AttachmentContext.create(
                 dataSource = dataSource,
                 storageConfig = StorageConfig(
@@ -74,11 +82,19 @@ class AttachmentIntegrationTest {
                     maxAttachmentBytes = 1_000_000,
                 ),
                 blobStore = FileSystemBlobStore(blobDir),
+                groupMembership = groupRepository?.let { repo ->
+                    { conversationId: String, accountId: java.util.UUID ->
+                        val groupId = runCatching {
+                            java.util.UUID.fromString(conversationId.removePrefix("grp:"))
+                        }.getOrNull()
+                        groupId != null && repo.memberIds(groupId).contains(accountId)
+                    }
+                },
             )
 
             testApplication {
                 application { moduleWithContext(auth, attachments = attachments) }
-                block(client)
+                block(client, groupRepository)
             }
         } finally {
             dataSource.close()
@@ -129,7 +145,7 @@ class AttachmentIntegrationTest {
     }
 
     @Test
-    fun `declare upload meta download roundtrip`() = startApp { client ->
+    fun `declare upload meta download roundtrip`() = startApp { client, _ ->
         val alice = register(client, "+919800000101")
         val ciphertext = ByteArray(2048) { (it % 256).toByte() }
         val sha = hex.formatHex(MessageDigest.getInstance("SHA-256").digest(ciphertext))
@@ -166,7 +182,7 @@ class AttachmentIntegrationTest {
     }
 
     @Test
-    fun `recipient downloads, strangers get 404`() = startApp { client ->
+    fun `recipient downloads, strangers get 404`() = startApp { client, _ ->
         val alice = register(client, "+919800000102")
         val bob = register(client, "+919800000103")
         val carol = register(client, "+919800000104")
@@ -210,7 +226,7 @@ class AttachmentIntegrationTest {
     }
 
     @Test
-    fun `validation and access failures`() = startApp { client ->
+    fun `validation and access failures`() = startApp { client, _ ->
         val alice = register(client, "+919800000105")
         val mallory = register(client, "+919800000106")
         val sha = hex.formatHex(MessageDigest.getInstance("SHA-256").digest(byteArrayOf(1, 2, 3)))
@@ -285,5 +301,86 @@ class AttachmentIntegrationTest {
                 setBody(byteArrayOf(1, 2, 3))
             }.status,
         )
+    }
+
+    @Test
+    fun `group blob readable by members only`() = startApp(wireGroups = true) { client, groupRepository ->
+        val repo = assertNotNull(groupRepository)
+        val alice = register(client, "+919800000121")
+        val bob = register(client, "+919800000122")
+        val carol = register(client, "+919800000123")
+
+        val aliceId = java.util.UUID.fromString(alice.accountId)
+        val bobId = java.util.UUID.fromString(bob.accountId)
+        val groupId = java.util.UUID.randomUUID()
+        repo.insertGroup(
+            com.chattlyx.backend.db.GroupRow(
+                id = groupId,
+                name = "Media group",
+                createdBy = aliceId,
+                createdAt = System.currentTimeMillis(),
+                membershipVersion = 1L,
+            ),
+        )
+        repo.insertMembers(
+            groupId,
+            listOf(aliceId, bobId),
+            role = "member",
+            addedBy = aliceId,
+        )
+        val conversationId = "grp:$groupId"
+
+        val ciphertext = ByteArray(1024) { (it % 256).toByte() }
+        val sha = hex.formatHex(MessageDigest.getInstance("SHA-256").digest(ciphertext))
+
+        // Sender (member) declares against the group conversation.
+        val declared = client.post("/v1/attachments") {
+            bearerAuth(alice.token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """{"kind":"image","mimeType":"image/jpeg","sizeBytes":${ciphertext.size},""" +
+                    """"sha256Hex":"$sha","conversationId":"$conversationId"}""",
+            )
+        }
+        assertEquals(HttpStatusCode.Created, declared.status, declared.bodyAsText())
+        val attachmentId = assertNotNull(
+            json.parseToJsonElement(declared.bodyAsText()).jsonObject["attachmentId"],
+        ).jsonPrimitive.content
+
+        client.put("/v1/attachments/$attachmentId/data") {
+            bearerAuth(alice.token)
+            contentType(ContentType.Application.OctetStream)
+            setBody(ciphertext)
+        }
+
+        // Another member reads meta + data.
+        assertEquals(
+            HttpStatusCode.OK,
+            client.get("/v1/attachments/$attachmentId") { bearerAuth(bob.token) }.status,
+        )
+        val bobData = client.get("/v1/attachments/$attachmentId/data") { bearerAuth(bob.token) }
+        assertEquals(HttpStatusCode.OK, bobData.status)
+        assertContentEquals(ciphertext, bobData.bodyAsBytes())
+
+        // Non-members learn nothing about the blob.
+        assertEquals(
+            HttpStatusCode.NotFound,
+            client.get("/v1/attachments/$attachmentId") { bearerAuth(carol.token) }.status,
+        )
+        assertEquals(
+            HttpStatusCode.NotFound,
+            client.get("/v1/attachments/$attachmentId/data") { bearerAuth(carol.token) }.status,
+        )
+
+        // Non-members may not declare into the group conversation either.
+        val carolDeclare = client.post("/v1/attachments") {
+            bearerAuth(carol.token)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """{"kind":"image","mimeType":"image/jpeg","sizeBytes":4,""" +
+                    """"sha256Hex":"$sha","conversationId":"$conversationId"}""",
+            )
+        }
+        assertEquals(HttpStatusCode.Forbidden, carolDeclare.status)
     }
 }

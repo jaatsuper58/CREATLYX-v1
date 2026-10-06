@@ -50,6 +50,23 @@ class SendAttachmentUseCaseTest {
             return Result.success("client-attachment-1")
         }
 
+        override suspend fun sendGroupAttachment(
+            groupId: String,
+            plaintextFile: File,
+            kind: AttachmentKind,
+            mimeType: String,
+            fileName: String?,
+            width: Int?,
+            height: Int?,
+            durationMs: Int?,
+            caption: String,
+        ): Result<String> {
+            lastFile = plaintextFile
+            lastKind = kind
+            lastCaption = caption
+            return Result.success("client-group-attachment-1")
+        }
+
         override suspend fun downloadAttachment(message: Message): Result<File> =
             Result.failure(ChattlyError.Network())
     }
@@ -86,6 +103,22 @@ class SendAttachmentUseCaseTest {
         assertEquals(file, messages.lastFile)
         assertEquals(AttachmentKind.IMAGE, messages.lastKind)
         assertEquals("look at this", messages.lastCaption)
+    }
+
+    @Test
+    fun `group id routes to group attachment send`() = runTest {
+        val file = tempFile(byteArrayOf(9, 9, 9))
+        val result = useCase(
+            peerAccountId = "group-1",
+            file = file,
+            kind = AttachmentKind.IMAGE,
+            mimeType = "image/jpeg",
+            groupId = "group-1",
+        )
+        val success = assertIs<Result.Success<String>>(result)
+        // Distinct sentinel proves the group fan-out path ran, not the 1:1 send.
+        assertEquals("client-group-attachment-1", success.value)
+        assertEquals(file, messages.lastFile)
     }
 
     @Test
@@ -150,6 +183,18 @@ class SendAttachmentUseCaseTest {
                 durationMs: Int?,
                 caption: String,
             ) = Result.success("y")
+
+            override suspend fun sendGroupAttachment(
+                groupId: String,
+                plaintextFile: File,
+                kind: AttachmentKind,
+                mimeType: String,
+                fileName: String?,
+                width: Int?,
+                height: Int?,
+                durationMs: Int?,
+                caption: String,
+            ) = Result.success("g-media")
 
             override suspend fun downloadAttachment(message: Message): Result<File> =
                 Result.success(File("ok.bin"))

@@ -5,6 +5,8 @@ import com.chattlyx.core.common.dispatchers.Dispatcher
 import com.chattlyx.core.common.result.Result
 import com.chattlyx.core.common.result.getOrElse
 import com.chattlyx.core.common.result.map
+import com.chattlyx.core.database.dao.BlockedPeerDao
+import com.chattlyx.core.database.entity.BlockedPeerEntity
 import com.chattlyx.core.network.rest.ChattlyxServiceApi
 import com.chattlyx.core.network.rest.safeCall
 import com.chattlyx.domain.social.BlockRepository
@@ -38,12 +40,16 @@ class PresenceRepositoryImpl @Inject constructor(
 }
 
 /**
- * SAF block list: server source of truth + in-memory cache so UI checks are
- * synchronous. The cache hydrates lazily on first read after process start.
+ * SAF block list: server source of truth + Room-backed cache (SAF hardening)
+ * with an in-memory mirror so UI checks stay synchronous. On first read the
+ * mirror hydrates from the local table — block enforcement therefore works
+ * immediately after process restart, even before/offline of the next server
+ * sync — then a best-effort refresh reconciles with the server.
  */
 @Singleton
 class BlockRepositoryImpl @Inject constructor(
     private val api: ChattlyxServiceApi,
+    private val blockedPeerDao: BlockedPeerDao,
     @Dispatcher(ChattlyxDispatcher.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : BlockRepository {
 
@@ -53,15 +59,27 @@ class BlockRepositoryImpl @Inject constructor(
     override fun observeBlocked(): Flow<List<String>> = cache.asStateFlow()
 
     override suspend fun refresh(): Result<Unit> = withContext(ioDispatcher) {
-        safeCall { api.blockList() }.map { dto ->
-            cache.value = dto.blockedAccountIds
+        if (!hydrated) {
+            cache.value = blockedPeerDao.snapshot()
             hydrated = true
+        }
+        safeCall { api.blockList() }.map { dto ->
+            blockedPeerDao.clear()
+            blockedPeerDao.insertAll(
+                dto.blockedAccountIds.map { id ->
+                    BlockedPeerEntity(accountId = id, blockedAt = System.currentTimeMillis())
+                },
+            )
+            cache.value = dto.blockedAccountIds
             Result.success(Unit)
         }.getOrElse { Result.failure(it) }
     }
 
     override suspend fun block(accountId: String): Result<Unit> = withContext(ioDispatcher) {
         safeCall { api.blockPeer(accountId) }.map {
+            blockedPeerDao.insert(
+                BlockedPeerEntity(accountId = accountId, blockedAt = System.currentTimeMillis()),
+            )
             cache.value = (cache.value + accountId).distinct()
             Result.success(Unit)
         }.getOrElse { Result.failure(it) }
@@ -69,6 +87,7 @@ class BlockRepositoryImpl @Inject constructor(
 
     override suspend fun unblock(accountId: String): Result<Unit> = withContext(ioDispatcher) {
         safeCall { api.unblockPeer(accountId) }.map {
+            blockedPeerDao.delete(accountId)
             cache.value = cache.value.filterNot { it == accountId }
             Result.success(Unit)
         }.getOrElse { Result.failure(it) }

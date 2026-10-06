@@ -58,13 +58,21 @@ fun Application.module() {
         blockGate = blockGate,
     )
 
-    val attachments = AttachmentContext.create(dataSource)
-
     val groups = GroupContext.create(
         dataSource = dataSource,
         accountRepository = authServices.accountRepository,
         registry = messaging.registry,
     )
+
+    // Group-media ACL: blob access rides on live group membership, so a
+    // member who left immediately loses decrypt rights to group attachments.
+    val attachments = AttachmentContext.create(dataSource) { conversationId, accountId ->
+        if (!conversationId.startsWith("grp:")) return@create false
+        val groupId = runCatching {
+            java.util.UUID.fromString(conversationId.removePrefix("grp:"))
+        }.getOrNull() ?: return@create false
+        groups.repository.memberIds(groupId).contains(accountId)
+    }
 
     moduleWithContext(authServices, messaging, attachments, groups, blocks)
 }

@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.chattlyx.core.database.entity.BlockedPeerEntity
 import com.chattlyx.core.database.entity.CallLogEntity
 import com.chattlyx.core.database.entity.ContactEntity
 import com.chattlyx.core.database.entity.GroupEntity
@@ -196,4 +197,30 @@ interface ContactDao {
 
     @Query("SELECT * FROM contacts WHERE account_id = :accountId")
     suspend fun byAccountId(accountId: String): ContactEntity?
+}
+
+/** SAF-01: durable block-list cache (server remains the source of truth). */
+@Dao
+interface BlockedPeerDao {
+
+    @Query("SELECT account_id FROM blocked_peers ORDER BY blocked_at DESC")
+    fun observeAccountIds(): Flow<List<String>>
+
+    @Query("SELECT account_id FROM blocked_peers")
+    suspend fun snapshot(): List<String>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM blocked_peers WHERE account_id = :accountId)")
+    suspend fun contains(accountId: String): Boolean
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entry: BlockedPeerEntity)
+
+    @Query("DELETE FROM blocked_peers WHERE account_id = :accountId")
+    suspend fun delete(accountId: String)
+
+    @Query("DELETE FROM blocked_peers")
+    suspend fun clear()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entries: List<BlockedPeerEntity>)
 }
