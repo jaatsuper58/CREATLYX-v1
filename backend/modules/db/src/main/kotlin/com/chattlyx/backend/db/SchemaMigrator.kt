@@ -95,6 +95,7 @@ class SchemaMigrator(
                 "migrations/V5__attachments.sql",
                 "migrations/V6__groups.sql",
                 "migrations/V7__blocked_peers.sql",
+                "migrations/V8__idempotency.sql",
             )
     }
 }
