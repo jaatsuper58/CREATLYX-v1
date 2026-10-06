@@ -1,5 +1,62 @@
-# Baseline Profiles scaffold (Phase 0). Generated rules replace this file when the
-# :benchmark module produces them on a reference device (Section 10 budgets).
+# ChattlyX baseline profile (curated; cold-start hot path).
+# Regenerate with tools/perf/gen_baseline.py after adding screens, and refine
+# on a reference device via :benchmark's BaselineProfileGenerator
+# (Section 10 budgets: < 2 s cold start on a 3 GB mid-range phone).
+# Compose/androidx libraries ship their own profiles; only app code is listed.
 HSPLcom/chattlyx/app/ChattlyxApplication;->onCreate()V
 HSPLcom/chattlyx/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLandroidx/activity/ComponentActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLandroidx/compose/ui/platform/AndroidComposeView;->onCreate()V
+HSPLcom/chattlyx/app/navigation/ChattlyxNavHostKt;->ChattlyxNavHost(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/navigation/ChattlyxShellKt;->ChattlyxShell(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/navigation/ChattlyxShellKt;->IncomingCallOverlay(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/navigation/ChattlyxShellKt;->ShellNavigationBar(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/navigation/ChattlyxShellKt;->ShellNavigationRail(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/ui/AppLockKt;->AppLockGate(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/app/ui/AppLockKt;->LockSurface(Landroidx/compose/runtime/Composer;I)V
 HSPLcom/chattlyx/app/ui/AppRootKt;->ChattlyxAppRoot(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/CallsScreenKt;->CallsScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/CallsScreenKt;->CallsContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/CallsScreenKt;->CallLogRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/InCallScreenKt;->InCallScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/InCallScreenKt;->CallVideoSurface(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/InCallScreenKt;->IncomingControls(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/InCallScreenKt;->ActiveControls(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/calls/InCallScreenKt;->CallControlButton(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->AttachmentBubble(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->ImageBubble(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->VoiceBubble(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->VoicePlayer(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->DocumentRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/AttachmentBubbleKt;->TransferRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ChatsScreenKt;->ChatsScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ChatsScreenKt;->ChatsContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ChatsScreenKt;->SearchResults(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ChatsScreenKt;->CreateGroupDialog(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ConversationScreenKt;->ConversationScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ConversationScreenKt;->AttachOption(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ConversationScreenKt;->VoiceRecordingBar(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ConversationScreenKt;->FullscreenImageDialog(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/chats/ConversationScreenKt;->MessageRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/contacts/ContactsScreenKt;->ContactsScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/contacts/ContactsScreenKt;->ContactRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/OnboardingNavHostKt;->OnboardingNavHost(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/OtpScreenKt;->OtpScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/OtpScreenKt;->OtpContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/PhoneEntryScreenKt;->PhoneEntryScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/PhoneEntryScreenKt;->PhoneEntryContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/PhoneEntryScreenKt;->CountryPicker(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/ProfileSetupScreenKt;->ProfileSetupScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/ProfileSetupScreenKt;->ProfileSetupContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/onboarding/WelcomeScreenKt;->WelcomeScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/SettingsNavHostKt;->SettingsScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/SettingsScreenKt;->SettingsHomeScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/SettingsScreenKt;->AppLockRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/SettingsScreenKt;->SettingsRow(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/account/AccountScreenKt;->AccountScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/account/AccountScreenKt;->AccountContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/danger/DeleteAccountScreenKt;->DeleteAccountScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/danger/DeleteAccountScreenKt;->DeleteAccountContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/devices/DevicesScreenKt;->DevicesScreen(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/devices/DevicesScreenKt;->DevicesContent(Landroidx/compose/runtime/Composer;I)V
+HSPLcom/chattlyx/feature/settings/devices/DevicesScreenKt;->DeviceRow(Landroidx/compose/runtime/Composer;I)V

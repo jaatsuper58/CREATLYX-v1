@@ -47,5 +47,6 @@ dependencies {
     implementation(libs.junit4)
 }
 
-// Baseline Profile generation wiring lands with performance hardening (Phase 7);
-// app/baseline-prof.txt carries the starter rules until then.
+// Baseline Profile refinement: BaselineProfileGenerator.kt collects device
+// traces; the curated app/baseline-prof.txt ships in the APK and is
+// regenerated via tools/perf/gen_baseline.py.
