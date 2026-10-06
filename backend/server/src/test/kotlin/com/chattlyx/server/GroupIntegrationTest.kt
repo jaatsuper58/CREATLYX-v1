@@ -10,6 +10,7 @@ import com.chattlyx.server.messaging.ConnectionRegistry
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -235,4 +236,46 @@ class GroupIntegrationTest {
         assertEquals(1, members.size)
         assertEquals("owner", members[0].jsonObject["role"]!!.jsonPrimitive.content)
     }
+
+    @Test
+    fun `retried create with same idempotency key returns the original group`() = startApp { client ->
+        val alice = register(client, "+15550000501")
+        val key = java.util.UUID.randomUUID().toString()
+
+        val first = client.post("/v1/groups") {
+            bearerAuth(alice.token)
+            contentType(ContentType.Application.Json)
+            header("Idempotency-Key", key)
+            setBody("""{"name":"Retry crew","memberAccountIds":[]}""")
+        }
+        assertEquals(HttpStatusCode.Created, first.status, first.bodyAsText())
+        val firstId = parseGroupId(first.bodyAsText())
+
+        // Transport-level retry: same key, same identity -> original group,
+        // no duplicate (list stays a single row).
+        val retry = client.post("/v1/groups") {
+            bearerAuth(alice.token)
+            contentType(ContentType.Application.Json)
+            header("Idempotency-Key", key)
+            setBody("""{"name":"Retry crew","memberAccountIds":[]}""")
+        }
+        assertEquals(HttpStatusCode.Created, retry.status, retry.bodyAsText())
+        assertEquals(firstId, parseGroupId(retry.bodyAsText()))
+
+        val list = client.get("/v1/groups") { bearerAuth(alice.token) }
+        val groups = json.parseToJsonElement(list.bodyAsText())
+            .jsonObject["groups"]!!.jsonArray
+        assertEquals(1, groups.size)
+
+        // A genuinely new attempt (new key) creates a distinct group.
+        val fresh = client.post("/v1/groups") {
+            bearerAuth(alice.token)
+            contentType(ContentType.Application.Json)
+            header("Idempotency-Key", java.util.UUID.randomUUID().toString())
+            setBody("""{"name":"Another crew","memberAccountIds":[]}""")
+        }
+        assertEquals(HttpStatusCode.Created, fresh.status)
+        assertTrue(parseGroupId(fresh.bodyAsText()) != firstId)
+    }
+
 }

@@ -16,6 +16,20 @@ android {
     defaultConfig {
         // AUTH-10: deletion flow also exists on the web (URL configured server-side).
         manifestPlaceholders["chattlyxDeepLinkHost"] = "chattlyx.com"
+
+        // SAF (Phase 7): Play Integrity is opt-in per build environment.
+        // INTEGRITY_CLOUD_PROJECT_NUMBER is the numeric GCP project id linked
+        // in Play Console → App integrity (see docs/SECURITY.md).
+        buildConfigField(
+            "boolean",
+            "INTEGRITY_ENABLED",
+            providers.environmentVariable("CHATTLYX_INTEGRITY_ENABLED").orElse("false").get(),
+        )
+        buildConfigField(
+            "long",
+            "INTEGRITY_CLOUD_PROJECT_NUMBER",
+            providers.environmentVariable("CHATTLYX_INTEGRITY_CLOUD_PROJECT_NUMBER").orElse("0").get() + "L",
+        )
     }
 
     // Phase 8 release signing: credentials come from CI secrets / local
@@ -78,6 +92,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.biometric)
+    implementation(libs.play.integrity)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.timber)
     implementation(libs.bundles.androidx.lifecycle)

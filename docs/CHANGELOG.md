@@ -27,6 +27,17 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
   row now shows a progress bar and percentage driven by the pipeline's byte
   counters (encrypt + declare + upload passes share one 0–1 scale), for 1:1
   and group sends alike.
+- SAF (MASVS-RESILIENCE): **idempotency keys on REST mutations** — group
+  creation honours an `Idempotency-Key` header backed by a V8 partial unique
+  index; retried creates return the original group (integration-tested), and
+  the Android client stamps per-request keys via an OkHttp interceptor so
+  transport retries dedupe automatically.
+- SAF: **Play Integrity client scaffold** — `DeviceIntegrityProvider` with a
+  real Play Integrity binding (`com.google.android.play:integrity`,
+  single-use tokens, verdicts never logged) and a noop default; enabled via
+  `CHATTLYX_INTEGRITY_ENABLED` + `CHATTLYX_INTEGRITY_CLOUD_PROJECT_NUMBER`
+  build flags. Server-side decode/enforcement is documented in SECURITY.md
+  and lands with the GCP project.
 
 ### Changed
 - SAF-01: the block-list cache is now **Room-backed** (`blocked_peers` table,

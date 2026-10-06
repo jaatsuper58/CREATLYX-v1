@@ -106,6 +106,34 @@ Please report suspected vulnerabilities privately:
 6. **OTP entry is screen-capture protected (Phase 7).** The OTP route sets
    `FLAG_SECURE`, keeping codes out of screenshots, recents and recordings.
 
+## Phase 7/8 hardening notes
+
+1. **REST mutation idempotency (MASVS-RESILIENCE).** Messaging is idempotent
+   via the unique `(sender_account_id, client_message_id)` envelope key. The
+   only non-naturally-idempotent mutation — group creation — now honours an
+   `Idempotency-Key` request header (V8 partial unique index on
+   `(created_by, idempotency_key)`): a retried create returns the original
+   group instead of duplicating it. The Android client stamps a per-request
+   key on `POST /v1/groups` via `IdempotencyKeyInterceptor`; OkHttp
+   transport retries reuse the same key, fresh user attempts mint new ones.
+2. **Play Integrity scaffold (root/tamper verdicts).** The client ships the
+   full provider surface: `DeviceIntegrityProvider` with a real
+   `PlayDeviceIntegrityProvider` (`com.google.android.play:integrity`,
+   single-use tokens per Google's guidance, verdicts never logged) and a
+   noop default. Enabling requires the build environment:
+
+   - Play Console → *App integrity* → link the Google Cloud project.
+   - Copy the numeric **Cloud project number** shown there.
+   - Build with `CHATTLYX_INTEGRITY_ENABLED=true` and
+     `CHATTLYX_INTEGRITY_CLOUD_PROJECT_NUMBER=<number>` (Gradle picks both
+     up as `BuildConfig` fields; without them the noop provider binds and no
+     Play round-trip happens).
+   - Server-side decode/verification (Google's Play Integrity decode
+     endpoint with a service account from the same GCP project) and the
+     enforcement policy (warn vs. block on failed `MEETS_DEVICE_INTEGRITY`)
+     are configured when the GCP project exists; until then the client
+     provider is the integration surface and tokens are not yet consumed.
+
 ## Pre-launch gates
 
 - OWASP MASVS L2 checklist + MASTG cases (`docs/masvs-l2-checklist.md`).

@@ -28,22 +28,45 @@ data class GroupMemberRow(
  */
 class GroupRepository(private val db: DataSource) {
 
-    fun insertGroup(row: GroupRow) {
-        db.connection.use { connection ->
+    /**
+     * Inserts the group row; [idempotencyKey] (V8) dedupes retried creates.
+     * Returns false when a group with the same creator + key already exists.
+     */
+    fun insertGroup(row: GroupRow, idempotencyKey: String? = null): Boolean {
+        return db.connection.use { connection ->
             connection.prepareStatement(
                 """
-                INSERT INTO groups (id, name, created_by, created_at, membership_version)
-                VALUES (?, ?, ?, to_timestamp(?::double precision / 1000), 1)
+                INSERT INTO groups (id, name, created_by, created_at, membership_version, idempotency_key)
+                VALUES (?, ?, ?, to_timestamp(?::double precision / 1000), 1, ?)
                 """.trimIndent(),
             ).use { s ->
                 s.setObject(1, row.id)
                 s.setString(2, row.name)
                 s.setObject(3, row.createdBy)
                 s.setLong(4, row.createdAt)
-                s.executeUpdate()
+                if (idempotencyKey == null) s.setNull(5, java.sql.Types.VARCHAR) else s.setString(5, idempotencyKey)
+                try {
+                    s.executeUpdate() == 1
+                } catch (e: java.sql.SQLException) {
+                    if (e.sqlState == "23505") false else throw e
+                }
             }
         }
     }
+
+    /** V8 idempotency lookup: the original group for a creator + key. */
+    fun groupIdByIdempotencyKey(creator: UUID, idempotencyKey: String): UUID? =
+        db.connection.use { connection ->
+            connection.prepareStatement(
+                "SELECT id FROM groups WHERE created_by = ? AND idempotency_key = ?",
+            ).use { s ->
+                s.setObject(1, creator)
+                s.setString(2, idempotencyKey)
+                s.executeQuery().use { rs ->
+                    if (rs.next()) rs.getObject(1, UUID::class.java) else null
+                }
+            }
+        }
 
     fun insertMembers(groupId: UUID, accountIds: List<UUID>, role: String, addedBy: UUID) {
         if (accountIds.isEmpty()) return

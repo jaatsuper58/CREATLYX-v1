@@ -50,6 +50,7 @@ object NetworkModule {
         authenticator: TokenRefreshAuthenticator,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .addInterceptor(IdempotencyKeyInterceptor())
         .authenticator(authenticator)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)

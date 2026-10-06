@@ -31,10 +31,13 @@ fun Application.installGroupRoutes(groups: GroupContext) {
             post("/v1/groups") {
                 val principal = call.requireAccount()
                 val body = call.receive<CreateGroupBody>()
+                // MASVS-RESILIENCE: retried creates carrying the same
+                // Idempotency-Key return the original group.
                 val view = groups.service.create(
                     creator = principal.accountId,
                     name = body.name,
                     memberAccountIds = body.memberAccountIds.map { it.toAccountId() },
+                    idempotencyKey = call.request.headers["Idempotency-Key"]?.takeIf { it.isNotBlank() },
                 )
                 call.respond(HttpStatusCode.Created, view.toDto())
             }

@@ -28,11 +28,31 @@ class GroupService(
     private val broadcastGroupUpdate: (memberIds: List<UUID>, groupId: UUID, version: Long) -> Unit,
 ) {
 
-    /** GRP-01: creator becomes owner; every listed member must exist. */
-    fun create(creator: UUID, name: String, memberAccountIds: List<UUID>): GroupView {
+    /**
+     * GRP-01: creator becomes owner; every listed member must exist.
+     * [idempotencyKey] (MASVS-RESILIENCE): a retried create carrying the same
+     * key returns the original group instead of duplicating it.
+     */
+    fun create(
+        creator: UUID,
+        name: String,
+        memberAccountIds: List<UUID>,
+        idempotencyKey: String? = null,
+    ): GroupView {
         val trimmed = name.trim()
         if (trimmed.isEmpty() || trimmed.length > MAX_NAME_LENGTH) {
             throw ChattlyxServerException.Validation("name must be 1..$MAX_NAME_LENGTH chars")
+        }
+        if (idempotencyKey != null && idempotencyKey.length > MAX_IDEMPOTENCY_KEY_LENGTH) {
+            throw ChattlyxServerException.Validation("idempotencyKey too long")
+        }
+        if (idempotencyKey != null) {
+            // Fast path: an earlier attempt with this key already won.
+            repository.groupIdByIdempotencyKey(creator, idempotencyKey)?.let { existingId ->
+                val existing = repository.groupById(existingId)
+                    ?: throw ChattlyxServerException.NotFound("group")
+                return GroupView(existing, repository.membersOf(existingId))
+            }
         }
         val distinct = (memberAccountIds + creator).distinct()
         if (distinct.size > MAX_MEMBERS) {
@@ -51,7 +71,14 @@ class GroupService(
             createdAt = System.currentTimeMillis(),
             membershipVersion = 1,
         )
-        repository.insertGroup(row)
+        if (!repository.insertGroup(row, idempotencyKey)) {
+            // Lost a concurrent race on the same key: report the winning row.
+            val winnerId = idempotencyKey?.let { repository.groupIdByIdempotencyKey(creator, it) }
+                ?: throw ChattlyxServerException.Conflict("group exists")
+            val winner = repository.groupById(winnerId)
+                ?: throw ChattlyxServerException.NotFound("group")
+            return GroupView(winner, repository.membersOf(winnerId))
+        }
         repository.insertMembers(row.id, distinct.filter { it != creator }, GroupRepository.ROLE_MEMBER, creator)
         repository.insertMembers(row.id, listOf(creator), GroupRepository.ROLE_OWNER, creator)
 
@@ -160,6 +187,7 @@ class GroupService(
     companion object {
         const val MAX_NAME_LENGTH = 64
         const val MAX_MEMBERS = 100
+        const val MAX_IDEMPOTENCY_KEY_LENGTH = 128
 
         /** Builds the wire frame pushed to live member sessions. */
         fun updateFrame(groupId: UUID, version: Long): WsFrame =

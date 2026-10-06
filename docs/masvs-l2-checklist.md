@@ -48,10 +48,14 @@ beta build ships to Play internal testing.
 - ✅ Dependency scanning (Dependabot + advisory scan workflow).
 
 ## MASVS-RESILIENCE
-- ✅ Root/tamper checks deferred to Phase 7 hardening sprint with SafetyNet
-  replacement (Play Integrity) integration task filed.
-- 🟧 Anti-replay on REST mutations (idempotency keys) — messaging already
-  idempotent via UNIQUE sender+clientMessageId.
+- 🟧 Root/tamper checks via Play Integrity: client scaffold complete and
+  tested (provider binding behind `CHATTLYX_INTEGRITY_ENABLED` +
+  `CHATTLYX_INTEGRITY_CLOUD_PROJECT_NUMBER` build flags); server-side token
+  decode/enforcement lands with the GCP project (setup steps in
+  SECURITY.md, "Phase 7/8 hardening notes").
+- ✅ Anti-replay on REST mutations: messaging idempotent via UNIQUE
+  sender+clientMessageId; group creation honours `Idempotency-Key` (V8
+  unique index; client stamps keys via `IdempotencyKeyInterceptor`).
 - ✅ Block enforcement is server-side (SAF-02): delivery, typing, receipts and
   call signals are all suppressed between blocked peers.
 
