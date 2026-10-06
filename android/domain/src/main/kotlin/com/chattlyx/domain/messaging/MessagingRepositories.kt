@@ -34,7 +34,8 @@ interface MessageRepository {
 
     /**
      * MED-01/02/03: encrypts [plaintextFile], uploads the ciphertext and sends
-     * the attachment message. Returns the client message id.
+     * the attachment message. [onProgress] reports (doneBytes, totalBytes)
+     * across encrypt + declare + upload. Returns the client message id.
      */
     suspend fun sendAttachment(
         peerAccountId: String,
@@ -46,13 +47,14 @@ interface MessageRepository {
         height: Int? = null,
         durationMs: Int? = null,
         caption: String = "",
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit = { _, _ -> },
     ): Result<String>
 
     /**
      * MED + GRP: group media send. The ciphertext blob is uploaded ONCE,
      * declared against the group conversation (server ACL = live membership),
      * then the attachment descriptor rides one fan-out envelope per member.
-     * Returns the client message id.
+     * [onProgress] mirrors [sendAttachment]. Returns the client message id.
      */
     suspend fun sendGroupAttachment(
         groupId: String,
@@ -64,6 +66,7 @@ interface MessageRepository {
         height: Int? = null,
         durationMs: Int? = null,
         caption: String = "",
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit = { _, _ -> },
     ): Result<String>
 
     /** MED-04: fetches + decrypts the blob for [message]; updates local state. */

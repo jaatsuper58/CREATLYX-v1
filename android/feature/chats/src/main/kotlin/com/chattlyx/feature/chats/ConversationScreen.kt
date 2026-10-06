@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -294,11 +295,26 @@ fun ConversationScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    val progress by viewModel.attachmentProgress.collectAsStateWithLifecycle()
                     Text(
                         text = stringResource(R.string.attachment_uploading),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    // Determinate once the pipeline reports byte counts; the
+                    // encrypt pass shares the 0..1 scale with the upload pass.
+                    val barModifier = Modifier.weight(1f).height(6.dp)
+                    if (progress == null) {
+                        LinearProgressIndicator(modifier = barModifier)
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { progress ?: 0f },
+                            modifier = barModifier,
+                        )
+                        Text(
+                            text = "${(progress?.times(100))?.toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
                 else -> Row(
                     modifier = Modifier

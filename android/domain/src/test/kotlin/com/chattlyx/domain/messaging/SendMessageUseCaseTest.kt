@@ -40,6 +40,7 @@ private class FakeMessageRepository : MessageRepository {
         height: Int?,
         durationMs: Int?,
         caption: String,
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
     ): Result<String> = Result.success("client-attachment-1")
 
     override suspend fun sendGroupAttachment(
@@ -52,6 +53,7 @@ private class FakeMessageRepository : MessageRepository {
         height: Int?,
         durationMs: Int?,
         caption: String,
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
     ): Result<String> = Result.success("client-group-attachment-1")
 
     override suspend fun downloadAttachment(message: Message): Result<java.io.File> =

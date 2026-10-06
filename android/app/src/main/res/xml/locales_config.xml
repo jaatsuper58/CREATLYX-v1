@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Launch languages (master spec Section 1). Per-app language selection on
-     Android 13+; translations land in Phase 7. -->
+     Android 13+. All locales are translated under */res/values-<qualifier>/
+     (generated via tools/i18n/generate.py). -->
 <locale-config xmlns:android="http://schemas.android.com/apk/res/android">
     <locale android:name="en" />
     <locale android:name="hi" />

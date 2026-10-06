@@ -91,6 +91,10 @@ class ConversationViewModel @Inject constructor(
     private val _attachmentSending = MutableStateFlow(false)
     val attachmentSending: StateFlow<Boolean> = _attachmentSending.asStateFlow()
 
+    /** MED-02: upload progress 0..1 (encrypt + upload passes); null = indeterminate. */
+    private val _attachmentProgress = MutableStateFlow<Float?>(null)
+    val attachmentProgress: StateFlow<Float?> = _attachmentProgress.asStateFlow()
+
     /** One-shot snackbar content (message-key string), consumed by the UI. */
     private val _snackMessageKey = MutableStateFlow<String?>(null)
     val snackMessageKey: StateFlow<String?> = _snackMessageKey.asStateFlow()
@@ -295,6 +299,9 @@ class ConversationViewModel @Inject constructor(
             val kind = when {
                 isVideo -> AttachmentKind.VIDEO
                 isImage -> AttachmentKind.IMAGE
+                // Some providers hand back octet-stream for picker results;
+                // the video picker's preference disambiguates the kind.
+                preferVideo && mimeType == "application/octet-stream" -> AttachmentKind.VIDEO
                 else -> AttachmentKind.FILE
             }
             val meta = when (kind) {
@@ -336,6 +343,7 @@ class ConversationViewModel @Inject constructor(
         durationMs: Int?,
     ) {
         _attachmentSending.value = true
+        _attachmentProgress.value = null
         val result = sendAttachmentUseCase(
             peerAccountId = peer,
             file = file,
@@ -348,8 +356,13 @@ class ConversationViewModel @Inject constructor(
             caption = composerText.value.trim(),
             // GRP + MED: for groups [peer] carries the groupId (see send()).
             groupId = if (isGroup) peer else null,
+            onProgress = { done, total ->
+                _attachmentProgress.value =
+                    if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else null
+            },
         )
         _attachmentSending.value = false
+        _attachmentProgress.value = null
         if (result is Result.Failure) {
             _snackMessageKey.value = "error_attachment_send"
         } else {

@@ -21,6 +21,7 @@ class SendAttachmentUseCaseTest {
         var lastFile: File? = null
         var lastKind: AttachmentKind? = null
         var lastCaption: String? = null
+        var progressEvents = 0
 
         override suspend fun sendMessage(peerAccountId: String, body: String): Result<String> =
             Result.success("client-1")
@@ -43,10 +44,13 @@ class SendAttachmentUseCaseTest {
             height: Int?,
             durationMs: Int?,
             caption: String,
+            onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
         ): Result<String> {
             lastFile = plaintextFile
             lastKind = kind
             lastCaption = caption
+            onProgress(10, 20)
+            progressEvents += 1
             return Result.success("client-attachment-1")
         }
 
@@ -60,6 +64,7 @@ class SendAttachmentUseCaseTest {
             height: Int?,
             durationMs: Int?,
             caption: String,
+            onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
         ): Result<String> {
             lastFile = plaintextFile
             lastKind = kind
@@ -103,6 +108,22 @@ class SendAttachmentUseCaseTest {
         assertEquals(file, messages.lastFile)
         assertEquals(AttachmentKind.IMAGE, messages.lastKind)
         assertEquals("look at this", messages.lastCaption)
+    }
+
+    @Test
+    fun `progress callback is forwarded to the repository`() = runTest {
+        val file = tempFile(byteArrayOf(5, 6, 7))
+        val seen = mutableListOf<Pair<Long, Long>>()
+        val result = useCase(
+            peerAccountId = "peer-1",
+            file = file,
+            kind = AttachmentKind.IMAGE,
+            mimeType = "image/jpeg",
+            onProgress = { done, total -> seen += done to total },
+        )
+        assertIs<Result.Success<String>>(result)
+        assertEquals(listOf(10L to 20L), seen)
+        assertEquals(1, messages.progressEvents)
     }
 
     @Test
@@ -182,6 +203,7 @@ class SendAttachmentUseCaseTest {
                 height: Int?,
                 durationMs: Int?,
                 caption: String,
+                onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
             ) = Result.success("y")
 
             override suspend fun sendGroupAttachment(
@@ -194,6 +216,7 @@ class SendAttachmentUseCaseTest {
                 height: Int?,
                 durationMs: Int?,
                 caption: String,
+                onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
             ) = Result.success("g-media")
 
             override suspend fun downloadAttachment(message: Message): Result<File> =

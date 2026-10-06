@@ -215,6 +215,7 @@ class MessageRepositoryImpl @Inject constructor(
         height: Int?,
         durationMs: Int?,
         caption: String,
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
     ): Result<String> = withContext(ioDispatcher) {
         val selfAccountId = tokenStore.accountId()
             ?: return@withContext Result.failure(ChattlyError.Auth)
@@ -254,6 +255,7 @@ class MessageRepositoryImpl @Inject constructor(
             height = height,
             durationMs = durationMs,
             fileName = fileName,
+            onProgress = onProgress,
         ).getOrElse {
             if (!staged.delete()) staged.deleteOnExit()
             return@withContext Result.failure(it)
@@ -351,6 +353,7 @@ class MessageRepositoryImpl @Inject constructor(
         height: Int?,
         durationMs: Int?,
         caption: String,
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit,
     ): Result<String> = withContext(ioDispatcher) {
         val selfAccountId = tokenStore.accountId() ?: return@withContext Result.failure(ChattlyError.Auth)
         val conversationId = conversationIds.direct(selfAccountId, peerAccountId)
@@ -376,6 +379,7 @@ class MessageRepositoryImpl @Inject constructor(
             height = height,
             durationMs = durationMs,
             fileName = fileName,
+            onProgress = onProgress,
         ).getOrElse {
             if (!staged.delete()) staged.deleteOnExit()
             return@withContext Result.failure(it)

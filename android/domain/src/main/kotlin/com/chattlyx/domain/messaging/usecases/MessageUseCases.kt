@@ -60,6 +60,7 @@ class SendAttachmentUseCase @Inject constructor(
         durationMs: Int? = null,
         caption: String = "",
         groupId: String? = null,
+        onProgress: (doneBytes: Long, totalBytes: Long) -> Unit = { _, _ -> },
     ): Result<String> {
         if (!file.isFile) {
             return Result.failure(
@@ -94,6 +95,7 @@ class SendAttachmentUseCase @Inject constructor(
                 height = height,
                 durationMs = durationMs,
                 caption = caption.trim(),
+                onProgress = onProgress,
             )
         }
         conversationRepository.openConversationWith(peerAccountId)
@@ -107,6 +109,7 @@ class SendAttachmentUseCase @Inject constructor(
             height = height,
             durationMs = durationMs,
             caption = caption.trim(),
+            onProgress = onProgress,
         )
     }
 

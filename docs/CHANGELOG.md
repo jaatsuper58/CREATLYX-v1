@@ -17,6 +17,16 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 - MSG-08: **chat-list attachment previews** — the last-message preview shows
   a localized kind summary ("Photo", "Video", "Voice message", "File") when
   the latest message is media without a caption; captions still win.
+- **Full localisation for all 12 launch languages** (en, hi, ur, ar, bn, es,
+  fr, pt-BR, in, tr, ru): every user-visible string across app, feature and
+  data modules is translated (70 locale resource files), RTL layouts ride on
+  the existing `supportsRtl` + `localeConfig` wiring, and the dictionaries
+  are maintained under `tools/i18n/` with a generator + placeholder-parity
+  validation. Brand names stay untranslated by design.
+- MED-02: **determinate upload progress** — the "Encrypting & uploading…"
+  row now shows a progress bar and percentage driven by the pipeline's byte
+  counters (encrypt + declare + upload passes share one 0–1 scale), for 1:1
+  and group sends alike.
 
 ### Changed
 - SAF-01: the block-list cache is now **Room-backed** (`blocked_peers` table,
@@ -24,6 +34,8 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
   as the synchronous read path. Block enforcement now survives process
   restarts and offline windows; the server remains the source of truth and
   `refresh()` reconciles.
+- MED: the photo-picker's `preferVideo` hint now disambiguates
+  `application/octet-stream` results into VIDEO instead of FILE.
 
 ## [0.11.0-beta] — Phase 8 polish: biometric app lock (2026-10-05)
 
