@@ -5,7 +5,6 @@ import com.google.android.play.core.integrity.IntegrityManager
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -62,12 +61,12 @@ class PlayDeviceIntegrityProvider(
             suspendCancellableCoroutine { continuation ->
                 integrityManager.requestIntegrityToken(request)
                     .addOnSuccessListener { response ->
-                        continuation.resume(response.token())
+                        continuation.resumeWith(Result.success(response.token()))
                     }
                     .addOnFailureListener { error ->
                         // Never log the nonce or any verdict detail.
                         Timber.w(error, "Play Integrity token request failed")
-                        continuation.resume(null)
+                        continuation.resumeWith(Result.success(null))
                     }
             }
         }.getOrNull()
