@@ -9,17 +9,21 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * BKP-01/02 local backup cipher (JCA only, no custom primitives):
+ * BKP-01/02 local backup cipher (JCA only, no custom primitives), the shipped
+ * implementation of the [BackupCipher] contract in `Ciphers.kt`:
  *
  * - The key is derived from a user passphrase with PBKDF2-HMAC-SHA256
  *   (600k iterations per OWASP guidance) so the backup file is meaningful
- *   off-device without ever exporting Keystore material.
+ *   off-device without ever exporting Keystore material. The contract names
+ *   Argon2id; PBKDF2 is used because the Argon2 provider is not yet in the
+ *   dependency catalog and we never fabricate coordinates. The blob carries
+ *   a version tag (`CHXBAK1`) so the KDF can be upgraded later.
  * - Payload is a single AES-256-GCM pass: confidentiality + integrity, tag
  *   verification fails closed on tamper or wrong passphrase.
  *
  * Layout: `"CHXBAK1"` | salt(16) | nonce(12) | ciphertext(+16-byte tag).
  */
-object BackupCipher {
+object JcaBackupCipher : BackupCipher {
 
     const val MAGIC = "CHXBAK1"
     const val SALT_BYTES = 16
@@ -32,8 +36,14 @@ object BackupCipher {
     /** Passphrase did not match (GCM tag verification failed). */
     class WrongPassphraseException : Exception("backup passphrase mismatch")
 
+    override suspend fun encryptBackup(plaintext: ByteArray, passphrase: CharArray): ByteArray =
+        encrypt(plaintext, passphrase)
+
+    override suspend fun decryptBackup(ciphertext: ByteArray, passphrase: CharArray): ByteArray =
+        decrypt(ciphertext, passphrase)
+
     /** Encrypts [plaintext] for [passphrase]; returns the full backup blob. */
-    fun encrypt(plaintext: ByteArray, passphrase: String): ByteArray {
+    fun encrypt(plaintext: ByteArray, passphrase: CharArray): ByteArray {
         val salt = ByteArray(SALT_BYTES).also(SecureRandom()::nextBytes)
         val nonce = ByteArray(NONCE_BYTES).also(SecureRandom()::nextBytes)
         val cipher = Cipher.getInstance(TRANSFORMATION).apply {
@@ -48,7 +58,7 @@ object BackupCipher {
      * @throws WrongPassphraseException on passphrase mismatch,
      * @throws IllegalArgumentException on malformed/corrupt blobs.
      */
-    fun decrypt(blob: ByteArray, passphrase: String): ByteArray {
+    fun decrypt(blob: ByteArray, passphrase: CharArray): ByteArray {
         val magic = MAGIC.toByteArray(Charsets.US_ASCII)
         val header = SALT_BYTES + NONCE_BYTES + magic.size
         if (blob.size < header + GCM_TAG_BITS / 8) {
@@ -70,8 +80,8 @@ object BackupCipher {
         }
     }
 
-    internal fun deriveKey(passphrase: String, salt: ByteArray): SecretKeySpec {
-        val spec = PBEKeySpec(passphrase.toCharArray(), salt, PBKDF2_ITERATIONS, KEY_BYTES * 8)
+    internal fun deriveKey(passphrase: CharArray, salt: ByteArray): SecretKeySpec {
+        val spec = PBEKeySpec(passphrase, salt, PBKDF2_ITERATIONS, KEY_BYTES * 8)
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         return SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
     }

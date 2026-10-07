@@ -4,7 +4,7 @@ import com.chattlyx.core.common.dispatchers.ChattlyxDispatcher
 import com.chattlyx.core.common.dispatchers.Dispatcher
 import com.chattlyx.core.common.error.ChattlyError
 import com.chattlyx.core.common.result.Result
-import com.chattlyx.core.crypto.BackupCipher
+import com.chattlyx.core.crypto.JcaBackupCipher
 import com.chattlyx.core.database.dao.ConversationDao
 import com.chattlyx.core.database.dao.MessageDao
 import com.chattlyx.core.database.entity.ConversationEntity
@@ -46,7 +46,9 @@ class BackupRepositoryImpl @Inject constructor(
                     .put("exportedAt", System.currentTimeMillis())
                     .put("conversations", JSONArray(conversationDao.snapshotAll().map { it.toJson() }))
                     .put("messages", JSONArray(messageDao.snapshotAll().map { it.toJson() }))
-                Result.success(BackupCipher.encrypt(payload.toString().toByteArray(Charsets.UTF_8), passphrase))
+                Result.success(
+                    JcaBackupCipher.encrypt(payload.toString().toByteArray(Charsets.UTF_8), passphrase.toCharArray()),
+                )
             } catch (e: Exception) {
                 Timber.w(e, "Backup export failed")
                 Result.failure(ChattlyError.Storage.Io(e))
@@ -56,8 +58,8 @@ class BackupRepositoryImpl @Inject constructor(
     override suspend fun restoreBackup(blob: ByteArray, passphrase: String): Result<RestoreSummary> =
         withContext(ioDispatcher) {
             val plaintext = try {
-                BackupCipher.decrypt(blob, passphrase)
-            } catch (e: BackupCipher.WrongPassphraseException) {
+                JcaBackupCipher.decrypt(blob, passphrase.toCharArray())
+            } catch (e: JcaBackupCipher.WrongPassphraseException) {
                 return@withContext Result.failure(
                     ChattlyError.Validation("passphrase", "error_backup_wrong_passphrase"),
                 )

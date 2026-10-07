@@ -11,48 +11,55 @@ class BackupCipherTest {
     @Test
     fun `roundtrip restores the original payload`() {
         val plaintext = Random(11).nextBytes(4096)
+        val passphrase = "correct horse battery staple".toCharArray()
 
-        val blob = BackupCipher.encrypt(plaintext, "correct horse battery staple")
-        val decrypted = BackupCipher.decrypt(blob, "correct horse battery staple")
+        val blob = JcaBackupCipher.encrypt(plaintext, passphrase)
+        val decrypted = JcaBackupCipher.decrypt(blob, passphrase.copyOf())
 
         assertArrayEquals(plaintext, decrypted)
     }
 
     @Test
     fun `wrong passphrase fails closed`() {
-        val blob = BackupCipher.encrypt("secret conversations".toByteArray(), "right-passphrase")
+        val blob = JcaBackupCipher.encrypt(
+            "secret conversations".toByteArray(),
+            "right-passphrase".toCharArray(),
+        )
 
-        assertThrows(BackupCipher.WrongPassphraseException::class.java) {
-            BackupCipher.decrypt(blob, "wrong-passphrase")
+        assertThrows(JcaBackupCipher.WrongPassphraseException::class.java) {
+            JcaBackupCipher.decrypt(blob, "wrong-passphrase".toCharArray())
         }
     }
 
     @Test
     fun `tampered ciphertext fails authentication`() {
-        val blob = BackupCipher.encrypt("secret conversations".toByteArray(), "some-passphrase")
+        val blob = JcaBackupCipher.encrypt(
+            "secret conversations".toByteArray(),
+            "some-passphrase".toCharArray(),
+        )
         blob[blob.size - 1] = (blob[blob.size - 1] + 1).toByte()
 
-        assertThrows(BackupCipher.WrongPassphraseException::class.java) {
-            BackupCipher.decrypt(blob, "some-passphrase")
+        assertThrows(JcaBackupCipher.WrongPassphraseException::class.java) {
+            JcaBackupCipher.decrypt(blob, "some-passphrase".toCharArray())
         }
     }
 
     @Test
     fun `missing magic is rejected before any key derivation`() {
-        val blob = BackupCipher.encrypt("payload".toByteArray(), "any-passphrase")
+        val blob = JcaBackupCipher.encrypt("payload".toByteArray(), "any-passphrase".toCharArray())
         blob[0] = 'X'.code.toByte()
 
         assertThrows(IllegalArgumentException::class.java) {
-            BackupCipher.decrypt(blob, "any-passphrase")
+            JcaBackupCipher.decrypt(blob, "any-passphrase".toCharArray())
         }
     }
 
     @Test
     fun `truncated blob is rejected`() {
-        val blob = BackupCipher.encrypt("payload".toByteArray(), "any-passphrase")
+        val blob = JcaBackupCipher.encrypt("payload".toByteArray(), "any-passphrase".toCharArray())
 
         assertThrows(IllegalArgumentException::class.java) {
-            BackupCipher.decrypt(blob.copyOfRange(0, 8), "any-passphrase")
+            JcaBackupCipher.decrypt(blob.copyOfRange(0, 8), "any-passphrase".toCharArray())
         }
     }
 }

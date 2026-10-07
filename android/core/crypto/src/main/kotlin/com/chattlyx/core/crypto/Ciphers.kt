@@ -27,7 +27,13 @@ interface SafetyNumberGenerator {
     suspend fun qrPayload(localAccountId: String, peerAccountId: String): ByteArray
 }
 
-/** E2EE backup encryption (BKP-01/02): Argon2id passphrase -> AES-256-GCM. */
+/**
+ * E2EE backup encryption (BKP-01/02): passphrase KDF -> AES-256-GCM. The
+ * contract targets Argon2id; the shipped implementation ([JcaBackupCipher])
+ * uses PBKDF2-HMAC-SHA256 at 600k iterations because the Argon2 provider is
+ * not yet in the dependency catalog (no fabricated coordinates) — the blob
+ * format carries a version tag so a KDF upgrade stays possible.
+ */
 interface BackupCipher {
     suspend fun encryptBackup(plaintext: ByteArray, passphrase: CharArray): ByteArray
     suspend fun decryptBackup(ciphertext: ByteArray, passphrase: CharArray): ByteArray

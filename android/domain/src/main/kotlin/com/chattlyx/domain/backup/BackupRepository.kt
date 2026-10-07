@@ -11,7 +11,7 @@ data class RestoreSummary(
 /**
  * BKP-01/02 local, user-controlled chat backup. Backups never touch the
  * network: the payload is the local message store, encrypted with a key
- * derived from a passphrase the user chooses (see core:crypto BackupCipher).
+ * derived from a passphrase the user chooses (see core:crypto JcaBackupCipher).
  */
 interface BackupRepository {
 
