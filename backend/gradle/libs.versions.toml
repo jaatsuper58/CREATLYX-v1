@@ -3,7 +3,7 @@
 
 [versions]
 kotlin = "2.4.20"                    # verified current stable
-ktor = "3.5.2"                       # verified latest stable (Aug 2026)
+ktor = "3.6.0"                       # verified latest stable (Aug 2026)
 kotlinxSerialization = "1.8.0"       # verify latest stable
 kotlinxCoroutines = "1.10.1"         # verify latest stable
 logback = "1.5.18"                   # verify latest stable
