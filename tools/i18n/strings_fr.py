@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Notifications",
     ("settings", "settings_notifications_summary"): "Sons, aperçus, canaux",
     ("settings", "settings_storage"): "Stockage et données",
-    ("settings", "settings_storage_summary"): "Utilisation réseau, téléchargements, mode économie de données",
+    ("settings", "settings_storage_summary"): "Sauvegardes chiffrées des discussions et restauration",
     ("settings", "settings_appearance"): "Apparence",
     ("settings", "settings_appearance_summary"): "Thème, couleurs, taille du texte",
     ("settings", "settings_help"): "Aide",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Égypte",
     ("onboarding", "country_south_africa"): "Afrique du Sud",
     ("onboarding", "country_singapore"): "Singapour",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Sauvegarde des discussions",
+    ("settings", "settings_storage_backup_summary"): "Exportez vos conversations et messages vers un fichier chiffré stocké sur cet appareil",
+    ("settings", "settings_storage_passphrase_label"): "Phrase secrète de sauvegarde",
+    ("settings", "settings_storage_passphrase_hint"): "Au moins 8 caractères. Elle sera nécessaire pour restaurer.",
+    ("settings", "settings_storage_create_backup"): "Créer une sauvegarde chiffrée",
+    ("settings", "settings_storage_restore_title"): "Restaurer depuis une sauvegarde",
+    ("settings", "settings_storage_restore_summary"): "Fusionnez une sauvegarde chiffrée créée précédemment sur cet appareil. Les messages existants ne sont jamais écrasés.",
+    ("settings", "settings_storage_restore_button"): "Choisir le fichier de sauvegarde",
+    ("settings", "settings_storage_busy"): "Traitement en cours…",
+    ("settings", "settings_storage_exported"): "Sauvegarde créée avec succès.",
+    ("settings", "settings_storage_restored"): "Restauration terminée : %1$d conversations, %2$d messages ajoutés.",
+    ("settings", "settings_storage_error_passphrase_short"): "La phrase secrète doit comporter au moins 8 caractères.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Phrase secrète incorrecte pour ce fichier.",
+    ("settings", "settings_storage_error_corrupt"): "Ce fichier n'est pas une sauvegarde ChattlyX valide.",
+    ("settings", "settings_storage_error_io"): "Impossible de lire ou d'écrire le fichier. Veuillez réessayer.",
+    ("settings", "settings_storage_dismiss"): "Fermer",
 }

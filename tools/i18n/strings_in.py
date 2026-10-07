@@ -67,7 +67,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Notifikasi",
     ("settings", "settings_notifications_summary"): "Nada, pratinjau, kanal",
     ("settings", "settings_storage"): "Penyimpanan dan data",
-    ("settings", "settings_storage_summary"): "Penggunaan jaringan, unduhan, mode hemat data",
+    ("settings", "settings_storage_summary"): "Cadangan terenkripsi dan pemulihan obrolan",
     ("settings", "settings_appearance"): "Tampilan",
     ("settings", "settings_appearance_summary"): "Tema, warna, ukuran teks",
     ("settings", "settings_help"): "Bantuan",
@@ -201,4 +201,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Mesir",
     ("onboarding", "country_south_africa"): "Afrika Selatan",
     ("onboarding", "country_singapore"): "Singapura",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Cadangan obrolan",
+    ("settings", "settings_storage_backup_summary"): "Ekspor percakapan dan pesan Anda ke file terenkripsi yang tersimpan di perangkat ini",
+    ("settings", "settings_storage_passphrase_label"): "Frasa sandi cadangan",
+    ("settings", "settings_storage_passphrase_hint"): "Minimal 8 karakter. Anda membutuhkannya untuk memulihkan.",
+    ("settings", "settings_storage_create_backup"): "Buat cadangan terenkripsi",
+    ("settings", "settings_storage_restore_title"): "Pulihkan dari cadangan",
+    ("settings", "settings_storage_restore_summary"): "Gabungkan cadangan terenkripsi yang dibuat sebelumnya ke perangkat ini. Pesan yang ada tidak pernah ditimpa.",
+    ("settings", "settings_storage_restore_button"): "Pilih file cadangan",
+    ("settings", "settings_storage_busy"): "Sedang memproses…",
+    ("settings", "settings_storage_exported"): "Cadangan berhasil dibuat.",
+    ("settings", "settings_storage_restored"): "Pemulihan selesai: %1$d percakapan, %2$d pesan ditambahkan.",
+    ("settings", "settings_storage_error_passphrase_short"): "Frasa sandi harus minimal 8 karakter.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Frasa sandi salah untuk file cadangan ini.",
+    ("settings", "settings_storage_error_corrupt"): "File itu bukan cadangan ChattlyX yang valid.",
+    ("settings", "settings_storage_error_io"): "Tidak dapat membaca atau menulis file. Silakan coba lagi.",
+    ("settings", "settings_storage_dismiss"): "Tutup",
 }

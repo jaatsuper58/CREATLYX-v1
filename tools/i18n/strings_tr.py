@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Bildirimler",
     ("settings", "settings_notifications_summary"): "Sesler, önizlemeler, kanallar",
     ("settings", "settings_storage"): "Depolama ve veri",
-    ("settings", "settings_storage_summary"): "Ağ kullanımı, indirmeler, düşük veri modu",
+    ("settings", "settings_storage_summary"): "Şifreli sohbet yedekleri ve geri yükleme",
     ("settings", "settings_appearance"): "Görünüm",
     ("settings", "settings_appearance_summary"): "Tema, renkler, metin boyutu",
     ("settings", "settings_help"): "Yardım",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Mısır",
     ("onboarding", "country_south_africa"): "Güney Afrika",
     ("onboarding", "country_singapore"): "Singapur",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Sohbet yedeği",
+    ("settings", "settings_storage_backup_summary"): "Sohbetlerinizi ve mesajlarınızı bu cihazda saklanan şifreli bir dosyaya aktarın",
+    ("settings", "settings_storage_passphrase_label"): "Yedek parolası",
+    ("settings", "settings_storage_passphrase_hint"): "En az 8 karakter. Geri yüklemek için gerekli olacak.",
+    ("settings", "settings_storage_create_backup"): "Şifreli yedek oluştur",
+    ("settings", "settings_storage_restore_title"): "Yedekten geri yükle",
+    ("settings", "settings_storage_restore_summary"): "Daha önce oluşturulmuş şifreli bir yedeği bu cihaza birleştirin. Mevcut mesajların üzerine asla yazılmaz.",
+    ("settings", "settings_storage_restore_button"): "Yedek dosyası seç",
+    ("settings", "settings_storage_busy"): "İşleniyor…",
+    ("settings", "settings_storage_exported"): "Yedek başarıyla oluşturuldu.",
+    ("settings", "settings_storage_restored"): "Geri yükleme tamamlandı: %1$d sohbet, %2$d mesaj eklendi.",
+    ("settings", "settings_storage_error_passphrase_short"): "Parola en az 8 karakter olmalı.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Bu yedek dosyası için parola yanlış.",
+    ("settings", "settings_storage_error_corrupt"): "Bu dosya geçerli bir ChattlyX yedeği değil.",
+    ("settings", "settings_storage_error_io"): "Dosya okunamadı veya yazılamadı. Lütfen tekrar deneyin.",
+    ("settings", "settings_storage_dismiss"): "Kapat",
 }

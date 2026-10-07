@@ -68,7 +68,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "सूचनाएँ",
     ("settings", "settings_notifications_summary"): "टोन, पूर्वावलोकन, चैनल",
     ("settings", "settings_storage"): "स्टोरेज और डेटा",
-    ("settings", "settings_storage_summary"): "नेटवर्क उपयोग, डाउनलोड, कम-डेटा मोड",
+    ("settings", "settings_storage_summary"): "एनक्रिप्टेड चैट बैकअप और पुनर्स्थापना",
     ("settings", "settings_appearance"): "दिखावट",
     ("settings", "settings_appearance_summary"): "थीम, रंग, टेक्स्ट का आकार",
     ("settings", "settings_help"): "सहायता",
@@ -204,4 +204,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "मिस्र",
     ("onboarding", "country_south_africa"): "दक्षिण अफ़्रीका",
     ("onboarding", "country_singapore"): "सिंगापुर",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "चैट बैकअप",
+    ("settings", "settings_storage_backup_summary"): "अपनी बातचीत और संदेशों को इसी डिवाइस पर संग्रहीत एनक्रिप्टेड फ़ाइल में निर्यात करें",
+    ("settings", "settings_storage_passphrase_label"): "बैकअप पासफ़्रेज़",
+    ("settings", "settings_storage_passphrase_hint"): "कम से कम 8 अक्षर। पुनर्स्थापना के लिए इसकी ज़रूरत होगी।",
+    ("settings", "settings_storage_create_backup"): "एनक्रिप्टेड बैकअप बनाएँ",
+    ("settings", "settings_storage_restore_title"): "बैकअप से पुनर्स्थापित करें",
+    ("settings", "settings_storage_restore_summary"): "पहले बनाई गई एनक्रिप्टेड बैकअप को इस डिवाइस में मिलाएँ। मौजूदा संदेश कभी अधिलेखित नहीं होते।",
+    ("settings", "settings_storage_restore_button"): "बैकअप फ़ाइल चुनें",
+    ("settings", "settings_storage_busy"): "कार्य जारी है…",
+    ("settings", "settings_storage_exported"): "बैकअप सफलतापूर्वक बनाया गया।",
+    ("settings", "settings_storage_restored"): "पुनर्स्थापना पूर्ण: %1$d बातचीत, %2$d संदेश जोड़े गए।",
+    ("settings", "settings_storage_error_passphrase_short"): "पासफ़्रेज़ कम से कम 8 अक्षरों का होना चाहिए।",
+    ("settings", "settings_storage_error_wrong_passphrase"): "इस बैकअप फ़ाइल के लिए पासफ़्रेज़ ग़लत है।",
+    ("settings", "settings_storage_error_corrupt"): "यह फ़ाइल मान्य ChattlyX बैकअप नहीं है।",
+    ("settings", "settings_storage_error_io"): "फ़ाइल पढ़ी या लिखी नहीं जा सकी। कृपया फिर कोशिश करें।",
+    ("settings", "settings_storage_dismiss"): "बंद करें",
 }

@@ -41,7 +41,8 @@ feature/*  ->  core/ui, core/designsystem, core/network, core/database,
   connectivity monitor, reconnect/heartbeat policies.
 - `:core:database` — Room + SQLCipher (single source of truth; FTS5; Paging later).
 - `:core:crypto` — Signal-protocol store/cipher interfaces (Section 6.6),
-  Keystore key wrapping, attachment chunk cipher. No UI dependencies.
+  Keystore key wrapping, attachment chunk cipher, passphrase-derived backup
+  cipher (BKP-01/02). No UI dependencies.
 - `:domain` — pure Kotlin models, use cases, repository interfaces.
 - `:data` — repository implementations bridging network ↔ database ↔ crypto.
 

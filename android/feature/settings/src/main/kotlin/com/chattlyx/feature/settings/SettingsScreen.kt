@@ -41,6 +41,7 @@ import com.chattlyx.core.designsystem.theme.ChattlyxTheme
 fun SettingsHomeScreen(
     onOpenAccount: () -> Unit,
     onOpenDevices: () -> Unit,
+    onOpenStorage: () -> Unit,
     onOpenDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,7 +80,7 @@ fun SettingsHomeScreen(
         SettingsRow(
             title = stringResource(R.string.settings_storage),
             summary = stringResource(R.string.settings_storage_summary),
-            onClick = {},
+            onClick = onOpenStorage,
         )
         SettingsRow(
             title = stringResource(R.string.settings_appearance),
@@ -215,6 +216,11 @@ private fun SettingsRow(
 @Composable
 private fun SettingsScreenPreview() {
     ChattlyxTheme {
-        SettingsHomeScreen(onOpenAccount = {}, onOpenDevices = {}, onOpenDeleteAccount = {})
+        SettingsHomeScreen(
+            onOpenAccount = {},
+            onOpenDevices = {},
+            onOpenStorage = {},
+            onOpenDeleteAccount = {},
+        )
     }
 }

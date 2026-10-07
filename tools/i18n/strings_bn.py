@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "বিজ্ঞপ্তি",
     ("settings", "settings_notifications_summary"): "টোন, প্রিভিউ, চ্যানেল",
     ("settings", "settings_storage"): "স্টোরেজ ও ডেটা",
-    ("settings", "settings_storage_summary"): "নেটওয়ার্ক ব্যবহার, ডাউনলোড, কম-ডেটা মোড",
+    ("settings", "settings_storage_summary"): "এনক্রিপ্ট করা চ্যাট ব্যাকআপ এবং পুনরুদ্ধার",
     ("settings", "settings_appearance"): "চেহারা",
     ("settings", "settings_appearance_summary"): "থিম, রং, লেখার আকার",
     ("settings", "settings_help"): "সহায়তা",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "মিশর",
     ("onboarding", "country_south_africa"): "দক্ষিণ আফ্রিকা",
     ("onboarding", "country_singapore"): "সিঙ্গাপুর",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "চ্যাট ব্যাকআপ",
+    ("settings", "settings_storage_backup_summary"): "আপনার কথোপকথন ও বার্তাগুলো এই ডিভাইসে সংরক্ষিত একটি এনক্রিপ্ট করা ফাইলে রপ্তানি করুন",
+    ("settings", "settings_storage_passphrase_label"): "ব্যাকআপ পাসফ্রেজ",
+    ("settings", "settings_storage_passphrase_hint"): "কমপক্ষে ৮টি অক্ষর। পুনরুদ্ধারের জন্য এটি প্রয়োজন হবে।",
+    ("settings", "settings_storage_create_backup"): "এনক্রিপ্ট করা ব্যাকআপ তৈরি করুন",
+    ("settings", "settings_storage_restore_title"): "ব্যাকআপ থেকে পুনরুদ্ধার",
+    ("settings", "settings_storage_restore_summary"): "আগে তৈরি করা একটি এনক্রিপ্ট করা ব্যাকআপ এই ডিভাইসে যুক্ত করুন। বিদ্যমান বার্তা কখনো প্রতিস্থাপিত হয় না।",
+    ("settings", "settings_storage_restore_button"): "ব্যাকআপ ফাইল বেছে নিন",
+    ("settings", "settings_storage_busy"): "কাজ চলছে…",
+    ("settings", "settings_storage_exported"): "ব্যাকআপ সফলভাবে তৈরি হয়েছে।",
+    ("settings", "settings_storage_restored"): "পুনরুদ্ধার সম্পন্ন: %1$dটি কথোপকথন, %2$dটি বার্তা যোগ হয়েছে।",
+    ("settings", "settings_storage_error_passphrase_short"): "পাসফ্রেজ কমপক্ষে ৮টি অক্ষরের হতে হবে।",
+    ("settings", "settings_storage_error_wrong_passphrase"): "এই ব্যাকআপ ফাইলের জন্য পাসফ্রেজটি ভুল।",
+    ("settings", "settings_storage_error_corrupt"): "ফাইলটি একটি বৈধ ChattlyX ব্যাকআপ নয়।",
+    ("settings", "settings_storage_error_io"): "ফাইলটি পড়া বা লেখা যায়নি। আবার চেষ্টা করুন।",
+    ("settings", "settings_storage_dismiss"): "বন্ধ করুন",
 }

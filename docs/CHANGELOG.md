@@ -5,6 +5,20 @@ All notable changes to ChattlyX are documented here, per phase of the roadmap.
 ## [Unreleased]
 
 ### Added
+- BKP-01/02: **local encrypted chat backup & restore**. Settings → Storage
+  exports the conversation/message store to a file the user picks (SAF),
+  sealed as `"CHXBAK1" | salt | nonce | AES-256-GCM` under a key derived
+  from a user passphrase (PBKDF2-HMAC-SHA256, 600k iterations). Restore
+  decrypts and merges with `INSERT OR IGNORE` — a backup can never
+  overwrite newer local state. Backups stay on-device; nothing is uploaded.
+  Localised in all 12 launch languages.
+
+### Removed
+- The five Phase-0 feature scaffolds that never received code
+  (`feature/chat`, `feature/media`, `feature/search`, `feature/backup`,
+  `feature/status`) are deleted; their functionality shipped in other
+  modules (`feature/chats` composer + AttachmentPipeline, `data`
+  SearchRepository with FTS5, settings Storage backup).
 - MED + GRP: **group media/file sending**. Group attachments upload the
   ciphertext blob ONCE, declared against the group conversation; the server
   ACL now grants meta/download to every *current* group member (membership

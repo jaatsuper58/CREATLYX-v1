@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Notificações",
     ("settings", "settings_notifications_summary"): "Sons, pré-visualizações, canais",
     ("settings", "settings_storage"): "Armazenamento e dados",
-    ("settings", "settings_storage_summary"): "Uso de rede, downloads, modo de economia de dados",
+    ("settings", "settings_storage_summary"): "Backups criptografados de conversas e restauração",
     ("settings", "settings_appearance"): "Aparência",
     ("settings", "settings_appearance_summary"): "Tema, cores, tamanho do texto",
     ("settings", "settings_help"): "Ajuda",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Egito",
     ("onboarding", "country_south_africa"): "África do Sul",
     ("onboarding", "country_singapore"): "Singapura",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Backup de conversas",
+    ("settings", "settings_storage_backup_summary"): "Exporte suas conversas e mensagens para um arquivo criptografado armazenado neste aparelho",
+    ("settings", "settings_storage_passphrase_label"): "Frase secreta do backup",
+    ("settings", "settings_storage_passphrase_hint"): "Pelo menos 8 caracteres. Você vai precisar dela para restaurar.",
+    ("settings", "settings_storage_create_backup"): "Criar backup criptografado",
+    ("settings", "settings_storage_restore_title"): "Restaurar de um backup",
+    ("settings", "settings_storage_restore_summary"): "Mescle um backup criptografado criado anteriormente neste aparelho. Mensagens existentes nunca são sobrescritas.",
+    ("settings", "settings_storage_restore_button"): "Escolher arquivo de backup",
+    ("settings", "settings_storage_busy"): "Trabalhando…",
+    ("settings", "settings_storage_exported"): "Backup criado com sucesso.",
+    ("settings", "settings_storage_restored"): "Restauração concluída: %1$d conversas, %2$d mensagens adicionadas.",
+    ("settings", "settings_storage_error_passphrase_short"): "A frase secreta deve ter pelo menos 8 caracteres.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Frase secreta incorreta para este arquivo de backup.",
+    ("settings", "settings_storage_error_corrupt"): "Esse arquivo não é um backup válido do ChattlyX.",
+    ("settings", "settings_storage_error_io"): "Não foi possível ler ou gravar o arquivo. Tente novamente.",
+    ("settings", "settings_storage_dismiss"): "Dispensar",
 }

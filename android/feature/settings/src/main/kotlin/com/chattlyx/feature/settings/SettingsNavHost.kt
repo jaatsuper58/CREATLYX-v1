@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.chattlyx.feature.settings.account.AccountScreen
 import com.chattlyx.feature.settings.danger.DeleteAccountScreen
 import com.chattlyx.feature.settings.devices.DevicesScreen
+import com.chattlyx.feature.settings.storage.StorageScreen
 
 /**
  * Settings entry point (Section 4.10). Hosts the nested graph and reports
@@ -28,6 +29,7 @@ fun SettingsScreen(
             SettingsHomeScreen(
                 onOpenAccount = { navController.navigate(AccountRoute) },
                 onOpenDevices = { navController.navigate(DevicesRoute) },
+                onOpenStorage = { navController.navigate(StorageRoute) },
                 onOpenDeleteAccount = { navController.navigate(DeleteAccountRoute) },
             )
         }
@@ -42,6 +44,10 @@ fun SettingsScreen(
 
         composable<DeleteAccountRoute> {
             DeleteAccountScreen(onAccountDeleted = onSessionEnded)
+        }
+
+        composable<StorageRoute> {
+            StorageScreen()
         }
     }
 }

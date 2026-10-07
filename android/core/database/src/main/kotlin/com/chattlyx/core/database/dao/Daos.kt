@@ -40,6 +40,10 @@ interface ConversationDao {
     @Query("SELECT * FROM conversations WHERE id = :id")
     suspend fun byIdOnce(id: String): ConversationEntity?
 
+    /** BKP-01: full table snapshot for local backup export. */
+    @Query("SELECT * FROM conversations")
+    suspend fun snapshotAll(): List<ConversationEntity>
+
     @Query("SELECT id, last_seq FROM conversations")
     suspend fun allCursors(): List<ConversationCursor>
 
@@ -48,6 +52,10 @@ interface ConversationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(conversation: ConversationEntity)
+
+    /** BKP-02: restore never overwrites newer local state. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertOrIgnore(conversation: ConversationEntity): Long
 
     /** SRCH-01: conversations whose peer name matches. */
     @Query(
@@ -96,6 +104,10 @@ interface MessageDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertOrIgnore(message: MessageEntity): Long
+
+    /** BKP-01: full table snapshot for local backup export (oldest first). */
+    @Query("SELECT * FROM messages ORDER BY sent_at ASC")
+    suspend fun snapshotAll(): List<MessageEntity>
 
     @Query("UPDATE messages SET status = :status, server_id = :serverId WHERE client_id = :clientId")
     suspend fun markAcked(clientId: String, serverId: String, status: Int)

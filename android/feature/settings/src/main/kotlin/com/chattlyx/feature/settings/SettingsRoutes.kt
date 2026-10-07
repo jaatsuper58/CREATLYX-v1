@@ -17,3 +17,7 @@ data object DevicesRoute
 /** S50: account deletion. */
 @Serializable
 data object DeleteAccountRoute
+
+/** BKP-01/02: storage — encrypted local backup export/restore. */
+@Serializable
+data object StorageRoute

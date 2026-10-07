@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "اطلاعات",
     ("settings", "settings_notifications_summary"): "ٹونز، پیش منظر، چینلز",
     ("settings", "settings_storage"): "اسٹوریج اور ڈیٹا",
-    ("settings", "settings_storage_summary"): "نیٹ ورک کا استعمال، ڈاؤن لوڈز، کم ڈیٹا موڈ",
+    ("settings", "settings_storage_summary"): "خفیہ کردہ چیٹ بیک اپ اور بحالی",
     ("settings", "settings_appearance"): "ظاہری شکل",
     ("settings", "settings_appearance_summary"): "تھیم، رنگ، متن کا سائز",
     ("settings", "settings_help"): "مدد",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "مصر",
     ("onboarding", "country_south_africa"): "جنوبی افریقہ",
     ("onboarding", "country_singapore"): "سنگاپور",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "چیٹ بیک اپ",
+    ("settings", "settings_storage_backup_summary"): "اپنی گفتگو اور پیغامات اس آلے پر محفوظ خفیہ کردہ فائل میں ایکسپورٹ کریں",
+    ("settings", "settings_storage_passphrase_label"): "بیک اپ پاس فریز",
+    ("settings", "settings_storage_passphrase_hint"): "کم از کم 8 حروف۔ بحالی کے لیے اس کی ضرورت ہوگی۔",
+    ("settings", "settings_storage_create_backup"): "خفیہ کردہ بیک اپ بنائیں",
+    ("settings", "settings_storage_restore_title"): "بیک اپ سے بحال کریں",
+    ("settings", "settings_storage_restore_summary"): "پہلے بنائی گئی خفیہ کردہ بیک اپ کو اس آلے میں ضم کریں۔ موجودہ پیغامات کبھی اوور رائٹ نہیں ہوتے۔",
+    ("settings", "settings_storage_restore_button"): "بیک اپ فائل منتخب کریں",
+    ("settings", "settings_storage_busy"): "کارروائی جاری ہے…",
+    ("settings", "settings_storage_exported"): "بیک اپ کامیابی سے بن گیا۔",
+    ("settings", "settings_storage_restored"): "بحالی مکمل: %1$d گفتگوئیں، %2$d پیغامات شامل کیے گئے۔",
+    ("settings", "settings_storage_error_passphrase_short"): "پاس فریز کم از کم 8 حروف کا ہونا چاہیے۔",
+    ("settings", "settings_storage_error_wrong_passphrase"): "اس بیک اپ فائل کے لیے پاس فریز غلط ہے۔",
+    ("settings", "settings_storage_error_corrupt"): "یہ فائل درست ChattlyX بیک اپ نہیں ہے۔",
+    ("settings", "settings_storage_error_io"): "فائل پڑھی یا لکھی نہیں جا سکی۔ براہ کرم دوبارہ کوشش کریں۔",
+    ("settings", "settings_storage_dismiss"): "بند کریں",
 }

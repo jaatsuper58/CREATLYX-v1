@@ -12,7 +12,26 @@
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_summary">Tones, previews, channels</string>
     <string name="settings_storage">Storage and data</string>
-    <string name="settings_storage_summary">Network usage, downloads, low-data mode</string>
+    <string name="settings_storage_summary">Encrypted chat backups and restore</string>
+
+    <!-- BKP-01/02 local encrypted backup -->
+    <string name="settings_storage_backup_title">Chat backup</string>
+    <string name="settings_storage_backup_summary">Export your conversations and messages to an encrypted file stored on this device</string>
+    <string name="settings_storage_passphrase_label">Backup passphrase</string>
+    <string name="settings_storage_passphrase_hint">At least 8 characters. You will need it to restore.</string>
+    <string name="settings_storage_create_backup">Create encrypted backup</string>
+    <string name="settings_storage_restore_title">Restore from backup</string>
+    <string name="settings_storage_restore_summary">Merge a previously created encrypted backup into this device. Existing messages are never overwritten.</string>
+    <string name="settings_storage_restore_button">Choose backup file</string>
+    <string name="settings_storage_busy">Working…</string>
+    <string name="settings_storage_exported">Backup created successfully.</string>
+    <string name="settings_storage_restored">Restore complete: %1$d conversations, %2$d messages added.</string>
+    <string name="settings_storage_error_passphrase_short">The passphrase must be at least 8 characters.</string>
+    <string name="settings_storage_error_wrong_passphrase">Wrong passphrase for this backup file.</string>
+    <string name="settings_storage_error_corrupt">That file is not a valid ChattlyX backup.</string>
+    <string name="settings_storage_error_io">Could not read or write the file. Please try again.</string>
+    <string name="settings_storage_dismiss">Dismiss</string>
+
     <string name="settings_appearance">Appearance</string>
     <string name="settings_appearance_summary">Theme, colours, text size</string>
     <string name="settings_help">Help</string>

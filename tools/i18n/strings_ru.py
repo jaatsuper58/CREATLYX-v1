@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Уведомления",
     ("settings", "settings_notifications_summary"): "Звуки, предпросмотр, каналы",
     ("settings", "settings_storage"): "Хранилище и данные",
-    ("settings", "settings_storage_summary"): "Использование сети, загрузки, режим экономии трафика",
+    ("settings", "settings_storage_summary"): "Зашифрованные резервные копии чатов и восстановление",
     ("settings", "settings_appearance"): "Оформление",
     ("settings", "settings_appearance_summary"): "Тема, цвета, размер текста",
     ("settings", "settings_help"): "Помощь",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Египет",
     ("onboarding", "country_south_africa"): "Южная Африка",
     ("onboarding", "country_singapore"): "Сингапур",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Резервная копия чатов",
+    ("settings", "settings_storage_backup_summary"): "Экспортируйте беседы и сообщения в зашифрованный файл на этом устройстве",
+    ("settings", "settings_storage_passphrase_label"): "Парольная фраза резервной копии",
+    ("settings", "settings_storage_passphrase_hint"): "Не менее 8 символов. Она понадобится для восстановления.",
+    ("settings", "settings_storage_create_backup"): "Создать зашифрованную копию",
+    ("settings", "settings_storage_restore_title"): "Восстановить из резервной копии",
+    ("settings", "settings_storage_restore_summary"): "Объедините ранее созданную зашифрованную копию с этим устройством. Существующие сообщения никогда не перезаписываются.",
+    ("settings", "settings_storage_restore_button"): "Выбрать файл резервной копии",
+    ("settings", "settings_storage_busy"): "Обработка…",
+    ("settings", "settings_storage_exported"): "Резервная копия успешно создана.",
+    ("settings", "settings_storage_restored"): "Восстановление завершено: добавлено бесед — %1$d, сообщений — %2$d.",
+    ("settings", "settings_storage_error_passphrase_short"): "Парольная фраза должна содержать не менее 8 символов.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Неверная парольная фраза для этого файла.",
+    ("settings", "settings_storage_error_corrupt"): "Этот файл не является допустимой резервной копией ChattlyX.",
+    ("settings", "settings_storage_error_io"): "Не удалось прочитать или записать файл. Повторите попытку.",
+    ("settings", "settings_storage_dismiss"): "Закрыть",
 }

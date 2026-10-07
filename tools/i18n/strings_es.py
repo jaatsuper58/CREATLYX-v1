@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "Notificaciones",
     ("settings", "settings_notifications_summary"): "Tonos, vistas previas, canales",
     ("settings", "settings_storage"): "Almacenamiento y datos",
-    ("settings", "settings_storage_summary"): "Uso de red, descargas, modo de bajo consumo de datos",
+    ("settings", "settings_storage_summary"): "Copias de seguridad cifradas y restauración",
     ("settings", "settings_appearance"): "Apariencia",
     ("settings", "settings_appearance_summary"): "Tema, colores, tamaño del texto",
     ("settings", "settings_help"): "Ayuda",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "Egipto",
     ("onboarding", "country_south_africa"): "Sudáfrica",
     ("onboarding", "country_singapore"): "Singapur",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "Copia de seguridad del chat",
+    ("settings", "settings_storage_backup_summary"): "Exporta tus conversaciones y mensajes a un archivo cifrado guardado en este dispositivo",
+    ("settings", "settings_storage_passphrase_label"): "Frase de contraseña de la copia",
+    ("settings", "settings_storage_passphrase_hint"): "Al menos 8 caracteres. La necesitarás para restaurar.",
+    ("settings", "settings_storage_create_backup"): "Crear copia cifrada",
+    ("settings", "settings_storage_restore_title"): "Restaurar desde una copia",
+    ("settings", "settings_storage_restore_summary"): "Fusiona una copia cifrada creada anteriormente en este dispositivo. Los mensajes existentes nunca se sobrescriben.",
+    ("settings", "settings_storage_restore_button"): "Elegir archivo de copia",
+    ("settings", "settings_storage_busy"): "Trabajando…",
+    ("settings", "settings_storage_exported"): "Copia de seguridad creada correctamente.",
+    ("settings", "settings_storage_restored"): "Restauración completada: %1$d conversaciones y %2$d mensajes añadidos.",
+    ("settings", "settings_storage_error_passphrase_short"): "La frase de contraseña debe tener al menos 8 caracteres.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "Frase de contraseña incorrecta para este archivo.",
+    ("settings", "settings_storage_error_corrupt"): "Ese archivo no es una copia de seguridad válida de ChattlyX.",
+    ("settings", "settings_storage_error_io"): "No se pudo leer o escribir el archivo. Inténtalo de nuevo.",
+    ("settings", "settings_storage_dismiss"): "Descartar",
 }

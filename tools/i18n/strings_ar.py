@@ -63,7 +63,7 @@ STRINGS = {
     ("settings", "settings_notifications"): "الإشعارات",
     ("settings", "settings_notifications_summary"): "النغمات، المعاينات، القنوات",
     ("settings", "settings_storage"): "التخزين والبيانات",
-    ("settings", "settings_storage_summary"): "استخدام الشبكة، التنزيلات، وضع توفير البيانات",
+    ("settings", "settings_storage_summary"): "النسخ الاحتياطية المشفّرة للدردشات والاستعادة",
     ("settings", "settings_appearance"): "المظهر",
     ("settings", "settings_appearance_summary"): "السمة، الألوان، حجم النص",
     ("settings", "settings_help"): "المساعدة",
@@ -197,4 +197,23 @@ STRINGS = {
     ("onboarding", "country_egypt"): "مصر",
     ("onboarding", "country_south_africa"): "جنوب أفريقيا",
     ("onboarding", "country_singapore"): "سنغافورة",
+
+    # BKP-01/02 storage backup strings
+
+    ("settings", "settings_storage_backup_title"): "النسخ الاحتياطي للدردشة",
+    ("settings", "settings_storage_backup_summary"): "صدّر محادثاتك ورسائلك إلى ملف مشفّر يُخزَّن على هذا الجهاز",
+    ("settings", "settings_storage_passphrase_label"): "عبارة مرور النسخة الاحتياطية",
+    ("settings", "settings_storage_passphrase_hint"): "8 أحرف على الأقل. ستحتاجها عند الاستعادة.",
+    ("settings", "settings_storage_create_backup"): "إنشاء نسخة احتياطية مشفّرة",
+    ("settings", "settings_storage_restore_title"): "الاستعادة من نسخة احتياطية",
+    ("settings", "settings_storage_restore_summary"): "ادمج نسخة احتياطية مشفّرة أُنشئت سابقًا في هذا الجهاز. لا تُستبدل الرسائل الحالية أبدًا.",
+    ("settings", "settings_storage_restore_button"): "اختيار ملف النسخة الاحتياطية",
+    ("settings", "settings_storage_busy"): "جارٍ العمل…",
+    ("settings", "settings_storage_exported"): "تم إنشاء النسخة الاحتياطية بنجاح.",
+    ("settings", "settings_storage_restored"): "اكتملت الاستعادة: أُضيفت %1$d محادثة و%2$d رسالة.",
+    ("settings", "settings_storage_error_passphrase_short"): "يجب أن تتكون عبارة المرور من 8 أحرف على الأقل.",
+    ("settings", "settings_storage_error_wrong_passphrase"): "عبارة المرور غير صحيحة لهذا الملف.",
+    ("settings", "settings_storage_error_corrupt"): "هذا الملف ليس نسخة ChattlyX احتياطية صالحة.",
+    ("settings", "settings_storage_error_io"): "تعذّرت قراءة الملف أو الكتابة عليه. حاول مرة أخرى.",
+    ("settings", "settings_storage_dismiss"): "إغلاق",
 }

@@ -133,6 +133,17 @@ Please report suspected vulnerabilities privately:
      enforcement policy (warn vs. block on failed `MEETS_DEVICE_INTEGRITY`)
      are configured when the GCP project exists; until then the client
      provider is the integration surface and tokens are not yet consumed.
+3. **Local encrypted chat backup (BKP-01/02).** Settings → Storage exports
+   conversations and messages to a user-chosen file via SAF. The blob format
+   is `"CHXBAK1" | salt(16) | nonce(12) | AES-256-GCM ciphertext+tag`, with
+   the key derived from a user passphrase (≥8 chars) using
+   PBKDF2-HMAC-SHA256 at 600k iterations — JCA primitives only, no custom
+   crypto. Backups never traverse ChattlyX servers and never embed Keystore
+   material (the Keystore key is not exportable by design, which is why a
+   passphrase-derived key is used instead of a SQLCipher file copy). Wrong
+   passphrase or tampered ciphertext fails closed on GCM tag verification;
+   restore is `INSERT OR IGNORE`, so a backup can never overwrite newer
+   local state.
 
 ## Pre-launch gates
 

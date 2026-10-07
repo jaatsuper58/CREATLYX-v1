@@ -37,15 +37,14 @@ include(":domain")
 include(":data")
 include(":feature:onboarding")
 include(":feature:chats")
-include(":feature:chat")
 include(":feature:groups")
 include(":feature:contacts")
 include(":feature:calls")
-include(":feature:media")
-include(":feature:search")
 include(":feature:settings")
-include(":feature:backup")
-include(":feature:status")
+// feature/chat, feature/media, feature/search, feature/backup and
+// feature/status were Phase-0 scaffolds whose functionality shipped inside
+// other modules (chats composer/AttachmentPipeline, data SearchRepository,
+// settings Storage backup); the empty shells were removed in the BKP round.
 // Macrobenchmark needs a physical device/emulator to be meaningful, so CI
 // skips it (it runs in the Phase 7 device lab). Build it locally with
 // -PchattlyxBenchmark=true.

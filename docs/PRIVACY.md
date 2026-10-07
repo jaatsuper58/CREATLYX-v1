@@ -19,6 +19,10 @@ Message/media/call content (E2EE — server holds ciphertext only), contact name
 advertising identifier, location (unless the user shares it inside an E2EE chat),
 browsing/usage graphs.
 
+Optional local chat backups (BKP-01/02) are encrypted with a key derived from
+the user's own passphrase and written only to a location the user picks; they
+are never uploaded to or readable by ChattlyX.
+
 ## No third-party advertising or analytics SDKs.
 
 ## User rights
