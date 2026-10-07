@@ -5,7 +5,7 @@
 
 [versions]
 # --- Toolchain (verified 2026-10-04) ---
-agp = "9.3.0"                    # verify latest stable
+agp = "9.4.1"                    # verify latest stable
 kotlin = "2.4.20"                # verified current stable
 ksp = "2.3.12"                   # latest KSP, pairs with Kotlin 2.4.x (kotlinlang quickstart)
 gradleKtlint = "14.2.0"          # verified latest ktlint-gradle plugin
