@@ -41,7 +41,12 @@ import com.chattlyx.core.designsystem.theme.ChattlyxTheme
 fun SettingsHomeScreen(
     onOpenAccount: () -> Unit,
     onOpenDevices: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenStorage: () -> Unit,
+    onOpenAppearance: () -> Unit,
+    onOpenHelp: () -> Unit,
+    onOpenAbout: () -> Unit,
     onOpenDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -69,13 +74,13 @@ fun SettingsHomeScreen(
         SettingsRow(
             title = stringResource(R.string.settings_privacy),
             summary = stringResource(R.string.settings_privacy_summary),
-            onClick = {},
+            onClick = onOpenPrivacy,
         )
         AppLockRow()
         SettingsRow(
             title = stringResource(R.string.settings_notifications),
             summary = stringResource(R.string.settings_notifications_summary),
-            onClick = {},
+            onClick = onOpenNotifications,
         )
         SettingsRow(
             title = stringResource(R.string.settings_storage),
@@ -85,17 +90,17 @@ fun SettingsHomeScreen(
         SettingsRow(
             title = stringResource(R.string.settings_appearance),
             summary = stringResource(R.string.settings_appearance_summary),
-            onClick = {},
+            onClick = onOpenAppearance,
         )
         SettingsRow(
             title = stringResource(R.string.settings_help),
             summary = stringResource(R.string.settings_help_summary),
-            onClick = {},
+            onClick = onOpenHelp,
         )
         SettingsRow(
             title = stringResource(R.string.settings_about),
             summary = stringResource(R.string.settings_about_summary),
-            onClick = {},
+            onClick = onOpenAbout,
         )
         SettingsRow(
             title = stringResource(R.string.settings_delete_title),
@@ -219,7 +224,12 @@ private fun SettingsScreenPreview() {
         SettingsHomeScreen(
             onOpenAccount = {},
             onOpenDevices = {},
+            onOpenPrivacy = {},
+            onOpenNotifications = {},
             onOpenStorage = {},
+            onOpenAppearance = {},
+            onOpenHelp = {},
+            onOpenAbout = {},
             onOpenDeleteAccount = {},
         )
     }

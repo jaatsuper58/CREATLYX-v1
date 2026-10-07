@@ -34,6 +34,53 @@
 
     <string name="settings_appearance">Appearance</string>
     <string name="settings_appearance_summary">Theme, colours, text size</string>
+
+    <!-- SET appearance screen -->
+    <string name="settings_appearance_theme_title">Theme</string>
+    <string name="settings_appearance_theme_system">Follow system</string>
+    <string name="settings_appearance_theme_light">Light</string>
+    <string name="settings_appearance_theme_dark">Dark</string>
+    <string name="settings_appearance_theme_amoled">Dark (AMOLED)</string>
+    <string name="settings_appearance_dynamic_color">Dynamic colours</string>
+    <string name="settings_appearance_dynamic_color_summary">Take accent colours from your wallpaper (Android 12+)</string>
+    <string name="settings_appearance_reduce_motion">Reduce motion</string>
+    <string name="settings_appearance_reduce_motion_summary">Limit animations and transitions</string>
+
+    <!-- SET privacy screen -->
+    <string name="settings_privacy_e2ee_title">End-to-end encryption</string>
+    <string name="settings_privacy_e2ee_body">Messages, media and calls are encrypted on your device. Only you and the person you are talking to can read them.</string>
+    <string name="settings_privacy_minimal_title">Minimal data collection</string>
+    <string name="settings_privacy_minimal_body">We process only what delivers your messages: your phone number, the profile details you add, and transient routing data. No ads, no third-party analytics.</string>
+    <string name="settings_privacy_backups_title">Backups stay yours</string>
+    <string name="settings_privacy_backups_body">Local backups are encrypted with your own passphrase and never leave your device through ChattlyX.</string>
+    <string name="settings_privacy_lock_title">App lock</string>
+    <string name="settings_privacy_lock_body">Protect the app with biometrics or your device credential when you step away. Turn it on from the Settings home screen.</string>
+
+    <!-- NOT notifications screen -->
+    <string name="settings_notifications_intro">ChattlyX uses Android notification channels, so you can fine-tune what sounds and what stays silent from the system settings.</string>
+    <string name="settings_notifications_channels_title">Channels</string>
+    <string name="settings_notifications_empty">No channels yet. They are created when your first call or message notification arrives.</string>
+    <string name="settings_notifications_system">Open system notification settings</string>
+    <string name="settings_notifications_importance_high">High — sound and pop on screen</string>
+    <string name="settings_notifications_importance_default">Default</string>
+    <string name="settings_notifications_importance_low">Low — silent</string>
+    <string name="settings_notifications_importance_silent">Silent — minimised</string>
+    <string name="settings_notifications_importance_off">Off</string>
+
+    <!-- SET help screen -->
+    <string name="settings_help_faq_title">Frequently asked questions</string>
+    <string name="settings_help_faq1_q">Are my conversations really end-to-end encrypted?</string>
+    <string name="settings_help_faq1_a">Yes. Messages and media are encrypted on your device and can only be decrypted on the recipient device. Servers only ever see ciphertext.</string>
+    <string name="settings_help_faq2_q">What happens to my backups?</string>
+    <string name="settings_help_faq2_a">Backups are encrypted with your passphrase and stored only where you choose them. ChattlyX never uploads them.</string>
+    <string name="settings_help_faq3_q">How do I lock the app?</string>
+    <string name="settings_help_faq3_a">Turn on App lock on the Settings home screen and confirm with your fingerprint or device credential.</string>
+    <string name="settings_help_support">Need more help? Check the About screen for your app version when contacting support.</string>
+
+    <!-- SET about screen -->
+    <string name="settings_about_version">Version %1$s (%2$d)</string>
+    <string name="settings_about_tagline">Chat freely. Stay private.</string>
+    <string name="settings_about_privacy_note">ChattlyX is privacy-first: end-to-end encryption by default, minimal data collection, and no advertising or tracking. See the Privacy screen for the full data inventory.</string>
     <string name="settings_help">Help</string>
     <string name="settings_help_summary">FAQ, contact us, terms and privacy</string>
     <string name="settings_about">About</string>

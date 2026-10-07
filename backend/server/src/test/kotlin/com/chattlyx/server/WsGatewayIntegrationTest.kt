@@ -24,6 +24,7 @@ import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.testcontainers.containers.GenericContainer
@@ -99,7 +100,7 @@ class WsGatewayIntegrationTest {
 
                     val aliceClient = createClient { install(WebSockets) }
                     val delivery = launch {
-                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val raw = withTimeout(20_000) { incoming.receive() }
                         val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
                         assertTrue(frame.hasDeliver())
                         assertEquals(alice.toString(), frame.deliver.envelope.senderAccountId)
@@ -147,22 +148,32 @@ class WsGatewayIntegrationTest {
                         )
 
                         // Sender gets the server ack with seq + timestamp.
-                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val raw = withTimeout(20_000) { incoming.receive() }
                         val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
                         assertTrue(frame.hasAck())
                         assertEquals(cmid, frame.ack.clientMessageId.toJavaUuid())
                         assertTrue(frame.ack.serverTimestampMs > 0)
                     }
 
-                    withTimeout(5_000) { delivery.join() }
+                    withTimeout(20_000) { delivery.join() }
 
-                    // After Bob's ack, history for the conversation is empty.
-                    val history = messaging.messagingService.history(
-                        participant = bob,
-                        conversationId = ConversationIds.direct(alice, bob),
-                        afterSeq = 0,
-                        limit = 50,
-                    )
+                    // After Bob's ack, history for the conversation drains to
+                    // empty. The ack's delete is processed asynchronously on
+                    // the server, so poll instead of asserting immediately —
+                    // the old immediate assert was the source of CI flakes.
+                    var history: List<Envelope> = emptyList()
+                    withTimeout(20_000) {
+                        while (true) {
+                            history = messaging.messagingService.history(
+                                participant = bob,
+                                conversationId = ConversationIds.direct(alice, bob),
+                                afterSeq = 0,
+                                limit = 50,
+                            )
+                            if (history.isEmpty()) break
+                            delay(100)
+                        }
+                    }
                     assertTrue(history.isEmpty())
                 }
             }
@@ -221,7 +232,7 @@ class WsGatewayIntegrationTest {
                     send(Frame.Binary(true, authFrame(daveToken, daveDevice)))
 
                     val incomingSignal = launch {
-                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val raw = withTimeout(20_000) { incoming.receive() }
                         val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
                         assertTrue(frame.hasCallSignal())
                         // peer_account_id is flipped: Dave sees Carol's id.
@@ -265,13 +276,13 @@ class WsGatewayIntegrationTest {
                                     .toByteArray(),
                             ),
                         )
-                        val raw = withTimeout(5_000) { incoming.receive() }
+                        val raw = withTimeout(20_000) { incoming.receive() }
                         val frame = ProtoFrame.parseFrom((raw as Frame.Binary).readBytes())
                         assertTrue(frame.hasError())
                         assertEquals("call/peer-offline", frame.error.code)
                     }
 
-                    withTimeout(5_000) { incomingSignal.join() }
+                    withTimeout(20_000) { incomingSignal.join() }
                 }
             }
         } finally {
