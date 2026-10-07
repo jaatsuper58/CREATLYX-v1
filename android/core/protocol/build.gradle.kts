@@ -24,7 +24,7 @@ protoSources.srcDir("../../../proto")
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.29.3" // verify latest stable
+        artifact = "com.google.protobuf:protoc:4.36.2" // verify latest stable
     }
     generateProtoTasks {
         all().forEach { task ->
