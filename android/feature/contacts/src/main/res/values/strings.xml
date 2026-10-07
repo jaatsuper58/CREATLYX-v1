@@ -1,0 +1,10 @@
+<resources>
+    <string name="contacts_title">Contacts</string>
+    <string name="contacts_empty_title">Find people on ChattlyX</string>
+    <string name="contacts_empty_message">Sync your contacts to see who is already here. Numbers are hashed on your device before anything is checked.</string>
+    <string name="contacts_empty_action">Sync contacts</string>
+    <string name="contacts_resync">Refresh</string>
+    <string name="contacts_retry">Try again</string>
+    <string name="contacts_sync_error">Contact sync failed. Check your connection and try again.</string>
+    <string name="contacts_permission_rationale">Contacts access lets ChattlyX find people you know. Numbers never leave your device unhashed.</string>
+</resources>

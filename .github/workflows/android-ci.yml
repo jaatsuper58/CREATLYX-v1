@@ -1,0 +1,101 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+
+permissions:
+  contents: write   # needed to post the build log excerpt as a commit comment
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    defaults: { run: { working-directory: android } }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+
+      - name: Install platform & build tools
+        # ubuntu runners ship cmdline-tools under ANDROID_HOME; the old
+        # android-actions/setup-android@v3 broke on the Ubuntu 26 image.
+        run: |
+          SDKMANAGER="${ANDROID_HOME:+$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager}"
+          [ -x "$SDKMANAGER" ] || SDKMANAGER="sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: "9.7.0" }
+
+      - name: Static analysis (ktlint + detekt)
+        # Deferred: detekt 1.23.8 and ktlint-gradle 14.2.0 are not AGP 9-safe
+        # yet (see android/build.gradle.kts tech-debt note). Runs in Phase 7.
+        run: echo "static analysis deferred until detekt/ktlint support AGP 9"
+
+      - name: Build, unit & screenshot tests
+        # Roborazzi records goldens until the first set is committed (see CONTRIBUTING.md).
+        run: |
+          set -o pipefail
+          gradle build --continue -Proborazzi.test.record=true --stacktrace 2>&1 | tee build-output.log
+
+      - name: Publish build log excerpt
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Android CI failure @ $(git rev-parse --short HEAD)"
+            echo '```'
+            grep -E "^e: |error: |FAILURE: |What went wrong|^> |Could not |Caused by: [a-z]|Kotlin compiler:|Location:" build-output.log | head -160 || true
+            echo "~~~ what went wrong (all) ~~~"
+            grep -A 6 "What went wrong:" build-output.log | head -150 || true
+            echo "~~~ failures ~~~"
+            grep -E "FAILED$|Test.*FAILED|> Task .* FAILED" build-output.log | head -40 || true
+            echo "~~~ test failure details ~~~"
+            grep -A 14 "FAILED$" build-output.log | head -300 || true
+            echo "~~~ r8 errors ~~~"
+            grep -iE "^ERROR|Missing class|R8 failed|Compilation failed|cannot|Invalid" build-output.log | head -40 || true
+            grep -B 2 -A 12 "R8Task" build-output.log | head -50 || true
+            echo "~~~ javac/hilt errors ~~~"
+            grep -E "error: |\[Hilt\]|cannot find symbol" build-output.log | head -40 || true
+            echo "~~~ ksp messages ~~~"
+            grep -iE "\[ksp\]|ksp: " build-output.log | head -30 || true
+            echo "~~~ exception context ~~~"
+            sed -n '/^* What went wrong:/,/^* Try:/p' build-output.log | head -25 || true
+            echo "~~~ cause frames ~~~"
+            sed -n '/NoClassDefFoundError/,/ClassNotFoundException/p' build-output.log | head -45 || true
+            echo "~~~ tail ~~~"
+            tail -c 1500 build-output.log 2>/dev/null || echo "(no log captured)"
+            echo '```'
+          } > failure-comment.md
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/commits/$(git rev-parse HEAD)/comments" -F body=@failure-comment.md || true
+          # Fallback channel: workflow annotations (readable without log-blob access).
+          grep -E "^e: |What went wrong:|FAILURE: Build failed|> Task .* FAILED" build-output.log | head -12 | while IFS= read -r line; do
+            echo "::error title=${title} build error::${line}"
+          done
+
+      - name: Upload screenshot goldens (commit these under core/designsystem/src/test/screenshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-goldens
+          path: android/core/designsystem/src/test/screenshots/**
+          if-no-files-found: ignore
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-reports
+          path: |
+            android/**/build/reports/**
+            android/**/build/test-results/**
+          if-no-files-found: ignore

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MED-03: decrypted attachments live in filesDir/attachments and are the
+     only directory ever shared with external viewers. -->
+<paths>
+    <files-path name="attachments" path="attachments/" />
+</paths>

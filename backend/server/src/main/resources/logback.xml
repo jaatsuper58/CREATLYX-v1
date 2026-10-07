@@ -1,0 +1,15 @@
+<configuration>
+    <!-- Structured console logs. Discipline (master spec Section 9.3): no
+         message content, keys, tokens or full phone numbers may be logged. -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <logger name="io.netty" level="WARN" />
+</configuration>

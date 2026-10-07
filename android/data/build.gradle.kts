@@ -1,0 +1,26 @@
+plugins {
+    id("chattlyx.android.library")
+    id("chattlyx.android.hilt")
+    id("chattlyx.android.test")
+}
+
+android {
+    namespace = "com.chattlyx.data"
+}
+
+dependencies {
+    implementation(libs.androidx.paging.common)
+    implementation(projects.core.common)
+    implementation(projects.core.network)
+    implementation(projects.core.database)
+    implementation(projects.core.datastore)
+    implementation(projects.core.crypto)
+    implementation(projects.core.push)
+    implementation(projects.core.protocol)
+    implementation(projects.core.rtc)
+    implementation(projects.domain)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.timber)
+}

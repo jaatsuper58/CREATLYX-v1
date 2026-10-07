@@ -1,0 +1,985 @@
+openapi: 3.1.0
+info:
+  title: ChattlyX API
+  version: 0.5.0-phase6
+  summary: |
+    Control-plane REST API for ChattlyX. Content is zero-knowledge: the server
+    stores only ciphertext envelopes (deleted on ack, TTL 30 days). Realtime
+    traffic uses the Protobuf WebSocket contract in /proto. This document is
+    the source of truth for REST; changes are additive and backward-compatible.
+  license:
+    name: Pending (ADR-0002)
+servers:
+  - url: https://api.chattlyx.com/v1
+    description: Production (placeholder host)
+  - url: http://localhost:8080/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+    description: OTP sign-up, tokens, device sessions (AUTH-*)
+  - name: config
+    description: Client configuration and feature flags
+  - name: profile
+    description: Profile read/write (AUTH-04)
+  - name: devices
+    description: Linked device management (AUTH-07)
+  - name: keys
+    description: Public key distribution (AUTH-06)
+  - name: contacts
+    description: Contact discovery (CON-03)
+  - name: messaging
+    description: Encrypted message history sync (MSG-06)
+  - name: presence
+    description: Online/last-seen state with block-aware hiding (STS)
+  - name: blocks
+    description: Per-account block list (SAF-01/02)
+
+paths:
+  /config:
+    get:
+      tags: [config]
+      operationId: getConfig
+      summary: Limits, feature flags, minimum supported version (force-update)
+      security: []
+      responses:
+        "200":
+          description: Current server configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerConfig"
+
+  /auth/otp/request:
+    post:
+      tags: [auth]
+      operationId: requestOtp
+      summary: Request a one-time password (AUTH-02/03)
+      description: |
+        Rate-limited per number/IP/device with growing back-off. Dev
+        environments may echo a magic code; production never does.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequest"
+      responses:
+        "200":
+          description: OTP dispatched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpRequestResult"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/otp/verify:
+    post:
+      tags: [auth]
+      operationId: verifyOtp
+      summary: Verify the OTP and register the device (AUTH-03)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerify"
+      responses:
+        "200":
+          description: Account authenticated; token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/token/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshToken
+      summary: Rotate the refresh token, mint a new access token (AUTH-07)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "200":
+          description: New token pair (old refresh token invalidated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /profile:
+    get:
+      tags: [profile]
+      operationId: getOwnProfile
+      summary: Read own profile
+      responses:
+        "200":
+          description: Own profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    put:
+      tags: [profile]
+      operationId: updateOwnProfile
+      summary: Update display name/about/username (AUTH-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Profile"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          $ref: "#/components/responses/Validation"
+
+  /profile/avatar:
+    post:
+      tags: [profile]
+      operationId: uploadAvatar
+      summary: Upload encrypted avatar ciphertext (AUTH-04)
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary, maxLength: 400000 }
+      responses:
+        "201":
+          description: Avatar stored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blobId]
+                properties:
+                  blobId: { type: string, format: uuid }
+        "400":
+          $ref: "#/components/responses/Validation"
+
+  /profile/avatar/{blobId}:
+    get:
+      tags: [profile]
+      operationId: downloadAvatar
+      summary: Download avatar ciphertext (keys never touch the server)
+      security: []
+      parameters:
+        - name: blobId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Avatar ciphertext
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "404":
+          description: Blob not found
+
+  /devices:
+    get:
+      tags: [devices]
+      operationId: listDevices
+      summary: List active devices on the account (AUTH-07)
+      responses:
+        "200":
+          description: Devices, newest first; `current` marks the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/Device" }
+
+  /devices/{deviceId}:
+    delete:
+      tags: [devices]
+      operationId: revokeDevice
+      summary: Revoke a linked device; its tokens die immediately (AUTH-07)
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "204": { description: Device revoked }
+        "404": { description: Device not found }
+
+  /account:
+    delete:
+      tags: [auth]
+      operationId: deleteAccount
+      summary: Soft-delete the account; purge within 30 days (AUTH-10)
+      responses:
+        "204": { description: Account scheduled for deletion }
+
+  /devices/keys:
+    put:
+      tags: [keys]
+      operationId: uploadKeys
+      summary: Upload this device's public key bundle (AUTH-06)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadKeys" }
+      responses:
+        "200":
+          description: Stored counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCount" }
+
+  /keys/count:
+    get:
+      tags: [keys]
+      operationId: getKeyCount
+      summary: Count remaining one-time/Kyber prekeys (AUTH-06)
+      responses:
+        "200":
+          description: Counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCount" }
+
+  /keys/{accountId}/{deviceId}:
+    get:
+      tags: [keys]
+      operationId: getKeyBundle
+      summary: Fetch a peer bundle; consumes one OTP/Kyber prekey (AUTH-06)
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Public bundle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyBundle" }
+        "404":
+          description: No bundle registered for that device
+
+  /keys/{accountId}:
+    get:
+      tags: [keys]
+      operationId: getKeyBundlesForAccount
+      summary: List bundles for every active device of an account (Phase 2)
+      description: |
+        Directory lookup used by the 1:1 pipeline before the first send.
+        One one-time/Kyber prekey is consumed per returned bundle.
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Bundles for all active devices (may be empty)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyBundleList" }
+
+  /contacts/discovery:
+    post:
+      tags: [contacts]
+      operationId: discoverContacts
+      summary: Discover which hashed numbers are on ChattlyX (CON-03)
+      description: |
+        The client sends up to 1000 unpeppered SHA-256 hex digests of E.164
+        numbers. The server answers with registered public profiles only;
+        the echoed hash is never returned, so matches cannot be attributed
+        back to a specific number. See SECURITY.md for the privacy trade-off.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryRequest" }
+      responses:
+        "200":
+          description: Registered accounts whose stored hash is in the batch
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryResponse" }
+        "400":
+          description: More than 1000 hashes or malformed digest
+
+  /devices/push:
+    put:
+      tags: [devices]
+      operationId: registerPushToken
+      summary: Register or rotate the FCM data-only push token (NOT-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PushToken" }
+      responses:
+        "204":
+          description: Token stored for this device
+
+  /messages/{conversationId}:
+    get:
+      tags: [messaging]
+      operationId: getConversationHistory
+      summary: Undelivered/undrained envelopes for a conversation (MSG-06)
+      description: |
+        History sync after reconnect or fresh install. Envelopes are opaque
+        ciphertext; `complete=false` means more pages exist beyond `limit`.
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: afterSeq
+          in: query
+          required: false
+          schema: { type: integer, format: int64, default: 0 }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 100, maximum: 500 }
+      responses:
+        "200":
+          description: Envelope page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HistoryResponse" }
+
+  /attachments:
+    post:
+      tags: [attachments]
+      operationId: declareAttachment
+      summary: Declare an attachment before uploading ciphertext (MED-01/02/03)
+      description: |
+        Clients encrypt the attachment locally and upload the ciphertext to
+        `uploadUrl`. The SHA-256 (over the ciphertext) and the decryption key
+        travel only inside the E2EE AttachmentContent descriptor, so the server
+        stores opaque bytes. Attachment ids are capability tokens shared only
+        with the recipient via an encrypted message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeclareAttachment" }
+      responses:
+        "201":
+          description: Attachment declared; upload the ciphertext to uploadUrl
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeclaredAttachment" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /attachments/{attachmentId}/data:
+    put:
+      tags: [attachments]
+      operationId: uploadAttachmentData
+      summary: Upload the attachment ciphertext (sender only, pending only)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "204": { description: Ciphertext stored; attachment is now ready }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+    get:
+      tags: [attachments]
+      operationId: downloadAttachmentData
+      summary: Download the attachment ciphertext (sender or recipient)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Ciphertext bytes; verify SHA-256 then decrypt locally (MED-04)
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /attachments/{attachmentId}:
+    get:
+      tags: [attachments]
+      operationId: getAttachmentMeta
+      summary: Attachment metadata (sender or recipient)
+      parameters:
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Metadata; downloadUrl present only when status=ready
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttachmentMeta" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /groups:
+    post:
+      tags: [groups]
+      operationId: createGroup
+      summary: GRP-01 create a group (creator becomes owner)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateGroup" }
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    get:
+      tags: [groups]
+      operationId: listGroups
+      summary: GRP-03 the caller's groups
+      responses:
+        "200":
+          description: Group list (membership metadata only; content stays E2EE)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GroupList" }
+        "401": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}:
+    get:
+      tags: [groups]
+      operationId: getGroup
+      summary: GRP-03 group + members (members only; strangers get 404)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+    patch:
+      tags: [groups]
+      operationId: renameGroup
+      summary: GRP-05 rename (owner/admin only); bumps membershipVersion
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+      responses:
+        "200":
+          description: Updated group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}/members:
+    post:
+      tags: [groups]
+      operationId: addGroupMembers
+      summary: GRP-04 add members (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountIds]
+              properties:
+                accountIds:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Updated group view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /groups/{groupId}/members/{accountId}:
+    delete:
+      tags: [groups]
+      operationId: removeGroupMember
+      summary: GRP-06 self-leave or admin removal; owner leaving promotes earliest member
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: New membershipVersion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membershipVersion: { type: integer, format: int64 }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+
+  /presence/{accountId}:
+    get:
+      tags: [presence]
+      operationId: getPresence
+      summary: STS presence; hidden both ways when a block exists between the pair
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Presence snapshot (offline view when hidden)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accountId, online]
+                properties:
+                  accountId: { type: string, format: uuid }
+                  online: { type: boolean }
+                  lastSeenMs:
+                    type: integer
+                    format: int64
+                    description: Omitted when hidden or unknown
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /blocks:
+    get:
+      tags: [blocks]
+      operationId: listBlocks
+      summary: SAF-01 the caller's block list (ids only)
+      responses:
+        "200":
+          description: Blocked account ids, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blockedAccountIds]
+                properties:
+                  blockedAccountIds:
+                    type: array
+                    items: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /blocks/{accountId}:
+    post:
+      tags: [blocks]
+      operationId: blockAccount
+      summary: SAF-01 block an account; idempotent
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "201":
+          description: Block recorded
+        "400": { $ref: "#/components/responses/Validation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    delete:
+      tags: [blocks]
+      operationId: unblockAccount
+      summary: SAF-01 remove a block; idempotent
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Block removed (or already absent)
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived access token (15 min), device-bound.
+
+  responses:
+    Problem:
+      description: RFC 9457 problem details
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: Rate limit exceeded; honour Retry-After
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Authentication failed or expired
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Validation:
+      description: Request failed validation
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    KeyBundleList:
+      type: object
+      required: [bundles]
+      properties:
+        bundles:
+          type: array
+          items: { $ref: "#/components/schemas/KeyBundle" }
+
+    DiscoveryRequest:
+      type: object
+      required: [hashes]
+      properties:
+        hashes:
+          type: array
+          maxItems: 1000
+          items:
+            type: string
+            pattern: "^[0-9a-f]{64}$"
+
+    DiscoveredContact:
+      type: object
+      required: [accountId, displayName]
+      properties:
+        accountId: { type: string, format: uuid }
+        displayName: { type: string }
+        username: { type: string, nullable: true }
+        avatarBlobId: { type: string, nullable: true }
+
+    DiscoveryResponse:
+      type: object
+      required: [matches]
+      properties:
+        matches:
+          type: array
+          items: { $ref: "#/components/schemas/DiscoveredContact" }
+
+    PushToken:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    SyncEnvelope:
+      type: object
+      required: [envelopeB64]
+      properties:
+        envelopeB64:
+          type: string
+          description: Base64 proto Envelope with serverSeq/serverMessageId set
+
+    HistoryResponse:
+      type: object
+      required: [conversationId, envelopes, complete]
+      properties:
+        conversationId: { type: string }
+        envelopes:
+          type: array
+          items: { $ref: "#/components/schemas/SyncEnvelope" }
+        complete:
+          type: boolean
+          description: False when more envelopes exist beyond this page
+
+    Problem:
+      type: object
+      description: RFC 9457 problem details
+      required: [title, status]
+      properties:
+        type: { type: string, format: uri, default: "about:blank" }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string }
+        retryAfterMs: { type: integer, format: int64 }
+
+    OtpRequest:
+      type: object
+      required: [e164]
+      properties:
+        e164:
+          type: string
+          pattern: '^\+[1-9]\d{4,14}$'
+          example: "+919876543210"
+        language:
+          type: string
+          description: BCP-47 tag for the SMS template
+          example: en
+
+    OtpRequestResult:
+      type: object
+      required: [expiresInSeconds]
+      properties:
+        expiresInSeconds: { type: integer, example: 300 }
+        resendAfterSeconds: { type: integer, example: 60 }
+
+    OtpVerify:
+      type: object
+      required: [e164, code]
+      properties:
+        e164: { type: string }
+        code: { type: string, pattern: '^\d{6}$' }
+        deviceName: { type: string, maxLength: 64 }
+
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, accessTokenExpiresInSeconds, accountId, deviceId]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        accessTokenExpiresInSeconds: { type: integer, example: 900 }
+        accountId: { type: string, format: uuid }
+        deviceId: { type: integer }
+
+    Profile:
+      type: object
+      required: [displayName]
+      properties:
+        accountId: { type: string, format: uuid }
+        displayName: { type: string, minLength: 1, maxLength: 40 }
+        username:
+          type: string
+          pattern: '^[a-z0-9_]{3,32}$'
+          description: Optional unique @username
+        about: { type: string, maxLength: 140 }
+        avatarBlobId: { type: string, description: Blob id of the encrypted avatar }
+
+    Device:
+      type: object
+      required: [deviceId, name, createdAt, lastSeenAt, current]
+      properties:
+        deviceId: { type: integer, format: int64 }
+        name: { type: string, maxLength: 64 }
+        createdAt: { type: integer, format: int64 }
+        lastSeenAt: { type: integer, format: int64 }
+        current: { type: boolean }
+
+    UploadKeys:
+      type: object
+      required: [identityKey, signedPrekey]
+      properties:
+        identityKey: { type: string, description: Base64 public identity key }
+        signedPrekey: { $ref: "#/components/schemas/SignedPrekey" }
+        oneTimePrekeys:
+          type: array
+          items: { $ref: "#/components/schemas/Prekey" }
+        kyberPrekeys:
+          type: array
+          items: { $ref: "#/components/schemas/Prekey" }
+
+    SignedPrekey:
+      type: object
+      required: [prekeyId, record]
+      properties:
+        prekeyId: { type: integer }
+        record: { type: string, description: Opaque base64 record }
+
+    Prekey:
+      type: object
+      required: [prekeyId, record]
+      properties:
+        prekeyId: { type: integer }
+        record: { type: string, description: Opaque base64 record }
+
+    KeyCount:
+      type: object
+      required: [oneTimePrekeys, kyberPrekeys]
+      properties:
+        oneTimePrekeys: { type: integer }
+        kyberPrekeys: { type: integer }
+
+    KeyBundle:
+      type: object
+      required: [accountId, deviceId]
+      properties:
+        accountId: { type: string, format: uuid }
+        deviceId: { type: integer, format: int64 }
+        identityKey: { type: string }
+        signedPrekey: { $ref: "#/components/schemas/SignedPrekey" }
+        oneTimePrekey: { $ref: "#/components/schemas/Prekey" }
+        kyberPrekey: { $ref: "#/components/schemas/Prekey" }
+
+    ServerConfig:
+      type: object
+      required: [minSupportedVersion, latestVersion, limits]
+      properties:
+        minSupportedVersion: { type: string }
+        latestVersion: { type: string }
+        limits:
+          type: object
+          required: [maxGroupMembers, maxMessageChars, maxAttachmentBytes]
+          properties:
+            maxGroupMembers: { type: integer }
+            maxMessageChars: { type: integer }
+            maxAttachmentBytes: { type: integer, format: int64 }
+            maxForwardTargets: { type: integer }
+            deleteForEveryoneWindowHours: { type: integer }
+            editWindowMinutes: { type: integer }
+            maxPinnedChats: { type: integer }
+            maxPinnedMessagesPerChat: { type: integer }
+        features:
+          type: object
+          additionalProperties: { type: boolean }
+    DeclareAttachment:
+      type: object
+      required: [kind, mimeType, sizeBytes, sha256Hex]
+      properties:
+        kind: { type: string, enum: [image, video, file, voice] }
+        mimeType: { type: string, maxLength: 128 }
+        sizeBytes: { type: integer, format: int64, minimum: 1 }
+        sha256Hex: { type: string, pattern: "^[0-9a-fA-F]{64}$" }
+        recipientAccountId: { type: string, format: uuid }
+        conversationId: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        durationMs: { type: integer }
+        fileName: { type: string, maxLength: 255 }
+    DeclaredAttachment:
+      type: object
+      required: [attachmentId, uploadUrl]
+      properties:
+        attachmentId: { type: string, format: uuid }
+        uploadUrl: { type: string }
+    AttachmentMeta:
+      type: object
+      required: [attachmentId, kind, mimeType, sizeBytes, sha256Hex, status]
+      properties:
+        attachmentId: { type: string, format: uuid }
+        kind: { type: string, enum: [image, video, file, voice] }
+        mimeType: { type: string }
+        sizeBytes: { type: integer, format: int64 }
+        sha256Hex: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        durationMs: { type: integer }
+        fileName: { type: string }
+        status: { type: string, enum: [pending, ready] }
+        downloadUrl: { type: string, nullable: true }
+
+    CreateGroup:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        memberAccountIds:
+          type: array
+          items: { type: string, format: uuid }
+    GroupMember:
+      type: object
+      properties:
+        accountId: { type: string, format: uuid }
+        role: { type: string, enum: [owner, admin, member] }
+        joinedAt: { type: integer, format: int64 }
+    Group:
+      type: object
+      properties:
+        groupId: { type: string, format: uuid }
+        name: { type: string }
+        createdBy: { type: string, format: uuid }
+        createdAt: { type: integer, format: int64 }
+        membershipVersion: { type: integer, format: int64 }
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/GroupMember" }
+    GroupList:
+      type: object
+      properties:
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/Group" }

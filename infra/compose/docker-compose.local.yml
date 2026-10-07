@@ -1,0 +1,110 @@
+# ChattlyX local development stack.
+#
+#   docker compose -f infra/compose/docker-compose.local.yml up -d
+#
+# All credentials here are DEV-ONLY. Staging/prod use secret managers with
+# per-environment values (master spec Section 9.3).
+name: chattlyx-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: chattlyx
+      POSTGRES_USER: chattlyx
+      POSTGRES_PASSWORD: chattlyx_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chattlyx -d chattlyx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: chattlyx_dev
+      MINIO_ROOT_PASSWORD: chattlyx_dev_only
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 chattlyx_dev chattlyx_dev_only &&
+        mc mb -p local/blobs || true &&
+        echo 'minio bucket ready'
+      "
+    restart: "no"
+
+  coturn:
+    image: coturn/coturn:alpine
+    volumes:
+      - ./coturn/turnserver.conf:/etc/turnserver.conf:ro
+    command: ["-c", "/etc/turnserver.conf"]
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "5349:5349/tcp"
+      - "5349:5349/udp"
+      - "49152-49252:49152-49252/udp"
+    restart: unless-stopped
+
+  livekit:
+    image: livekit/livekit-server:latest
+    command: ["--config", "/etc/livekit.yaml"]
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"     # HTTP API
+      - "7881:7881"     # TCP media fallback
+      - "50000-50100:50000-50100/udp"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Dev stand-in for Twilio Verify / FCM: prints codes and push payloads.
+  # Production swaps this for real providers (never in release builds).
+  fake-gateway:
+    image: python:3.12-alpine
+    command: ["python", "/svc/fake_gateway.py"]
+    volumes:
+      - ./fake-services:/svc:ro
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8090/health')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  miniodata:

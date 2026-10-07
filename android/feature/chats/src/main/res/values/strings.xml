@@ -1,0 +1,55 @@
+<resources>
+    <string name="chats_empty_title">No chats yet</string>
+    <string name="chats_empty_message">Find people you know on ChattlyX and start a private conversation.</string>
+    <string name="chats_empty_action">Find people</string>
+    <string name="chats_typing">typing…</string>
+    <string name="chats_search_hint">Search chats and messages</string>
+    <string name="chats_search_clear">Clear search</string>
+    <string name="chats_search_empty">No matches found on this device.</string>
+
+    <string name="conversation_loading">Loading…</string>
+    <string name="conversation_typing">typing…</string>
+    <string name="conversation_back">Back</string>
+    <string name="conversation_composer_hint">Message</string>
+    <string name="conversation_send">Send</string>
+    <string name="conversation_call">Start a call</string>
+    <string name="conversation_video_call">Start a video call</string>
+    <string name="conversation_online">online</string>
+    <string name="conversation_more">More options</string>
+    <string name="conversation_block">Block</string>
+
+    <!-- MED-* attachments -->
+    <string name="attachment_add">Add attachment</string>
+    <string name="attachment_photo">Photo</string>
+    <string name="attachment_video">Video</string>
+    <string name="attachment_file">Document</string>
+    <string name="attachment_voice">Voice note</string>
+    <string name="attachment_uploading">Encrypting &amp; uploading…</string>
+    <string name="attachment_download">Download</string>
+    <string name="attachment_downloading">Downloading…</string>
+    <string name="attachment_download_failed">Download failed — tap to retry</string>
+    <string name="attachment_image_label">Photo message</string>
+    <string name="attachment_video_label">Video message</string>
+    <string name="attachment_voice_label">Voice message</string>
+    <string name="attachment_file_label">Document message</string>
+    <string name="attachment_open">Open</string>
+    <string name="attachment_play">Play voice note</string>
+    <string name="attachment_stop">Stop playback</string>
+    <string name="attachment_no_app">No app available to open this file</string>
+    <string name="voice_recording">Recording… %1$s</string>
+    <string name="voice_cancel">Discard recording</string>
+    <string name="voice_send">Send voice note</string>
+    <string name="voice_permission_needed">Microphone access is needed to record voice notes.</string>
+    <!-- GRP-* groups -->
+    <string name="group_new">New group</string>
+    <string name="group_create">Create</string>
+    <string name="group_cancel">Cancel</string>
+    <string name="group_name_hint">Group name</string>
+    <string name="group_name_empty">Give the group a name.</string>
+    <string name="group_name_too_long">Group names are limited to 64 characters.</string>
+    <string name="group_create_failed">Could not create the group. Please try again.</string>
+    <string name="group_no_contacts">No contacts yet — discover people first, then add them.</string>
+
+    <string name="error_attachment_send">Could not send the attachment. Please try again.</string>
+    <string name="error_attachment_download">Download failed. Check your connection and retry.</string>
+</resources>

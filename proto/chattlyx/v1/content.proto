@@ -1,0 +1,74 @@
+// ChattlyX session-layer content. This is the payload INSIDE the E2EE
+// ciphertext envelope: the server never sees it. Phase 2 ships text,
+// receipts and typing; media descriptors land in Phase 3 (MED-*).
+syntax = "proto3";
+
+package chattlyx.v1;
+
+option java_package = "com.chattlyx.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ContentProto";
+
+message SessionContent {
+  oneof content {
+    TextContent text = 1;
+    ReceiptContent receipt = 2;
+    TypingContent typing = 3;
+    // Phase 3 (MED-*): a media/file/voice attachment. The bytes themselves
+    // live in blob storage (ciphertext only); this descriptor is the only
+    // part inside the E2EE payload, so only the peers see the metadata.
+    AttachmentContent attachment = 4;
+  }
+}
+
+message TextContent {
+  string body = 1;
+}
+
+message ReceiptContent {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_DELIVERED = 1;
+    KIND_READ = 2;
+  }
+  Kind kind = 1;
+  // Server ids of the messages being receipted.
+  repeated string server_message_ids = 2;
+}
+
+message TypingContent {
+  bool started = 1;
+}
+
+// MED-01/02/03 media descriptor. attachment_id references a blob uploaded
+// out-of-band via the REST /v1/attachments endpoints; kind drives UI
+// rendering and which optional fields are meaningful.
+message AttachmentContent {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_IMAGE = 1;
+    KIND_VIDEO = 2;
+    KIND_FILE = 3;
+    KIND_VOICE = 4;
+  }
+  Kind kind = 1;
+  // Server-assigned blob id (opaque string, UUIDv7).
+  string attachment_id = 2;
+  string mime_type = 3;
+  uint64 size_bytes = 4;
+  // SHA-256 of the CIPHERTEXT blob; clients verify after download (MED-04).
+  bytes sha256 = 5;
+  // Optional dimensions / duration (image & video).
+  uint32 width = 6;
+  uint32 height = 7;
+  // Optional duration in ms (video & voice).
+  uint32 duration_ms = 8;
+  // Optional original file name (KIND_FILE).
+  string file_name = 9;
+  // Optional inline thumbnail (small JPEG/WEBP) so lists render instantly.
+  bytes thumbnail = 10;
+  // Blob key + nonce (only inside this E2EE payload; the server never sees
+  // them). AES-256-GCM via AttachmentCipher.
+  bytes key = 11;
+  bytes nonce = 12;
+}

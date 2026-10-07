@@ -1,0 +1,146 @@
+// ChattlyX WebSocket frames (Section 8.3 of the master spec).
+// Endpoint: wss://api.<domain>/v1/ws — binary frames, one Frame per message.
+syntax = "proto3";
+
+package chattlyx.v1;
+
+import "chattlyx/v1/envelope.proto";
+import "chattlyx/v1/models.proto";
+
+option java_package = "com.chattlyx.proto";
+option java_multiple_files = true;
+option java_outer_classname = "FramesProto";
+
+message Frame {
+  oneof payload {
+    AuthFrame auth = 1;
+    SendFrame send = 2;
+    AckFrame ack = 3;
+    DeliverFrame deliver = 4;
+    ReceiptFrame receipt = 5;
+    TypingFrame typing = 6;
+    PresenceFrame presence = 7;
+    CallSignalFrame call_signal = 8;
+    GroupUpdateFrame group_update = 9;
+    SyncRequestFrame sync_request = 10;
+    SyncResponseFrame sync_response = 11;
+    PingFrame ping = 12;
+    PongFrame pong = 13;
+    ErrorFrame error = 14;
+  }
+}
+
+message AuthFrame {
+  string access_token = 1;
+  uint32 device_id = 2;
+}
+
+message SendFrame {
+  Envelope envelope = 1;
+  // Routing hint for 1:1 delivery; validated against the conversation id.
+  string recipient_account_id = 2;
+}
+
+message AckFrame {
+  Uuid client_message_id = 1;
+  string server_message_id = 2;
+  int64 server_timestamp_ms = 3;
+}
+
+message DeliverFrame {
+  Envelope envelope = 1;
+}
+
+message ReceiptFrame {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_DELIVERED = 1;
+    KIND_READ = 2;
+  }
+  Kind kind = 1;
+  repeated string message_ids = 2;
+  string conversation_id = 3;
+}
+
+message TypingFrame {
+  bool started = 1;              // true = typing started, false = stopped
+  string conversation_id = 2;
+}
+
+message PresenceFrame {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    ACTION_SUBSCRIBE = 1;
+    ACTION_UNSUBSCRIBE = 2;
+    ACTION_UPDATE = 3;
+  }
+  Action action = 1;
+  repeated string account_ids = 2;
+  bool online = 3;               // ACTION_UPDATE only
+  int64 last_seen_ms = 4;        // ACTION_UPDATE only
+}
+
+message CallSignalFrame {
+  // The payload is itself E2EE ciphertext; the frame only routes it.
+  string peer_account_id = 1;
+  string call_id = 2;
+  bytes ciphertext = 3;
+}
+
+// CALL-*: E2EE call signalling payload. Rides inside CallSignalFrame.ciphertext;
+// the server never sees SDP, ICE candidates or ring state.
+message CallSignalContent {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_RING = 1; // caller -> callee: incoming call (+ offer)
+    KIND_ACCEPT = 2; // callee -> caller: accepted (+ answer)
+    KIND_DECLINE = 3; // callee -> caller: rejected
+    KIND_BUSY = 4; // callee -> caller: already in a call
+    KIND_CANCEL = 5; // caller -> callee: hung up while ringing
+    KIND_HANGUP = 6; // either direction: ended an established call
+    KIND_ICE_CANDIDATE = 7; // trickle ICE in either direction
+  }
+  Kind kind = 1;
+  string call_id = 2;
+  // WebRTC session description for RING (offer) and ACCEPT (answer).
+  string sdp_type = 3;
+  string sdp = 4;
+  // Trickle ICE candidate line (KIND_ICE_CANDIDATE).
+  string ice_candidate = 5;
+  // Candidate media routing (Phase 7: preserves WebRTC sdpMid/mLineIndex).
+  string sdp_mid = 8;
+  int32 sdp_mline_index = 9;
+  // 0 = audio, 1 = video.
+  int32 media_type = 6;
+  int64 sent_at_ms = 7;
+}
+
+message GroupUpdateFrame {
+  string group_id = 1;
+  int64 membership_version = 2;
+}
+
+message SyncRequestFrame {
+  repeated SequenceCursor cursors = 1;
+}
+
+message SyncResponseFrame {
+  repeated Envelope missed = 1;
+  bool complete = 2;
+}
+
+message PingFrame {
+  int64 client_timestamp_ms = 1;
+}
+
+message PongFrame {
+  int64 client_timestamp_ms = 1;
+  int64 server_timestamp_ms = 2;
+}
+
+message ErrorFrame {
+  // RFC 9457-style machine-readable code, e.g. "auth/expired".
+  string code = 1;
+  string message = 2;
+  int64 retry_after_ms = 3;      // 0 = not retryable
+}

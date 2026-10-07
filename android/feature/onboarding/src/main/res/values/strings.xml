@@ -1,0 +1,64 @@
+<resources>
+    <string name="onboarding_app_name">ChattlyX</string>
+    <string name="onboarding_tagline">Chat freely. Stay private.</string>
+    <string name="onboarding_welcome_title">Welcome to ChattlyX</string>
+    <string name="onboarding_welcome_body">Fast, private messaging with end-to-end encryption. Your messages belong to you — and only you.</string>
+    <string name="onboarding_get_started">Get started</string>
+
+    <string name="onboarding_phone_title">Enter your phone number</string>
+    <string name="onboarding_phone_body">ChattlyX uses your number to connect you with people you know. We never show your number to strangers.</string>
+    <string name="onboarding_phone_label">Phone number</string>
+    <string name="onboarding_phone_hint">Number without leading zero</string>
+    <string name="onboarding_country_label">Country</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_phone_invalid">That doesn\'t look like a valid number. Check the country and try again.</string>
+
+    <string name="onboarding_otp_title">Verify your number</string>
+    <string name="onboarding_otp_body">We sent a 6-digit code to %1$s. Enter it below.</string>
+    <string name="onboarding_otp_resend_in">Resend code in %1$d s</string>
+    <string name="onboarding_otp_resend_now">Resend code</string>
+    <string name="onboarding_otp_expires_in">Code expires in %1$d s</string>
+    <string name="onboarding_verify">Verify</string>
+    <string name="onboarding_otp_wrong">Wrong code. Please check and try again.</string>
+    <string name="onboarding_otp_expired">That code expired. Request a new one.</string>
+    <string name="onboarding_otp_rate_limited">Too many attempts. Please wait a moment and try again.</string>
+
+    <string name="onboarding_profile_title">Set up your profile</string>
+    <string name="onboarding_profile_body">This is how friends will find you. You can change everything later.</string>
+    <string name="onboarding_profile_name_label">Your name</string>
+    <string name="onboarding_profile_name_placeholder">e.g. Aarav Sharma</string>
+    <string name="onboarding_profile_username_label">Username (optional)</string>
+    <string name="onboarding_profile_username_placeholder">letters, numbers, underscore</string>
+    <string name="onboarding_profile_about_label">About (optional)</string>
+    <string name="onboarding_profile_about_placeholder">Hey there! I am using ChattlyX.</string>
+    <string name="onboarding_profile_photo_add">Add a photo</string>
+    <string name="onboarding_profile_photo_change">Change photo</string>
+    <string name="onboarding_profile_photo_desc">Profile photo</string>
+    <string name="onboarding_finish">Finish setup</string>
+    <string name="onboarding_profile_invalid">Please review the highlighted fields.</string>
+    <string name="onboarding_username_taken">That username is already taken.</string>
+
+    <string name="onboarding_error_network">No connection. Check your network and try again.</string>
+    <string name="onboarding_error_server">Something went wrong on our side. Please try again.</string>
+
+    <string name="country_india">India</string>
+    <string name="country_usa">United States</string>
+    <string name="country_uk">United Kingdom</string>
+    <string name="country_uae">United Arab Emirates</string>
+    <string name="country_saudi">Saudi Arabia</string>
+    <string name="country_pakistan">Pakistan</string>
+    <string name="country_bangladesh">Bangladesh</string>
+    <string name="country_spain">Spain</string>
+    <string name="country_mexico">Mexico</string>
+    <string name="country_france">France</string>
+    <string name="country_brazil">Brazil</string>
+    <string name="country_portugal">Portugal</string>
+    <string name="country_indonesia">Indonesia</string>
+    <string name="country_turkiye">Türkiye</string>
+    <string name="country_russia">Russia</string>
+    <string name="country_germany">Germany</string>
+    <string name="country_nigeria">Nigeria</string>
+    <string name="country_egypt">Egypt</string>
+    <string name="country_south_africa">South Africa</string>
+    <string name="country_singapore">Singapore</string>
+</resources>

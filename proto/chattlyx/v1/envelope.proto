@@ -1,0 +1,35 @@
+// ChattlyX E2EE envelope. The server only ever sees ciphertext payloads.
+syntax = "proto3";
+
+package chattlyx.v1;
+
+import "chattlyx/v1/models.proto";
+
+option java_package = "com.chattlyx.proto";
+option java_multiple_files = true;
+option java_outer_classname = "EnvelopeProto";
+
+enum EnvelopeType {
+  ENVELOPE_TYPE_UNSPECIFIED = 0;
+  ENVELOPE_TYPE_SIGNAL = 1;      // 1:1 session ciphertext
+  ENVELOPE_TYPE_SENDER_KEY = 2;  // group sender-key ciphertext
+  ENVELOPE_TYPE_CALL_SIGNAL = 3; // offer/answer/ICE inside an E2EE session
+  ENVELOPE_TYPE_RECEIPT = 4;
+  ENVELOPE_TYPE_TYPING = 5;
+  ENVELOPE_TYPE_GROUP_UPDATE = 6;
+}
+
+message Envelope {
+  EnvelopeType type = 1;
+  // Sender may be sealed (P1): the server then sees no sender identity.
+  string sender_account_id = 2;
+  uint32 sender_device_id = 3;
+  int64 server_timestamp_ms = 4;
+  bytes ciphertext = 5;          // opaque to the server
+  Uuid client_message_id = 6;    // idempotency key (UUIDv7)
+  string conversation_id = 7;
+  // Server-assigned per-conversation cursor (set on delivery/sync only).
+  int64 server_seq = 8;
+  // Server envelope id; clients echo it in AckFrame.
+  string server_message_id = 9;
+}

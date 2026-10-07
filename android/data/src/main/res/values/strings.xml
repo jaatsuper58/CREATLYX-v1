@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CALL-02 (Phase 7): incoming-call notification. -->
+    <string name="call_notifications_channel">Incoming calls</string>
+    <string name="call_notifications_channel_desc">Full-screen alerts for incoming ChattlyX calls</string>
+    <string name="call_notification_title">Incoming ChattlyX call</string>
+    <!-- MSG-08 (chat list previews): summary when the last message is media. -->
+    <string name="attachment_preview_image">Photo</string>
+    <string name="attachment_preview_video">Video</string>
+    <string name="attachment_preview_voice">Voice message</string>
+    <string name="attachment_preview_file">File</string>
+</resources>
