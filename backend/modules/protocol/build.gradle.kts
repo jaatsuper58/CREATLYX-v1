@@ -7,7 +7,7 @@ plugins {
 // Source of truth stays outside the backend tree (single copy, both sides).
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.29.3" // verify latest stable
+        artifact = "com.google.protobuf:protoc:4.36.2" // verify latest stable
     }
 }
 
