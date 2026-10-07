@@ -40,7 +40,7 @@ kotlinxSerializationJson = "1.8.0"  # verify latest stable
 
 # --- Persistence ---
 datastore = "1.1.2"              # verify latest stable
-room = "2.7.1"                   # verify latest stable; wired in Phase 1
+room = "2.8.5"                   # verify latest stable; wired in Phase 1
 sqlcipherAndroid = "4.6.1"       # net.zetetic:sqlcipher-android; verify latest
 
 # --- Network ---
