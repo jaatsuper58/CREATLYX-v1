@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload screenshot goldens (commit these under core/designsystem/src/test/screenshots)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: roborazzi-goldens
           path: android/core/designsystem/src/test/screenshots/**
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload reports on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: failure-reports
           path: |
